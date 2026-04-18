@@ -1,21 +1,17 @@
-import './App.css'
+import Header from '../components/Header'
+import { preventFormSubmit } from '../utils/form'
+import './HomePage.css'
 
-function App() {
+// 영화 검색 첫 화면 구성
+function HomePage() {
   return (
     <div className="app">
-      <header className="site-header">
-        <a className="brand" href="/" aria-label="Movie Pedia home">
-          Movie Pedia
-        </a>
-        <button className="login-button" type="button">
-          로그인
-        </button>
-      </header>
+      <Header showLogin />
 
       <main className="main-container">
         <section className="search-section" aria-labelledby="search-title">
           <h1 id="search-title">보고 싶은 영화를 찾아보세요</h1>
-          <form className="search-form" onSubmit={(event) => event.preventDefault()}>
+          <form className="search-form" onSubmit={preventFormSubmit}>
             <label className="sr-only" htmlFor="movie-search">
               영화 검색
             </label>
@@ -35,4 +31,4 @@ function App() {
   )
 }
 
-export default App
+export default HomePage
