@@ -1,6 +1,7 @@
 package syb.moviepedia.member.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 
@@ -15,5 +16,11 @@ public class MemberService {
 
     public void save(Member member) {
         memberRepository.save(member);
+    }
+
+    @Transactional
+    public Long signup(Member member) {
+        memberRepository.save(member);
+        return 1L;
     }
 }

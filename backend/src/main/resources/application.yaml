@@ -3,7 +3,7 @@ spring:
     name: moviepedia
   # 데이터 소스 구성
   datasource:
-    url: jdbc:mysql://localhost:3306/myboard?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:3306/moviepedia?serverTimezone=Asia/Seoul
     username: root
     password: 23706668
 
