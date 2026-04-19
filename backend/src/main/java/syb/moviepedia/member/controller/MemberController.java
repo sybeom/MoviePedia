@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.member.domain.Member;
+import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.service.MemberService;
 
 @RestController
@@ -14,7 +15,8 @@ public class MemberController {
 
     @GetMapping("/")
     public String index() {
-        memberService.signup(new Member("test", "test"));
+        MemberDto dto = new MemberDto("test", "1234");
+        memberService.signup(dto);
         return "Hello World";
     }
 }
