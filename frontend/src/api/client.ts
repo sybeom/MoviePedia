@@ -1,9 +1,27 @@
 const API_BASE_URL = 'http://localhost:8080'
 
+// fetch 요청 옵션 타입 정의
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
 }
 
+// 서버 응답 본문 변환 처리
+async function parseResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('Content-Type')
+  const responseText = await response.text()
+
+  if (!responseText) {
+    return undefined as T
+  }
+
+  if (contentType?.includes('application/json')) {
+    return JSON.parse(responseText) as T
+  }
+
+  return responseText as T
+}
+
+// fetch 공통 요청 처리
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers, ...restOptions } = options
 
@@ -20,9 +38,5 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     throw new Error('API 요청에 실패했습니다.')
   }
 
-  if (response.status === 204) {
-    return undefined as T
-  }
-
-  return response.json() as Promise<T>
+  return parseResponse<T>(response)
 }

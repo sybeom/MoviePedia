@@ -61,8 +61,24 @@
 }
 
 .login-form input:focus-visible {
-  border-color: #ff2f6e;
-  outline: 3px solid rgba(255, 47, 110, 0.2);
+  border-color: #111827;
+  outline: 3px solid rgba(17, 24, 39, 0.18);
+}
+
+.login-form input[aria-invalid="true"] {
+  border-color: #e11d48;
+}
+
+.login-form input[aria-invalid="true"]:focus-visible {
+  border-color: #e11d48;
+  outline: 3px solid rgba(225, 29, 72, 0.18);
+}
+
+.field-message {
+  margin: -4px 0 4px;
+  color: #e11d48;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .submit-button {
