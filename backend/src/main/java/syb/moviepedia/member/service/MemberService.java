@@ -2,6 +2,7 @@ package syb.moviepedia.member.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.exception.SignupFieldException;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.repository.MemberRepository;
@@ -18,11 +19,11 @@ public class MemberService {
     @Transactional
     public Long signup(MemberDto memberDto) {
         if (memberRepository.existsByLoginId(memberDto.getLoginId())) {
-            throw new IllegalArgumentException("중복 된 아이디입니다.");
+            throw new SignupFieldException("중복 된 아이디입니다.");
         }
 
         if (memberRepository.existsByNickname(memberDto.getNickname())) {
-            throw new IllegalArgumentException("중복 된 닉네임입니다.");
+            throw new SignupFieldException("중복 된 닉네임입니다.");
         }
         Member member = new Member(memberDto.getLoginId(), memberDto.getPassword());
         return memberRepository.save(member).getId();

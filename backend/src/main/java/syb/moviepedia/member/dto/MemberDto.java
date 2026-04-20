@@ -15,7 +15,7 @@ public class MemberDto {
 
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z0-9]+$")
-    @Size(min = 5, max = 10)
+    @Size(min = 6, max = 10)
     String loginId;
 
     @NotBlank
