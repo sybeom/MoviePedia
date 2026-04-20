@@ -17,6 +17,13 @@ public class MemberService {
 
     @Transactional
     public Long signup(MemberDto memberDto) {
+        if (memberRepository.existsByLoginId(memberDto.getLoginId())) {
+            throw new IllegalArgumentException("중복 된 아이디입니다.");
+        }
+
+        if (memberRepository.existsByNickname(memberDto.getNickname())) {
+            throw new IllegalArgumentException("중복 된 닉네임입니다.");
+        }
         Member member = new Member(memberDto.getLoginId(), memberDto.getPassword());
         return memberRepository.save(member).getId();
     }

@@ -21,6 +21,7 @@ public class Member {
 
     String loginId;
     String password;
+    String nickname;
 
     public Member(String test, String test1) {
         loginId = test;
