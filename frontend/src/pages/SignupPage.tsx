@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signup } from '../api/auth'
+import { isApiError } from '../api/client'
 import Header from '../components/Header'
 import {
   hasSignupFormErrors,
@@ -42,6 +43,14 @@ function SignupPage() {
     return Boolean(validationErrors[fieldName])
   }
 
+  // 회원가입 400 응답 필드 에러 처리
+  function handleDuplicateSignupError() {
+    setValidationErrors({
+      loginId: '이미 사용중인 아이디입니다.',
+      nickname: '이미 사용중인 닉네임입니다.',
+    })
+  }
+
   // 회원가입 폼 제출 처리
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -64,7 +73,12 @@ function SignupPage() {
       })
 
       navigate('/login')
-    } catch {
+    } catch (error) {
+      if (isApiError(error) && error.status === 400) {
+        handleDuplicateSignupError()
+        return
+      }
+
       setMessage('회원가입 요청에 실패했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       setIsSubmitting(false)
@@ -79,7 +93,7 @@ function SignupPage() {
         <section className="login-panel" aria-labelledby="signup-title">
           <h1 id="signup-title">회원가입</h1>
 
-          <form className="login-form" onSubmit={handleSignup}>
+          <form className="login-form" onSubmit={handleSignup} noValidate>
             <label htmlFor="signup-id">아이디</label>
             <input
               id="signup-id"
@@ -90,7 +104,6 @@ function SignupPage() {
               onChange={(event) => setLoginId(event.target.value)}
               aria-invalid={shouldShowFieldError('loginId')}
               aria-describedby="signup-id-error"
-              required
             />
             {shouldShowFieldError('loginId') && (
               <p className="field-message" id="signup-id-error">
@@ -108,7 +121,6 @@ function SignupPage() {
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={shouldShowFieldError('password')}
               aria-describedby="signup-password-error"
-              required
             />
             {shouldShowFieldError('password') && (
               <p className="field-message" id="signup-password-error">
@@ -126,7 +138,6 @@ function SignupPage() {
               onChange={(event) => setNickname(event.target.value)}
               aria-invalid={shouldShowFieldError('nickname')}
               aria-describedby="nickname-error"
-              required
             />
             {shouldShowFieldError('nickname') && (
               <p className="field-message" id="nickname-error">
