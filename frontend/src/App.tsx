@@ -3,7 +3,6 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 
-// URL 경로별 페이지 연결
 function App() {
   return (
     <Routes>

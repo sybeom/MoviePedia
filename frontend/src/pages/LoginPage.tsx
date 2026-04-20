@@ -3,7 +3,6 @@ import Header from '../components/Header'
 import { preventFormSubmit } from '../utils/form'
 import './Auth.css'
 
-// 로그인 화면 구성
 function LoginPage() {
   return (
     <div className="app">
@@ -17,7 +16,12 @@ function LoginPage() {
 
           <form className="login-form" onSubmit={preventFormSubmit}>
             <label htmlFor="login-id">아이디</label>
-            <input id="login-id" type="text" placeholder="아이디를 입력하세요" autoComplete="username" />
+            <input
+              id="login-id"
+              type="text"
+              placeholder="아이디를 입력하세요"
+              autoComplete="username"
+            />
 
             <label htmlFor="login-password">비밀번호</label>
             <input

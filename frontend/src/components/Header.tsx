@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom'
 import './Header.css'
 
-// Header 컴포넌트 props 타입 정의
 type HeaderProps = {
   showLogin?: boolean
 }
 
-// 상단 공통 헤더 렌더링
 function Header({ showLogin = false }: HeaderProps) {
   return (
     <header className="site-header">

@@ -2,7 +2,6 @@ import Header from '../components/Header'
 import { preventFormSubmit } from '../utils/form'
 import './HomePage.css'
 
-// 영화 검색 첫 화면 구성
 function HomePage() {
   return (
     <div className="app">

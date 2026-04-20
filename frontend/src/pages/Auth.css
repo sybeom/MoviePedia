@@ -76,6 +76,18 @@
   cursor: pointer;
 }
 
+.submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.form-message {
+  margin: 4px 0 0;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .secondary-action {
   display: grid;
   min-height: 52px;
