@@ -9,6 +9,7 @@ import lombok.Getter;
 /**
  * 회원 가입에 필요한 MemberDto
  */
+// TODO: 추후 응답 Dto와 요청 Dto 별도로 생성하도록 한다.
 @AllArgsConstructor
 @Getter
 public class MemberDto {
@@ -19,7 +20,7 @@ public class MemberDto {
     String loginId;
 
     @NotBlank
-    @Size(min = 6, max = 12)
+    @Size(min = 2, max = 10)
     String password;
 
     @NotBlank

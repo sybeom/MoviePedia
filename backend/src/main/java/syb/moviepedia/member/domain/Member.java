@@ -1,30 +1,30 @@
 package syb.moviepedia.member.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
 
 @Slf4j
 @Entity
 @Getter
+@Builder
 @AllArgsConstructor
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     String loginId;
+
+    @Column(unique = true, nullable = false)
     String password;
+
+    @Column(unique = true, nullable = false)
     String nickname;
 
-    public Member(String test, String test1) {
-        loginId = test;
-        password = test1;
-    }
+    @Column(unique = true)
+    String email;
 }

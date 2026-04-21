@@ -25,7 +25,12 @@ public class MemberService {
         if (memberRepository.existsByNickname(memberDto.getNickname())) {
             throw new SignupFieldException("중복 된 닉네임입니다.");
         }
-        Member member = new Member(memberDto.getLoginId(), memberDto.getPassword());
+
+        Member member = Member.builder()
+                .loginId(memberDto.getLoginId())
+                .password(memberDto.getPassword())
+                .nickname(memberDto.getNickname())
+                .build();
         return memberRepository.save(member).getId();
     }
 }
