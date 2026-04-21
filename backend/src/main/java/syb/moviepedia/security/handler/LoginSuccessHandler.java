@@ -14,7 +14,7 @@ import java.io.IOException;
 
 /**
  * 로그인 성공시 실행되는 핸들러
- * 로그인 필터에 등록해야 동작한다
+ * SecurityConfig에 등록해야 동작한다
  */
 @Slf4j
 @Component
