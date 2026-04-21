@@ -1,18 +1,22 @@
 package syb.moviepedia.member.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import syb.moviepedia.member.domain.Member;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.service.MemberService;
 
-import java.util.HashSet;
-import java.util.Set;
-
+@Tag(name = "Member API", description = "회원 도메인 API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +25,30 @@ public class MemberController {
 
     final private MemberService memberService;
 
+    @Operation(
+            summary = "회원 가입",
+            description = "회원 가입을 진행합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "가입할 회원 JSON Body 데이터",
+                    required = true,
+                    content = @Content( // 요청 데이터 타입
+                            schema = @Schema(implementation = MemberDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content =  @Content( // 성공 응답 데이터 타입
+                                    schema = @Schema(implementation = MemberDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "실패"
+                    )
+            }
+    )
     @PostMapping
     public ResponseEntity<Void> signup(@Valid @RequestBody MemberDto dto) {
 
