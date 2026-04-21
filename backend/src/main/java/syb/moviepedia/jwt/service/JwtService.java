@@ -1,0 +1,161 @@
+package syb.moviepedia.jwt.service;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.util.JwtUtil;
+import syb.moviepedia.jwt.domain.JwtRefresh;
+import syb.moviepedia.jwt.dto.JwtDto;
+import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
+import syb.moviepedia.jwt.repository.JwtRepository;
+import syb.moviepedia.member.repository.MemberRepository;
+
+/**
+ * jwt 비즈니스 로직을 수행하는 jwt 서비스 클래스
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class JwtService {
+    private final JwtRepository jwtRepository;
+    private final MemberRepository memberRepository;
+
+    // 소셜 로그인 성공 후 쿠키(Refresh) -> 헤더 방식으로 응답
+    // 소셜은 RESTFul하게 설계를 하게되면 쿠키 형태로 토큰을 발급해줘야한다.
+    // 따라서 이 쿠키를 다시 헤더 방식으로 변경해야줘야한다.
+    @Transactional
+    public JwtDto cookie2Header( // 소셜 로그인 성공 후 쿠키로 발급받은 jwt를 다시 헤더로 발급
+                                 HttpServletRequest request,
+                                 HttpServletResponse response
+    ) {
+
+        // 쿠키 리스트
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            throw new RuntimeException("쿠키가 존재하지 않습니다.");
+        }
+
+        // Refresh 토큰 획득
+        String refreshToken = null;
+        for (Cookie cookie : cookies) {
+            if ("refreshToken".equals(cookie.getName())) {
+                refreshToken = cookie.getValue();
+                break;
+            }
+        }
+
+        if (refreshToken == null) {
+            throw new RuntimeException("refreshToken 쿠키가 없습니다.");
+        }
+
+        // Refresh 토큰 검증
+        Boolean isValid = JwtUtil.isValid(refreshToken, false);
+        if (!isValid) {
+            throw new RuntimeException("유효하지 않은 refreshToken입니다.");
+        }
+
+        // 정보 추출
+        String username = JwtUtil.getUsername(refreshToken);
+        String role = JwtUtil.getRole(refreshToken);
+        String nickname = memberRepository.findByNickname(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + username));
+
+        // 토큰 생성
+        String newAccessToken = JwtUtil.createJWT(username, role, true);
+        String newRefreshToken = JwtUtil.createJWT(username, role, false);
+
+        // 기존 Refresh 토큰 DB 삭제 후 신규 추가
+        JwtRefresh newRefreshEntity = JwtRefresh.builder()
+                .username(username)
+                .refresh(newRefreshToken)
+                .build();
+
+        removeRefresh(refreshToken);
+        jwtRepository.flush(); // 같은 트랜잭션 내부라 : 삭제 -> 생성 문제 해결
+        jwtRepository.save(newRefreshEntity);
+
+        // 기존 쿠키 제거
+        Cookie refreshCookie = new Cookie("refreshToken", null);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(false);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(10);
+        response.addCookie(refreshCookie);
+
+        return new JwtDto(username, nickname, newAccessToken, newRefreshToken);
+    }
+
+    // Refresh 토큰으로 Access 토큰 재발급 로직 (Rotate 포함)
+    @Transactional
+    public JwtDto refreshRotate(JwtRefreshRequestDto dto) {
+        log.info("refreshRotate 호출 됨, isValid() 검증전");
+        String refreshToken = dto.getRefreshToken();
+
+        // Refresh 토큰 검증
+        Boolean isValid = JwtUtil.isValid(refreshToken, false);
+        if (!isValid) {
+            throw new RuntimeException("유효하지 않은 refreshToken입니다.");
+        }
+
+        // RefreshEntity 존재 확인 (화이트리스트)
+        if (!existsRefresh(refreshToken)) {
+            throw new RuntimeException("유효하지 않은 refreshToken입니다.");
+        }
+        log.info("refreshRotate 호출 됨, isValid() 검증 통과후 정보추출 전");
+
+        // 정보 추출
+        String username = JwtUtil.getUsername(refreshToken);
+        String role = JwtUtil.getRole(refreshToken);
+        String nickname = memberRepository.findByNickname(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + username));
+
+        // 토큰 생성
+        String newAccessToken = JwtUtil.createJWT(username, role, true);
+        String newRefreshToken = JwtUtil.createJWT(username, role, false);
+
+        // 기존 Refresh 토큰 DB 삭제 후 신규 추가
+        JwtRefresh newRefreshEntity = JwtRefresh.builder()
+                .username(username)
+                .refresh(newRefreshToken)
+                .build();
+        log.info("refreshRotate 호출 됨, removeRefresh 전");
+        removeRefresh(refreshToken);
+        jwtRepository.save(newRefreshEntity);
+
+        log.info("refreshRotate 호출 됨, save 이후 return 전");
+        return new JwtDto(username, nickname, newAccessToken, newRefreshToken);
+    }
+
+    // JWT Refresh 토큰 발급 후 저장 메소드
+    @Transactional
+    public void addRefresh(String username, String refreshToken) {
+        JwtRefresh entity = JwtRefresh.builder()
+                .username(username)
+                .refresh(refreshToken)
+                .build();
+
+        jwtRepository.save(entity);
+    }
+
+    // JWT Refresh 존재 확인 메소드
+    @Transactional(readOnly = true)
+    public Boolean existsRefresh(String refreshToken) {
+        return jwtRepository.existsByRefresh(refreshToken);
+    }
+
+    // JWT Refresh 토큰 삭제 메소드
+    public void removeRefresh(String refreshToken) {
+        jwtRepository.deleteByRefresh(refreshToken);
+    }
+
+    // 특정 유저 Refresh 토큰 모두 삭제 (탈퇴)
+    public void removeRefreshUser(String username) {
+        jwtRepository.deleteByUsername(username);
+    }
+
+}
