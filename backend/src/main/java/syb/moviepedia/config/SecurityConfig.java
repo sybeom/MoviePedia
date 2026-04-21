@@ -1,29 +1,42 @@
 package syb.moviepedia.config;
 
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import syb.moviepedia.security.filter.LoginFilter;
 
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private final AuthenticationSuccessHandler loginSuccessHandler;
+//    private final AuthenticationSuccessHandler socialSuccessHandler;
 
+    // @RequiredArgsConstructor 사용해도 될듯
+    public SecurityConfig(
+            AuthenticationConfiguration authenticationConfiguration,
+            @Qualifier("LoginSuccessHandler") AuthenticationSuccessHandler loginSuccessHandler) {
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.loginSuccessHandler = loginSuccessHandler;
+//        this.socialSuccessHandler = socialSuccessHandler;
+    }
+
+    // 커스텀 자체 로그인 필터를 위한 AuthenticationManager Bean 수동 등록
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // 프론트엔드 fetch 요청 허용 설정
-        // 수 많은 필터 중 CSRF 필터를 disable 시킴
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
-//                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-
-        return http.build();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
     @Bean
@@ -39,5 +52,45 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // 프론트엔드 fetch 요청 허용 설정
+        // 수 많은 필터 중 CSRF 필터를 disable 시킴
+        http
+                .csrf(csrf -> csrf.disable());
+
+        // CORS 설정
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+//        // 기본 Form 기반 인증 필터들 disable
+//        http
+//                .formLogin(AbstractHttpConfigurer::disable);
+//
+//        // 기본 Basic 인증 필터 disable
+//        http
+//                .httpBasic(AbstractHttpConfigurer::disable);
+//
+//        // OAuth2 인증용
+////        http
+////                .oauth2Login(oauth2 -> oauth2
+////                        .successHandler(socialSuccessHandler));
+//
+//        // 인가 설정
+//        http
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers())
+
+        // 커스텀 필터 추가
+        http
+                .addFilterBefore(
+                        new LoginFilter(authenticationManager(authenticationConfiguration), loginSuccessHandler),
+                        UsernamePasswordAuthenticationFilter.class);
+
+
+
+        return http.build();
     }
 }
