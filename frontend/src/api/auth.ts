@@ -9,7 +9,7 @@ export type SignupRequest = {
 
 // 회원가입 API 요청 처리
 export function signup(data: SignupRequest) {
-  return request<void>('/signup', {
+  return request<void>('/members', {
     method: 'POST',
     body: data,
   })
