@@ -1,5 +1,13 @@
 const API_BASE_URL = 'http://localhost:8080'
 
+// 백엔드 공통 API 응답 타입 정의
+export type ApiResult<T> = {
+  code?: string
+  message?: string
+  data?: T
+  errors?: unknown
+}
+
 // fetch 요청 옵션 타입 정의
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
@@ -8,11 +16,15 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
 // API 실패 응답 에러 타입 정의
 export class ApiError extends Error {
   status: number
+  code?: string
+  errors?: unknown
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code?: string, errors?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
+    this.errors = errors
   }
 }
 
@@ -21,24 +33,30 @@ export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError
 }
 
+// JSON 응답 여부 확인
+function isJsonResponse(response: Response) {
+  return response.headers.get('Content-Type')?.includes('application/json')
+}
+
 // 서버 응답 본문 변환 처리
-async function parseResponse<T>(response: Response): Promise<T> {
-  const contentType = response.headers.get('Content-Type')
+async function parseApiResult<T>(response: Response): Promise<ApiResult<T> | undefined> {
   const responseText = await response.text()
 
   if (!responseText) {
-    return undefined as T
+    return undefined
   }
 
-  if (contentType?.includes('application/json')) {
-    return JSON.parse(responseText) as T
+  if (isJsonResponse(response)) {
+    return JSON.parse(responseText) as ApiResult<T>
   }
 
-  return responseText as T
+  return {
+    message: responseText,
+  }
 }
 
 // fetch 공통 요청 처리
-export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T | undefined> {
   const { body, headers, ...restOptions } = options
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -50,9 +68,16 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 
+  const result = await parseApiResult<T>(response)
+
   if (!response.ok) {
-    throw new ApiError(response.status, 'API 요청에 실패했습니다.')
+    throw new ApiError(
+      response.status,
+      result?.message ?? 'API 요청에 실패했습니다.',
+      result?.code,
+      result?.errors,
+    )
   }
 
-  return parseResponse<T>(response)
+  return result?.data
 }

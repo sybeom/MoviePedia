@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
 import Header from '../components/Header'
 import './Auth.css'
 
 // 로그인 화면 구성
 function LoginPage() {
+  // 로그인 성공 후 홈 화면 이동 함수 준비
+  const navigate = useNavigate()
+
   // 로그인 입력값 상태 관리
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
@@ -25,6 +28,8 @@ function LoginPage() {
         loginId,
         password,
       })
+
+      navigate('/')
     } catch {
       setMessage('로그인 요청에 실패했습니다. 아이디와 비밀번호를 확인해주세요.')
     } finally {
