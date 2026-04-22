@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.service.JwtService;
+import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.service.MemberService;
 import tools.jackson.databind.ObjectMapper;
 
@@ -42,12 +43,14 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         // loginId, role, nickname
         String loginId =  authentication.getName();
         String role = authentication.getAuthorities().iterator().next().getAuthority();
-//        String nickname = memberService.readUser(loginId).nickname();
+
+        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+        String nickname = principal.getNickname();
 
         // JWT(Access/Refresh) 생성
         String accessToken = JwtUtil.createJWT(loginId, role, true);
         String refreshToken = JwtUtil.createJWT(loginId, role, false);
-        UserDetails principal = (UserDetails) authentication.getPrincipal();
+
         // 발급한 Refresh DB 테이블 저장 (Refresh whitelist)
         jwtService.addRefresh(loginId, refreshToken);
 
@@ -57,7 +60,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("loginId", loginId);
-//        body.put("nickname", nickname);
+        body.put("nickname", nickname);
         body.put("accessToken", accessToken);
         body.put("refreshToken", refreshToken);
 
