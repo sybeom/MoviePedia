@@ -5,10 +5,10 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.jwt.domain.JwtRefresh;
 
 public interface JwtRepository extends JpaRepository<JwtRefresh, Long> {
-    Boolean existsByRefresh(String refreshToken);
+    Boolean existsByRefreshToken(String refreshToken);
 
     @Transactional
-    void deleteByRefresh(String refresh);
+    void deleteByRefreshToken(String refresh);
 
     @Transactional
     void deleteByLoginId(String loginId);

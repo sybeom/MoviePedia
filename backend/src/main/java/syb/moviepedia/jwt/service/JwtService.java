@@ -144,12 +144,12 @@ public class JwtService {
     // JWT Refresh 존재 확인
     @Transactional(readOnly = true)
     public Boolean existsRefresh(String refreshToken) {
-        return jwtRepository.existsByRefresh(refreshToken);
+        return jwtRepository.existsByRefreshToken(refreshToken);
     }
 
     // JWT Refresh 토큰 삭제
     public void removeRefresh(String refreshToken) {
-        jwtRepository.deleteByRefresh(refreshToken);
+        jwtRepository.deleteByRefreshToken(refreshToken);
     }
 
     // 특정 유저 Refresh 토큰 모두 삭제 (탈퇴)

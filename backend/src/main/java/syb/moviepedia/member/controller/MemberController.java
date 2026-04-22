@@ -8,11 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.service.MemberService;
 
@@ -50,7 +52,7 @@ public class MemberController {
             }
     )
     @PostMapping
-    public ResponseEntity<Void> signup(@Valid @RequestBody MemberDto dto) {
+    public ResponseEntity<ApiResult<Void>> signup(@Valid @RequestBody MemberDto dto) {
 
 //        // 검증 실패시
 //        // 필드 입력 조건에 대한 검증을 하는 것임. 아이디, 비밀번호, 닉네임 등의 중복 체크는 하지 않음)
@@ -66,6 +68,6 @@ public class MemberController {
         log.info("signup 호출");
         // 중복 검사 및 가입
         memberService.signup(dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("회원 가입에 성공했습니다", null));
     }
 }

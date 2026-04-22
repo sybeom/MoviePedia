@@ -21,4 +21,5 @@ public class GlobalExceptionHandler {
         // TODO: 추후 bindingResult 처리하기 및 SignupFieldException과 함께 처리할 방법 고민해보기
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
+    // JwtService
 }

@@ -25,7 +25,7 @@ public class JwtRefresh {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "username", nullable = false)
+    @Column(name = "loginId", nullable = false)
     private String loginId;
 
     @Column(name = "refresh", nullable = false, length = 512)
