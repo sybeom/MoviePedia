@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.exception.SignupFieldException;
+import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.repository.MemberRepository;
@@ -35,17 +36,19 @@ public class MemberService implements UserDetailsService {
 
         Member member = Member.builder()
                 .loginId(memberDto.getLoginId())
-                .password(memberDto.getPassword())
+                .password(passwordEncoder.encode(memberDto.getPassword()))
                 .nickname(memberDto.getNickname())
                 .build();
         return memberRepository.save(member).getId();
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return User.builder()
-                .username("test1234")
-                .password(passwordEncoder.encode("1234"))
+    public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Member member = memberRepository.findByLoginId(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username));
+        return CustomUserDetails.builder()
+                .loginId(username)
+                .password(member.getPassword())
                 .build();
     }
 }

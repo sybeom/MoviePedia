@@ -15,15 +15,32 @@ public class JwtUtil {
     private static final Long refreshTokenExpiresIn;
 
     static  {
-        String secretKeyString = "tjddbsqjadlqslek";
+        String secretKeyString = "dkssudgktpdywjsmstjddbsqjadlqslek";
         secretKey = new SecretKeySpec(secretKeyString.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
 
         accessTokenExpiresIn = 3600L * 1000; // 1시간
         refreshTokenExpiresIn = 604800L * 1000; // 7일
     }
 
-    // JWT 클레임 username 파싱
-    public static String getUsername(String token) {
+    // JWT(Access/Refresh) 생성
+    public static String createJWT(String loginId, String role, Boolean isAccess) {
+
+        long now = System.currentTimeMillis();
+        long expiry = isAccess ? accessTokenExpiresIn : refreshTokenExpiresIn;
+        String type = isAccess ? "access" : "refresh";
+
+        return Jwts.builder()
+                .claim("sub", loginId)
+                .claim("role", role)
+                .claim("type", type) // 액세스, 리프레쉬인지 여부
+                .issuedAt(new Date(now)) // jwt가 언제 발급되었는지.
+                .expiration(new Date(now + expiry))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    // JWT 클레임 loginId 파싱
+    public static String getLoginId(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("sub", String.class);
     }
 
@@ -38,7 +55,7 @@ public class JwtUtil {
             Claims claims = Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
-                    .parseSignedClaims(token)
+                    .parseSignedClaims(token) // 여기서 만료되었는지 검증하기 때문에 만료시간을 별도로 검증할 필요 없다.
                     .getPayload();
 
             String type = claims.get("type", String.class);
@@ -53,22 +70,4 @@ public class JwtUtil {
             return false;
         }
     }
-
-    // JWT(Access/Refresh) 생성
-    public static String createJWT(String username, String role, Boolean isAccess) {
-
-        long now = System.currentTimeMillis();
-        long expiry = isAccess ? accessTokenExpiresIn : refreshTokenExpiresIn;
-        String type = isAccess ? "access" : "refresh";
-
-        return Jwts.builder()
-                .claim("sub", username)
-                .claim("role", role)
-                .claim("type", type) // 액세스, 리프레쉬인지 여부
-                .issuedAt(new Date(now))
-                .expiration(new Date(now + expiry))
-                .signWith(secretKey)
-                .compact();
-    }
-
 }

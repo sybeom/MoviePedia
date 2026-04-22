@@ -25,7 +25,7 @@ public class JwtService {
     private final JwtRepository jwtRepository;
     private final MemberRepository memberRepository;
 
-    // 소셜 로그인 성공 후 쿠키(Refresh) -> 헤더 방식으로 응답
+    // 소셜 로그인은 로그인 성공 후 쿠키(Refresh) -> 헤더 방식으로 응답
     // 소셜은 RESTFul하게 설계를 하게되면 쿠키 형태로 토큰을 발급해줘야한다.
     // 따라서 이 쿠키를 다시 헤더 방식으로 변경해야줘야한다.
     @Transactional
@@ -33,7 +33,6 @@ public class JwtService {
                                  HttpServletRequest request,
                                  HttpServletResponse response
     ) {
-
         // 쿠키 리스트
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
@@ -60,18 +59,18 @@ public class JwtService {
         }
 
         // 정보 추출
-        String username = JwtUtil.getUsername(refreshToken);
+        String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);
-        String nickname = memberRepository.findByNickname(username)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + username));
+        String nickname = memberRepository.findByNickname(loginId)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + loginId));
 
         // 토큰 생성
-        String newAccessToken = JwtUtil.createJWT(username, role, true);
-        String newRefreshToken = JwtUtil.createJWT(username, role, false);
+        String newAccessToken = JwtUtil.createJWT(loginId, role, true);
+        String newRefreshToken = JwtUtil.createJWT(loginId, role, false);
 
         // 기존 Refresh 토큰 DB 삭제 후 신규 추가
         JwtRefresh newRefreshEntity = JwtRefresh.builder()
-                .username(username)
+                .loginId(loginId)
                 .refresh(newRefreshToken)
                 .build();
 
@@ -87,7 +86,7 @@ public class JwtService {
         refreshCookie.setMaxAge(10);
         response.addCookie(refreshCookie);
 
-        return new JwtDto(username, nickname, newAccessToken, newRefreshToken);
+        return new JwtDto(loginId, nickname, newAccessToken, newRefreshToken);
     }
 
     // Refresh 토큰으로 Access 토큰 재발급 로직 (Rotate 포함)
@@ -109,18 +108,18 @@ public class JwtService {
         log.info("refreshRotate 호출 됨, isValid() 검증 통과후 정보추출 전");
 
         // 정보 추출
-        String username = JwtUtil.getUsername(refreshToken);
+        String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);
-        String nickname = memberRepository.findByNickname(username)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + username));
+        String nickname = memberRepository.findByNickname(loginId)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + loginId));
 
         // 토큰 생성
-        String newAccessToken = JwtUtil.createJWT(username, role, true);
-        String newRefreshToken = JwtUtil.createJWT(username, role, false);
+        String newAccessToken = JwtUtil.createJWT(loginId, role, true);
+        String newRefreshToken = JwtUtil.createJWT(loginId, role, false);
 
         // 기존 Refresh 토큰 DB 삭제 후 신규 추가
         JwtRefresh newRefreshEntity = JwtRefresh.builder()
-                .username(username)
+                .loginId(loginId)
                 .refresh(newRefreshToken)
                 .build();
         log.info("refreshRotate 호출 됨, removeRefresh 전");
@@ -128,14 +127,14 @@ public class JwtService {
         jwtRepository.save(newRefreshEntity);
 
         log.info("refreshRotate 호출 됨, save 이후 return 전");
-        return new JwtDto(username, nickname, newAccessToken, newRefreshToken);
+        return new JwtDto(loginId, nickname, newAccessToken, newRefreshToken);
     }
 
     // JWT Refresh 토큰 발급 후 저장 메소드
     @Transactional
-    public void addRefresh(String username, String refreshToken) {
+    public void addRefresh(String loginId, String refreshToken) {
         JwtRefresh entity = JwtRefresh.builder()
-                .username(username)
+                .loginId(loginId)
                 .refresh(refreshToken)
                 .build();
 
@@ -154,8 +153,8 @@ public class JwtService {
     }
 
     // 특정 유저 Refresh 토큰 모두 삭제 (탈퇴)
-    public void removeRefreshUser(String username) {
-        jwtRepository.deleteByUsername(username);
+    public void removeRefreshUser(String loginId) {
+        jwtRepository.deleteByLoginId(loginId);
     }
 
 }

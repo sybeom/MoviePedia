@@ -26,7 +26,7 @@ public class JwtRefresh {
     private Long id;
 
     @Column(name = "username", nullable = false)
-    private String username;
+    private String loginId;
 
     @Column(name = "refresh", nullable = false, length = 512)
     private String refresh; // 리프레쉬 토큰 저장

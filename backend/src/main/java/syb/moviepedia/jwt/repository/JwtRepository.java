@@ -11,5 +11,5 @@ public interface JwtRepository extends JpaRepository<JwtRefresh, Long> {
     void deleteByRefresh(String refresh);
 
     @Transactional
-    void deleteByUsername(String username);
+    void deleteByLoginId(String loginId);
 }
