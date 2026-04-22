@@ -53,7 +53,7 @@ public class JwtService {
         }
 
         // Refresh 토큰 검증
-        Boolean isValid = JwtUtil.isValid(refreshToken, false);
+        Boolean isValid = JwtUtil.validateToken(refreshToken, false);
         if (!isValid) {
             throw new RuntimeException("유효하지 않은 refreshToken입니다.");
         }
@@ -71,7 +71,7 @@ public class JwtService {
         // 기존 Refresh 토큰 DB 삭제 후 신규 추가
         JwtRefresh newRefreshEntity = JwtRefresh.builder()
                 .loginId(loginId)
-                .refresh(newRefreshToken)
+                .refreshToken(newRefreshToken)
                 .build();
 
         removeRefresh(refreshToken);
@@ -96,7 +96,7 @@ public class JwtService {
         String refreshToken = dto.getRefreshToken();
 
         // Refresh 토큰 검증
-        Boolean isValid = JwtUtil.isValid(refreshToken, false);
+        Boolean isValid = JwtUtil.validateToken(refreshToken, false);
         if (!isValid) {
             throw new RuntimeException("유효하지 않은 refreshToken입니다.");
         }
@@ -120,7 +120,7 @@ public class JwtService {
         // 기존 Refresh 토큰 DB 삭제 후 신규 추가
         JwtRefresh newRefreshEntity = JwtRefresh.builder()
                 .loginId(loginId)
-                .refresh(newRefreshToken)
+                .refreshToken(newRefreshToken)
                 .build();
         log.info("refreshRotate 호출 됨, removeRefresh 전");
         removeRefresh(refreshToken);
@@ -130,24 +130,24 @@ public class JwtService {
         return new JwtDto(loginId, nickname, newAccessToken, newRefreshToken);
     }
 
-    // JWT Refresh 토큰 발급 후 저장 메소드
+    // JWT Refresh 토큰 발급 후 DB 저장
     @Transactional
-    public void addRefresh(String loginId, String refreshToken) {
+    public void save(String loginId, String refreshToken) {
         JwtRefresh entity = JwtRefresh.builder()
                 .loginId(loginId)
-                .refresh(refreshToken)
+                .refreshToken(refreshToken)
                 .build();
 
         jwtRepository.save(entity);
     }
 
-    // JWT Refresh 존재 확인 메소드
+    // JWT Refresh 존재 확인
     @Transactional(readOnly = true)
     public Boolean existsRefresh(String refreshToken) {
         return jwtRepository.existsByRefresh(refreshToken);
     }
 
-    // JWT Refresh 토큰 삭제 메소드
+    // JWT Refresh 토큰 삭제
     public void removeRefresh(String refreshToken) {
         jwtRepository.deleteByRefresh(refreshToken);
     }

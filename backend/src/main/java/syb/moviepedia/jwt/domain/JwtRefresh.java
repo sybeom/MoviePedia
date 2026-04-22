@@ -13,13 +13,13 @@ import java.time.LocalDateTime;
 /**
  * jwt CRUD를 위한 엔티티
  */
-@Entity
 @EntityListeners(AuditingEntityListener.class) // 엔티티 생성시 생성시간이 부여됨
 @Table(name = "jwt_refresh")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 public class JwtRefresh {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +29,7 @@ public class JwtRefresh {
     private String loginId;
 
     @Column(name = "refresh", nullable = false, length = 512)
-    private String refresh; // 리프레쉬 토큰 저장
+    private String refreshToken; // 리프레쉬 토큰 저장
 
     @CreatedDate
     @Column(name = "created_date", updatable = false)

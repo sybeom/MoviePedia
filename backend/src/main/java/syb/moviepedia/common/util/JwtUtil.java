@@ -50,7 +50,7 @@ public class JwtUtil {
     }
 
     // 서버에서 JWT를 받으면 우리가 만든 JWT인지 검증 - 유효 여부 (위조, 시간, Access/Refresh 여부)
-    public static Boolean isValid(String token, Boolean isAccess) {
+    public static Boolean validateToken(String token, Boolean isAccess) {
         try { // try-catch 묶는 이유는 시간이 만료되었다면 예외가 던져지기때문.
             Claims claims = Jwts.parser()
                     .verifyWith(secretKey)

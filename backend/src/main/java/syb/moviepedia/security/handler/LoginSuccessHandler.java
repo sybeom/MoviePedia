@@ -18,6 +18,7 @@ import syb.moviepedia.member.service.MemberService;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -52,13 +53,13 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = JwtUtil.createJWT(loginId, role, false);
 
         // 발급한 Refresh DB 테이블 저장 (Refresh whitelist)
-        jwtService.addRefresh(loginId, refreshToken);
+        jwtService.save(loginId, refreshToken);
 
         // 응답
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        Map<String, Object> body = new LinkedHashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("loginId", loginId);
         body.put("nickname", nickname);
         body.put("accessToken", accessToken);
