@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.service.JwtService;
 import syb.moviepedia.member.domain.CustomUserDetails;
@@ -59,14 +60,18 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("loginId", loginId);
-        body.put("nickname", nickname);
-        body.put("accessToken", accessToken);
-        body.put("refreshToken", refreshToken);
-
-        String json = new ObjectMapper().writeValueAsString(body);
+        String json = generateJsonString(loginId, nickname, accessToken, refreshToken);
         response.getWriter().write(json);
         response.getWriter().flush();
+    }
+
+    public String generateJsonString(String loginId, String nickname, String accessToken, String refreshToken) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("loginId", loginId);
+        data.put("nickname", nickname);
+        data.put("accessToken", accessToken);
+        data.put("refreshToken", refreshToken);
+
+        return new ObjectMapper().writeValueAsString(ApiResult.success("로그인 성공", data));
     }
 }

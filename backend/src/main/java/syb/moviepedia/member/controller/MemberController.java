@@ -27,6 +27,7 @@ public class MemberController {
 
     final private MemberService memberService;
 
+    // TODO: 응답 형식 변경
     @Operation(
             summary = "회원 가입",
             description = "회원 가입을 진행합니다.",
@@ -39,7 +40,7 @@ public class MemberController {
             ),
             responses = {
                     @ApiResponse(
-                            responseCode = "200",
+                            responseCode = "201",
                             description = "성공",
                             content =  @Content( // 성공 응답 데이터 타입
                                     schema = @Schema(implementation = MemberDto.class)
@@ -68,6 +69,6 @@ public class MemberController {
         log.info("signup 호출");
         // 중복 검사 및 가입
         memberService.signup(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("회원 가입에 성공했습니다", null));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("회원 가입 성공"));
     }
 }

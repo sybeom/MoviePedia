@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
+    // TODO: ApiReulst 응답 변경
     // 회원 가입 필드 중복 검사 예외
     @ExceptionHandler(SignupFieldException.class)
     public ResponseEntity<String> handleSignupFieldException(SignupFieldException e) {

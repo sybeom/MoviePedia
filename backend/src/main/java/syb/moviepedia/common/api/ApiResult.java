@@ -12,12 +12,8 @@ public record ApiResult<T> (
         T data,
         Object errors) {
 
-    public static <T> ApiResult<T> success() {
-        return new ApiResult<>("SUCCESS", "요청에 성공했습니다.", null, null);
-    }
-
-    public static <T> ApiResult<T> success(T data) {
-        return new ApiResult<>("SUCCESS", "요청에 성공했습니다.", data, null);
+    public static <T> ApiResult<T> success(String message) {
+        return new ApiResult<>("SUCCESS", message, null, null);
     }
 
     public static <T> ApiResult<T> success(String message, T data) {
