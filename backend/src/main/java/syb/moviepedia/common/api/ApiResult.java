@@ -20,11 +20,11 @@ public record ApiResult<T> (
         return new ApiResult<>("SUCCESS", message, data, null);
     }
 
-    public static <T> ApiResult<T> fail(String code, String message) {
-        return new ApiResult<>(code, message, null, null);
+    public static <T> ApiResult<T> fail(ErrorCode code, String message) {
+        return new ApiResult<>(code.getCode(), message, null, null);
     }
 
-    public static <T> ApiResult<T> fail(String code, String message, Object errors) {
-        return new ApiResult<>(code, message, null, errors);
+    public static <T> ApiResult<T> fail(ErrorCode code, String message, Object errors) {
+        return new ApiResult<>(code.getCode(), message, null, errors);
     }
 }

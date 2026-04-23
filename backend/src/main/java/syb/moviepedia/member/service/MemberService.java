@@ -1,17 +1,18 @@
 package syb.moviepedia.member.service;
 
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import syb.moviepedia.common.exception.SignupFieldException;
+import syb.moviepedia.common.exception.DuplicateSignupFieldException;
 import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.repository.MemberRepository;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class MemberService implements UserDetailsService {
@@ -26,12 +27,17 @@ public class MemberService implements UserDetailsService {
 
     @Transactional
     public Long signup(MemberDto memberDto) {
-        if (memberRepository.existsByLoginId(memberDto.getLoginId())) {
-            throw new SignupFieldException("중복 된 아이디입니다.");
+
+        Set<String> errors = new HashSet<>(); // 회원 가입시 에러 메시를 담음
+        if(memberRepository.existsByLoginId(memberDto.getLoginId())) { // true면 중복
+            errors.add("loginId");
+        }
+        if (memberRepository.existsByNickname(memberDto.getNickname())) { // true면 중복
+            errors.add("nickname");
         }
 
-        if (memberRepository.existsByNickname(memberDto.getNickname())) {
-            throw new SignupFieldException("중복 된 닉네임입니다.");
+        if (!errors.isEmpty()) {
+            throw new DuplicateSignupFieldException(errors, "이미 사용중인 필드입니다.");
         }
 
         Member member = Member.builder()

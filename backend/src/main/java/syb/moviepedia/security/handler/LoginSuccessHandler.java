@@ -64,7 +64,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.getWriter().write(json);
         response.getWriter().flush();
     }
-
+    
+    // 로그인 데이터, 닉네임, 액세스 및 리프레쉬 토큰 Json 문자열 화
     public String generateJsonString(String loginId, String nickname, String accessToken, String refreshToken) {
         Map<String, Object> data = new HashMap<>();
         data.put("loginId", loginId);
