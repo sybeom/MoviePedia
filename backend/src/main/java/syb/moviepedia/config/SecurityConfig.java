@@ -24,15 +24,16 @@ import syb.moviepedia.security.filter.LoginFilter;
 public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final AuthenticationSuccessHandler loginSuccessHandler;
-//    private final AuthenticationSuccessHandler socialSuccessHandler;
+    private final AuthenticationSuccessHandler socialSuccessHandler;
 
     // @RequiredArgsConstructor 사용해도 될듯
     public SecurityConfig(
             AuthenticationConfiguration authenticationConfiguration,
-            @Qualifier("LoginSuccessHandler") AuthenticationSuccessHandler loginSuccessHandler) {
+            @Qualifier("LoginSuccessHandler") AuthenticationSuccessHandler loginSuccessHandler,
+            @Qualifier("SocialSuccessHandler") AuthenticationSuccessHandler socialSuccessHandler) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.loginSuccessHandler = loginSuccessHandler;
-//        this.socialSuccessHandler = socialSuccessHandler;
+        this.socialSuccessHandler = socialSuccessHandler;
     }
 
     // 비밀번호 암호화용 Bean
@@ -81,10 +82,10 @@ public class SecurityConfig {
 //        http
 //                .httpBasic(AbstractHttpConfigurer::disable);
 //
-//        // OAuth2 인증용
-////        http
-////                .oauth2Login(oauth2 -> oauth2
-////                        .successHandler(socialSuccessHandler));
+        // OAuth2 인증용
+        http
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(socialSuccessHandler));
 //
 //        // 인가 설정
 //        http
