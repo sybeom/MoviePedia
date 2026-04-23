@@ -14,6 +14,9 @@ import './Auth.css'
 // 회원가입 필드 이름 타입 정의
 type SignupFieldName = keyof SignupFormValues
 
+// 중복 검증 대상 필드 타입 정의
+type DuplicateSignupField = 'loginId' | 'nickname'
+
 // 회원가입 화면 구성
 function SignupPage() {
   // 회원가입 성공 후 로그인 화면 이동 함수 준비
@@ -43,44 +46,77 @@ function SignupPage() {
     return Boolean(validationErrors[fieldName])
   }
 
-  // 회원가입 400 응답 필드 에러 처리
-  function handleDuplicateSignupError() {
-    setValidationErrors({
-      loginId: '이미 사용중인 아이디입니다.',
-      nickname: '이미 사용중인 닉네임입니다.',
-    })
+  // 중복 필드 목록 추출 처리
+  function getDuplicateFields(errors: unknown): DuplicateSignupField[] {
+    // errors가 배열이 아니면 빈 목록 반환
+    if (!Array.isArray(errors)) {
+      return []
+    }
+
+    // loginId, nickname만 중복 필드로 인정
+    return errors.filter(
+      (field): field is DuplicateSignupField => field === 'loginId' || field === 'nickname',
+    )
+  }
+
+  // 회원가입 중복 필드 에러 처리
+  function handleDuplicateSignupError(errors: unknown) {
+    // 백엔드 errors 목록에서 실제 중복 필드만 추출
+    const duplicateFields = getDuplicateFields(errors)
+    const duplicateFieldErrors: SignupFormErrors = {}
+
+    // 아이디 중복 메시지 반영
+    if (duplicateFields.includes('loginId')) {
+      duplicateFieldErrors.loginId = '이미 사용중인 아이디입니다.'
+    }
+
+    // 닉네임 중복 메시지 반영
+    if (duplicateFields.includes('nickname')) {
+      duplicateFieldErrors.nickname = '이미 사용중인 닉네임입니다.'
+    }
+
+    setValidationErrors(duplicateFieldErrors)
   }
 
   // 회원가입 폼 제출 처리
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
+    // 브라우저 기본 form 제출 방지
     event.preventDefault()
     setMessage('')
 
+    // 프론트 입력값 검증 결과 계산
     const currentErrors = validateSignupForm(formValues)
     setValidationErrors(currentErrors)
 
+    // 형식 검증 실패 시 서버 요청 차단
     if (hasSignupFormErrors(currentErrors)) {
       return
     }
 
+    // 서버 요청 시작 상태 반영
     setIsSubmitting(true)
 
     try {
+      // 회원가입 요청 전송
       await signup({
         loginId,
         password,
         nickname,
       })
 
+      // 회원가입 성공 후 로그인 화면 이동
       navigate('/login')
     } catch (error) {
-      if (isApiError(error) && error.status === 400) {
-        handleDuplicateSignupError()
+      // 백엔드 중복 필드 응답 처리
+      if (isApiError(error) && error.status === 400 && error.code === 'DUPLICATE_FIELD') {
+        handleDuplicateSignupError(error.errors)
         return
       }
 
+      // 일반 실패 메시지 표시
       setMessage('회원가입 요청에 실패했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
+      // 서버 요청 종료 상태 반영
       setIsSubmitting(false)
     }
   }
@@ -93,57 +129,69 @@ function SignupPage() {
         <section className="login-panel" aria-labelledby="signup-title">
           <h1 id="signup-title">회원가입</h1>
 
-          <form className="login-form" onSubmit={handleSignup} noValidate>
-            <label htmlFor="signup-id">아이디</label>
-            <input
-              id="signup-id"
-              type="text"
-              placeholder="사용할 아이디를 입력하세요"
-              autoComplete="username"
-              value={loginId}
-              onChange={(event) => setLoginId(event.target.value)}
-              aria-invalid={shouldShowFieldError('loginId')}
-              aria-describedby="signup-id-error"
-            />
-            {shouldShowFieldError('loginId') && (
-              <p className="field-message" id="signup-id-error">
-                {validationErrors.loginId}
-              </p>
-            )}
+          <form className="login-form signup-form" onSubmit={handleSignup} noValidate>
+            <div className="field-group">
+              <label htmlFor="signup-id">아이디</label>
+              <input
+                id="signup-id"
+                type="text"
+                placeholder="사용할 아이디를 입력하세요"
+                autoComplete="username"
+                value={loginId}
+                onChange={(event) => setLoginId(event.target.value)}
+                aria-invalid={shouldShowFieldError('loginId')}
+                aria-describedby="signup-id-error"
+              />
+              <div className="field-message-slot">
+                {shouldShowFieldError('loginId') && (
+                  <p className="field-message" id="signup-id-error">
+                    {validationErrors.loginId}
+                  </p>
+                )}
+              </div>
+            </div>
 
-            <label htmlFor="signup-password">비밀번호</label>
-            <input
-              id="signup-password"
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              aria-invalid={shouldShowFieldError('password')}
-              aria-describedby="signup-password-error"
-            />
-            {shouldShowFieldError('password') && (
-              <p className="field-message" id="signup-password-error">
-                {validationErrors.password}
-              </p>
-            )}
+            <div className="field-group">
+              <label htmlFor="signup-password">비밀번호</label>
+              <input
+                id="signup-password"
+                type="password"
+                placeholder="비밀번호를 입력하세요"
+                autoComplete="new-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                aria-invalid={shouldShowFieldError('password')}
+                aria-describedby="signup-password-error"
+              />
+              <div className="field-message-slot">
+                {shouldShowFieldError('password') && (
+                  <p className="field-message" id="signup-password-error">
+                    {validationErrors.password}
+                  </p>
+                )}
+              </div>
+            </div>
 
-            <label htmlFor="nickname">닉네임</label>
-            <input
-              id="nickname"
-              type="text"
-              placeholder="닉네임을 입력하세요"
-              autoComplete="nickname"
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              aria-invalid={shouldShowFieldError('nickname')}
-              aria-describedby="nickname-error"
-            />
-            {shouldShowFieldError('nickname') && (
-              <p className="field-message" id="nickname-error">
-                {validationErrors.nickname}
-              </p>
-            )}
+            <div className="field-group">
+              <label htmlFor="nickname">닉네임</label>
+              <input
+                id="nickname"
+                type="text"
+                placeholder="닉네임을 입력하세요"
+                autoComplete="nickname"
+                value={nickname}
+                onChange={(event) => setNickname(event.target.value)}
+                aria-invalid={shouldShowFieldError('nickname')}
+                aria-describedby="nickname-error"
+              />
+              <div className="field-message-slot">
+                {shouldShowFieldError('nickname') && (
+                  <p className="field-message" id="nickname-error">
+                    {validationErrors.nickname}
+                  </p>
+                )}
+              </div>
+            </div>
 
             <button className="submit-button" type="submit" disabled={isSubmitting}>
               {isSubmitting ? '가입 요청 중...' : '가입하기'}

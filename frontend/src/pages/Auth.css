@@ -38,9 +38,18 @@
   margin-top: 24px;
 }
 
+.signup-form {
+  margin-top: 12px;
+}
+
 .login-form {
   display: grid;
   gap: 12px;
+}
+
+.field-group {
+  display: grid;
+  gap: 8px;
 }
 
 .login-form label {
@@ -74,8 +83,12 @@
   outline: 3px solid rgba(225, 29, 72, 0.18);
 }
 
+.field-message-slot {
+  min-height: 22px;
+}
+
 .field-message {
-  margin: -4px 0 4px;
+  margin: 0;
   color: #e11d48;
   font-size: 13px;
   line-height: 1.45;
