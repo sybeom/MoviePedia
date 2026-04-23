@@ -122,21 +122,52 @@
   min-height: 52px;
   margin-top: 12px;
   place-items: center;
-  color: #111827;
+  color: #ffffff;
   font-weight: 800;
   text-decoration: none;
-  background: #ffffff;
-  border: 1px solid #d8dce5;
+  background: #03c75a;
+  border: 1px solid #03c75a;
   border-radius: 8px;
+  cursor: pointer;
 }
 
-.submit-button:hover,
-.secondary-action:hover {
+.auth-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.text-action {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.submit-button:hover {
   filter: brightness(0.95);
 }
 
-.submit-button:focus-visible,
+.secondary-action:hover {
+  background: #02b350;
+  border-color: #02b350;
+}
+
+.text-action:hover {
+  color: #111827;
+}
+
+.submit-button:focus-visible {
+  outline: 3px solid rgba(255, 47, 110, 0.28);
+  outline-offset: 2px;
+}
+
 .secondary-action:focus-visible {
+  outline: 3px solid rgba(3, 199, 90, 0.28);
+  outline-offset: 2px;
+}
+
+.text-action:focus-visible {
   outline: 3px solid rgba(255, 47, 110, 0.28);
   outline-offset: 2px;
 }
