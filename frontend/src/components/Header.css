@@ -18,7 +18,8 @@
   text-decoration: none;
 }
 
-.login-button {
+.login-button,
+.logout-button {
   padding: 10px 18px;
   color: #ffffff;
   font-weight: 700;
@@ -29,11 +30,17 @@
   cursor: pointer;
 }
 
-.login-button:hover {
+.logout-button {
+  background: #111827;
+}
+
+.login-button:hover,
+.logout-button:hover {
   filter: brightness(0.95);
 }
 
-.login-button:focus-visible {
+.login-button:focus-visible,
+.logout-button:focus-visible {
   outline: 3px solid rgba(255, 47, 110, 0.28);
   outline-offset: 2px;
 }

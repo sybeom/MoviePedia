@@ -2,10 +2,11 @@ import Header from '../components/Header'
 import { preventFormSubmit } from '../utils/form'
 import './HomePage.css'
 
+// 영화 검색 첫 화면 구성
 function HomePage() {
   return (
     <div className="app">
-      <Header showLogin />
+      <Header showAuthActions />
 
       <main className="main-container">
         <section className="search-section" aria-labelledby="search-title">

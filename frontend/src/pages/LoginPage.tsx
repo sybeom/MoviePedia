@@ -1,13 +1,17 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
 import Header from '../components/Header'
+import { saveAuthSession } from '../utils/authStorage'
 import './Auth.css'
 
 // 로그인 화면 구성
 function LoginPage() {
   // 로그인 성공 후 홈 화면 이동 함수 준비
   const navigate = useNavigate()
+
+  // 로그인 중복 제출 방지 참조값 준비
+  const isSubmittingRef = useRef(false)
 
   // 로그인 입력값 상태 관리
   const [loginId, setLoginId] = useState('')
@@ -19,20 +23,42 @@ function LoginPage() {
 
   // 로그인 폼 제출 처리
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    // 브라우저 기본 form 제출 방지
     event.preventDefault()
+
+    // 이미 로그인 요청 중이면 추가 요청 차단
+    if (isSubmittingRef.current) {
+      return
+    }
+
+    // 요청 시작 상태 반영
+    isSubmittingRef.current = true
     setMessage('')
     setIsSubmitting(true)
 
     try {
-      await login({
+      // 입력된 아이디와 비밀번호로 로그인 요청
+      const loginResponse = await login({
         loginId,
         password,
       })
 
+      // 백엔드 공통 응답에 data가 없는 경우 실패 처리
+      if (!loginResponse) {
+        throw new Error('로그인 응답 데이터가 없습니다.')
+      }
+
+      // 토큰과 닉네임을 로컬 저장소에 저장
+      saveAuthSession(loginResponse)
+
+      // 로그인 성공 후 홈 화면 이동
       navigate('/')
     } catch {
+      // 로그인 실패 안내 메시지 표시
       setMessage('로그인 요청에 실패했습니다. 아이디와 비밀번호를 확인해주세요.')
     } finally {
+      // 요청 종료 상태 반영
+      isSubmittingRef.current = false
       setIsSubmitting(false)
     }
   }
