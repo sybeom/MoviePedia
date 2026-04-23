@@ -1,18 +1,24 @@
 package syb.moviepedia.member.service;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.SocialProviderType;
 import syb.moviepedia.common.exception.DuplicateSignupFieldException;
 import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.repository.MemberRepository;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class MemberService implements UserDetailsService {
@@ -57,4 +63,71 @@ public class MemberService implements UserDetailsService {
                 .password(member.getPassword())
                 .build();
     }
+
+//    // 소셜 회원가입 및 로그인
+//    @Override // Oath2 관련 빈이 유저 정보를 받으면 loadUser()를 호출해 네이버로부터 받은 유저 정보를 객체를 userRequest에 넣어줌.
+//    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+//
+//        // 부모 메소드 호출. 받은 유저 정보 (userRequest를 파싱한다.)
+//        OAuth2User oAuth2User = super.loadUser(userRequest); // 파싱된 유저 정보가 들어있음
+//
+//        // 파싱된 유저 정보에서 데이터를 파싱하여 담을 변수들
+//        Map<String, Object> attributes;
+//        List<GrantedAuthority> authorities;
+//
+//        String loginId;
+////        String role = UserRole.USER.name();
+//        String email;
+//        String nickname;
+//
+//        // provider 제공자별 데이터 획득 - 네이버, 구글 등 제공자 별 데이터를 제공하는 방식이 달라 파싱 방법도 달라진다.
+//        String registrationId = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
+//        if (registrationId.equals(SocialProviderType.NAVER.name())) { // 네이버
+//
+//            attributes = (Map<String, Object>) oAuth2User.getAttributes().get("response");
+//            loginId = registrationId + "_" + attributes.get("id");
+//            email = attributes.get("email").toString();
+//            nickname = attributes.get("nickname").toString(); // OAuth2User
+//
+//        } else if (registrationId.equals(SocialProviderType.GOOGLE.name())) { // 구글
+//
+//            attributes = (Map<String, Object>) oAuth2User.getAttributes();
+//            loginId = registrationId + "_" + attributes.get("sub");
+//            email = attributes.get("email").toString();
+//            nickname = attributes.get("name").toString();
+//
+//        } else {
+//            throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다.");
+//        }
+//
+//        // 데이터베이스 조회 -> 존재하면 업데이트, 없으면 신규 가입
+////        Optional<Member> member = memberRepository.findByLoginIdAndIsSocial(loginId, true); // TODO: 추후 고민해보고 수정하기
+//        Optional<Member> member = memberRepository.findByLoginId(loginId);
+//        if (member.isPresent()) {
+//            // role 조회
+////            role = member.get().getRole().name();
+//
+//            // 기존 유저 업데이트
+//            MemberDto memberDto = new MemberDto(nickname, email);
+//            member.get().updateMember(memberDto);
+//
+//            memberRepository.save(member.get());
+//        } else { // 없으면 신규 유저로 추가
+//            Member newMember = Member.builder()
+//                    .loginId(loginId)
+//                    .password("")
+////                    .isSocial(true)
+////                    .socialProviderType(SocialProviderType.valueOf(registrationId))
+////                    .role(UserRole.USER)
+//                    .nickname(nickname)
+//                    .email(email)
+//                    .build();
+//
+//            memberRepository.save(newMember);
+//        }
+//
+//        authorities = List.of(new SimpleGrantedAuthority(role));
+//
+//        return new CustomOAuth2MemberDto(attributes, authorities, loginId);
+//    }
 }
