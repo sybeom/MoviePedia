@@ -23,6 +23,7 @@ import syb.moviepedia.member.service.MemberService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
+
 public class MemberController {
 
     final private MemberService memberService;
@@ -30,7 +31,7 @@ public class MemberController {
     // TODO: 응답 형식 변경
     @Operation(
             summary = "회원 가입",
-            description = "회원 가입을 진행합니다.",
+            description = "회원 가입을 진행한다",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "가입할 회원 JSON Body 데이터",
                     required = true,

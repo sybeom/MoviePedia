@@ -103,7 +103,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         } else {
             throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다.");
         }
-
+        // 로그인 타입이 LOCAL이 아닌 것 찾기
         Optional<Member> member = memberRepository.findByLoginIdAndProviderTypeNot(loginId, ProviderType.LOCAL);
         // 데이터베이스 조회 -> 존재하면 업데이트, 없으면 신규 가입
         if (member.isPresent()) { // 변경 데이터 있을시 덮어 씌우기 위함. 예) 닉네임 등
@@ -115,7 +115,6 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
 
             memberRepository.save(member.get());
         } else { // 없으면 신규 유저로 추가
-            log.info("ninckname : {}", nickname);
             Member newMember = Member.builder()
                     .loginId(loginId)
                     .password("")

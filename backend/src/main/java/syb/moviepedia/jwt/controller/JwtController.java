@@ -1,5 +1,7 @@
 package syb.moviepedia.jwt.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,6 +30,10 @@ public class JwtController {
     }
 
     // 소셜 로그인 쿠키 방식의 Refresh 토큰 헤더 방식으로 교환
+    @Operation(
+            summary = "쿠키 -> JWT 변환",
+            description = "소셜 로그인의 쿠키를 JWT 방식으로 변환한다."
+    )
     @PostMapping(value = "/jwt/exchange")
     public JwtDto jwtExchangeApi(
             HttpServletRequest request,
@@ -39,6 +45,10 @@ public class JwtController {
 
     // 액세스 토큰 만료시 재발급
     // Refresh 토큰으로 Access 토큰 재발급 (Rotate 포함)
+    @Operation(
+            summary = "access 토큰 재발급",
+            description = "access 토큰 만료시 refresh 토큰을 사용해 재발급한다"
+    )
     @PostMapping(value = "/jwt/refresh")
     public JwtDto jwtRefreshApi(
             @Validated @RequestBody JwtRefreshRequestDto dto
