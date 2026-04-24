@@ -27,4 +27,11 @@ public class MemberDto {
     @Pattern(regexp = "^[A-Za-z0-9가-힣ㄱ-ㅎ]+$")
     @Size(min = 2, max = 6)
     String nickname;
+
+    String email;
+
+    public MemberDto(String nickname, String email) {
+        this.email = email;
+        this.nickname = nickname;
+    }
 }

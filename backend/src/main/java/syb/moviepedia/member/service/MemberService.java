@@ -53,6 +53,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .loginId(memberDto.getLoginId())
                 .password(passwordEncoder.encode(memberDto.getPassword()))
                 .nickname(memberDto.getNickname())
+                .isSocial(false)
                 .build();
         return memberRepository.save(member).getId();
     }
@@ -84,18 +85,21 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         String nickname;
 
         // provider 제공자별 데이터 획득 - 네이버, 구글 등 제공자 별 데이터를 제공하는 방식이 달라 파싱 방법도 달라진다.
-        String registrationId = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
-        if (registrationId.equals(SocialProviderType.NAVER.name())) { // 네이버
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
+        SocialProviderType provider =
+                SocialProviderType.valueOf(registrationId.toUpperCase());
 
+        if (provider==SocialProviderType.NAVER) { // 네이버
+            System.out.println("registrationId = " + registrationId);
             attributes = (Map<String, Object>) oAuth2User.getAttributes().get("response");
-            loginId = registrationId + "_" + attributes.get("id");
+            loginId = provider.name() + "_" + attributes.get("id");
             email = attributes.get("email").toString();
             nickname = attributes.get("nickname").toString(); // OAuth2User
 
-        } else if (registrationId.equals(SocialProviderType.GOOGLE.name())) { // 구글
+        } else if (provider==SocialProviderType.GOOGLE) { // 구글
 
             attributes = (Map<String, Object>) oAuth2User.getAttributes();
-            loginId = registrationId + "_" + attributes.get("sub");
+            loginId = provider.name() + "_" + attributes.get("sub");
             email = attributes.get("email").toString();
             nickname = attributes.get("name").toString();
 
@@ -104,23 +108,22 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         }
 
         // 데이터베이스 조회 -> 존재하면 업데이트, 없으면 신규 가입
-//        Optional<Member> member = memberRepository.findByLoginIdAndIsSocial(loginId, true); // TODO: 추후 고민해보고 수정하기
-        Optional<Member> member = memberRepository.findByLoginId(loginId);
-        if (member.isPresent()) {
+        Optional<Member> member = memberRepository.findByLoginIdAndIsSocial(loginId, true);
+        if (member.isPresent()) { // 변경 데이터 있을시 덮어 씌우기 위함. 예) 닉네임 등
             // role 조회
 //            role = member.get().getRole().name();
-
             // 기존 유저 업데이트
-//            MemberDto memberDto = new MemberDto(nickname, email);
-//            member.get().updateMember(memberDto);
+            MemberDto memberDto = new MemberDto(nickname, email);
+            member.get().update(memberDto);
 
             memberRepository.save(member.get());
         } else { // 없으면 신규 유저로 추가
+            log.info("ninckname : {}", nickname);
             Member newMember = Member.builder()
                     .loginId(loginId)
                     .password("")
-//                    .isSocial(true)
-//                    .socialProviderType(SocialProviderType.valueOf(registrationId))
+                    .isSocial(true)
+                    .socialProviderType(provider)
 //                    .role(UserRole.USER)
                     .nickname(nickname)
                     .email(email)

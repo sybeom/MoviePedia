@@ -1,6 +1,7 @@
 package syb.moviepedia.member.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import syb.moviepedia.member.domain.Member;
 
 import java.util.Optional;
@@ -14,4 +15,9 @@ public interface MemberRepository extends JpaRepository<Member,Long> {
     Optional<Member> findByLoginId(String loginId);
 
     Optional<String> findByNickname(String nickname);
+
+    Optional<Member> findByLoginIdAndIsSocial(String loginId, boolean isSocial);
+
+    @Query("select m.nickname from Member m where m.loginId = :loginId")
+    Optional<String> findNicknameByLoginId(String loginId);
 }

@@ -15,6 +15,8 @@ import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
 import syb.moviepedia.jwt.repository.JwtRepository;
 import syb.moviepedia.member.repository.MemberRepository;
 
+import java.util.Optional;
+
 /**
  * jwt 비즈니스 로직을 수행하는 jwt 서비스 클래스
  */
@@ -29,7 +31,7 @@ public class JwtService {
     // 소셜은 RESTFul하게 설계를 하게되면 쿠키 형태로 토큰을 발급해줘야한다.
     // 따라서 이 쿠키를 다시 헤더 방식으로 변경해야줘야한다.
     @Transactional
-    public JwtDto cookie2Header( // 소셜 로그인 성공 후 쿠키로 발급받은 jwt를 다시 헤더로 발급
+    public JwtDto cookieToHeader( // 소셜 로그인 성공 후 쿠키로 발급받은 jwt를 다시 헤더로 발급
                                  HttpServletRequest request,
                                  HttpServletResponse response
     ) {
@@ -57,11 +59,10 @@ public class JwtService {
         if (!isValid) {
             throw new RuntimeException("유효하지 않은 refreshToken입니다.");
         }
-
         // 정보 추출
         String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);
-        String nickname = memberRepository.findByNickname(loginId)
+        String nickname = memberRepository.findNicknameByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + loginId));
 
         // 토큰 생성
@@ -73,7 +74,6 @@ public class JwtService {
                 .loginId(loginId)
                 .refreshToken(newRefreshToken)
                 .build();
-
         removeRefresh(refreshToken);
         jwtRepository.flush(); // 같은 트랜잭션 내부라 : 삭제 -> 생성 문제 해결
         jwtRepository.save(newRefreshEntity);
