@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import syb.moviepedia.common.SocialProviderType;
+import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.member.dto.MemberDto;
 
 @Slf4j
@@ -32,12 +32,9 @@ public class Member {
     @Column(unique = true)
     String email;
 
-    @Column(name = "is_social", nullable = false)
-    private Boolean isSocial;
-
     @Enumerated(EnumType.STRING)
-    @Column(name = "social_provider_type")
-    private SocialProviderType socialProviderType;
+    @Column(name = "provider_type", nullable = false)
+    private ProviderType providerType;
 
     public void update(MemberDto memberDto) {
         this.email = memberDto.getEmail();

@@ -5,12 +5,14 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 회원 가입에 필요한 MemberDto
  */
 // TODO: 추후 응답 Dto와 요청 Dto 별도로 생성하도록 한다.
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 public class MemberDto {
 

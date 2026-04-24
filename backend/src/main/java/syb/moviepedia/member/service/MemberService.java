@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import syb.moviepedia.common.SocialProviderType;
+import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.common.exception.DuplicateSignupFieldException;
 import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
@@ -53,7 +53,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .loginId(memberDto.getLoginId())
                 .password(passwordEncoder.encode(memberDto.getPassword()))
                 .nickname(memberDto.getNickname())
-                .isSocial(false)
+                .providerType(ProviderType.LOCAL)
                 .build();
         return memberRepository.save(member).getId();
     }
@@ -86,29 +86,26 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
 
         // provider 제공자별 데이터 획득 - 네이버, 구글 등 제공자 별 데이터를 제공하는 방식이 달라 파싱 방법도 달라진다.
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
-        SocialProviderType provider =
-                SocialProviderType.valueOf(registrationId.toUpperCase());
+        ProviderType provider = ProviderType.from(registrationId); // registrationId에 해당하는 enum 상수 객체 반환
 
-        if (provider==SocialProviderType.NAVER) { // 네이버
-            System.out.println("registrationId = " + registrationId);
+        if (provider==ProviderType.NAVER) { // 네이버
             attributes = (Map<String, Object>) oAuth2User.getAttributes().get("response");
             loginId = provider.name() + "_" + attributes.get("id");
             email = attributes.get("email").toString();
             nickname = attributes.get("nickname").toString(); // OAuth2User
 
-        } else if (provider==SocialProviderType.GOOGLE) { // 구글
+        } else if (provider== ProviderType.GOOGLE) { // 구글
 
             attributes = (Map<String, Object>) oAuth2User.getAttributes();
             loginId = provider.name() + "_" + attributes.get("sub");
             email = attributes.get("email").toString();
             nickname = attributes.get("name").toString();
-
         } else {
             throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다.");
         }
 
+        Optional<Member> member = memberRepository.findByLoginIdAndProviderTypeNot(loginId, ProviderType.LOCAL);
         // 데이터베이스 조회 -> 존재하면 업데이트, 없으면 신규 가입
-        Optional<Member> member = memberRepository.findByLoginIdAndIsSocial(loginId, true);
         if (member.isPresent()) { // 변경 데이터 있을시 덮어 씌우기 위함. 예) 닉네임 등
             // role 조회
 //            role = member.get().getRole().name();
@@ -122,8 +119,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
             Member newMember = Member.builder()
                     .loginId(loginId)
                     .password("")
-                    .isSocial(true)
-                    .socialProviderType(provider)
+                    .providerType(provider)
 //                    .role(UserRole.USER)
                     .nickname(nickname)
                     .email(email)
