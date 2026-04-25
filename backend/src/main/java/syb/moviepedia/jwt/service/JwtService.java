@@ -88,7 +88,6 @@ public class JwtService {
     // Refresh 토큰으로 Access 토큰 재발급 로직 (Rotate 포함)
     @Transactional
     public JwtDto refreshRotate(JwtRefreshRequestDto dto) {
-        log.info("refreshRotate 호출 됨, isValid() 검증전");
         String refreshToken = dto.getRefreshToken();
 
         // Refresh 토큰 검증
@@ -101,13 +100,12 @@ public class JwtService {
         if (!existsRefresh(refreshToken)) {
             throw new RuntimeException("유효하지 않은 refreshToken입니다.");
         }
-        log.info("refreshRotate 호출 됨, isValid() 검증 통과후 정보추출 전");
 
         // 정보 추출
         String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);
         String nickname = memberRepository.findByNickname(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + loginId));
+                .orElseThrow(() -> new UsernameNotFoundException("해당 아이디를 찾을 수 없습니다: " + loginId));
 
         // 토큰 생성
         String newAccessToken = JwtUtil.createJWT(loginId, role, true);
@@ -118,11 +116,9 @@ public class JwtService {
                 .loginId(loginId)
                 .refreshToken(newRefreshToken)
                 .build();
-        log.info("refreshRotate 호출 됨, removeRefresh 전");
         removeRefresh(refreshToken);
         jwtRepository.save(newRefreshEntity);
 
-        log.info("refreshRotate 호출 됨, save 이후 return 전");
         return new JwtDto(loginId, nickname, newAccessToken, newRefreshToken);
     }
 

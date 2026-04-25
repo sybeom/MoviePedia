@@ -2,9 +2,12 @@ package syb.moviepedia.common;
 
 import lombok.Getter;
 
+/**
+ * 로그인 유형을 정의한다.
+ */
 @Getter
 public enum ProviderType {
-    LOCAL("LOCAL"),
+    LOCAL("LOCAL"), // 자체 로그인
     NAVER("NAVER"),
     GOOGLE("GOOGLE");
 

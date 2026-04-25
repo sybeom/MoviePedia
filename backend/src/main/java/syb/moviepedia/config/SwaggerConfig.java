@@ -9,6 +9,10 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * <a href="http://localhost:8080/swagger-ui/index.html#/">Swagger Api 명세</a>
+ * 프로젝트에 대한 명세를 작성
+ */
 @Configuration
 public class SwaggerConfig {
 

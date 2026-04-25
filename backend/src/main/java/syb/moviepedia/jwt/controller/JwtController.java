@@ -1,6 +1,9 @@
 package syb.moviepedia.jwt.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.swagger.JwtApiResult;
 import syb.moviepedia.jwt.dto.JwtDto;
 import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
 import syb.moviepedia.jwt.service.JwtService;
@@ -33,7 +37,24 @@ public class JwtController {
     // 소셜 로그인 쿠키 방식의 Refresh 토큰 헤더 방식으로 교환
     @Operation(
             summary = "쿠키 -> JWT 변환",
-            description = "소셜 로그인의 쿠키를 JWT 방식으로 변환한다."
+            description = "소셜 로그인의 쿠키를 JWT 방식으로 변환한다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    schema = @Schema(implementation = JwtApiResult.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "실패",
+                            content =  @Content(
+                                    schema =  @Schema(implementation = ApiResult.class)
+                            )
+                    )
+            }
+
     )
     @PostMapping(value = "/jwt/exchange")
     public ResponseEntity<ApiResult<JwtDto>> jwtExchangeApi(
