@@ -28,18 +28,20 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        log.info("JwtFilter 호출");
         String authorization = request.getHeader("Authorization"); // 요청 헤더에서 jwt를 가져옴
         if (authorization == null || authorization.isBlank()) { // 없으면 다음 필터로 넘어감 예) 비로그인으로 게시글 볼 경우
             filterChain.doFilter(request, response);
             return;
         }
-
+        log.info("JwtFilter Bearer 검사 직전 호출");
         if (!authorization.startsWith("Bearer ")) { // jwt가 있지만 Bearer라는 접두사가 없으면 에러
             throw new ServletException("Invalid JWT token");
         }
 
         // 문제 없으면 토큰 파싱 진행
         String accessToken = authorization.split(" ")[1];
+        log.info("accessToken {}", accessToken);
         log.info("JwtFilter 액세스 토큰 검증 직전, {}", request.getRequestURI());
 
         if (JwtUtil.validateToken(accessToken, true)) { // jwt 검증

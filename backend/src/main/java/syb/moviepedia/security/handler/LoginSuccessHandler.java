@@ -12,6 +12,8 @@ import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.service.JwtService;
 import syb.moviepedia.member.domain.CustomUserDetails;
+import syb.moviepedia.member.domain.Member;
+import syb.moviepedia.member.dto.MemberLoginResponseDto;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -56,19 +58,20 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        String json = generateJsonString(loginId, nickname, accessToken, refreshToken);
+        String json = generateJsonString(loginId, nickname, accessToken, refreshToken); // 데이터 공통 응답 형식으로 변경
         response.getWriter().write(json);
         response.getWriter().flush();
     }
     
-    // 로그인 데이터, 닉네임, 액세스 및 리프레쉬 토큰 Json 문자열 화
+    // 로그인 데이터, 닉네임, 액세스 및 리프레쉬 토큰 Json 문자열화
     public String generateJsonString(String loginId, String nickname, String accessToken, String refreshToken) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("loginId", loginId);
-        data.put("nickname", nickname);
-        data.put("accessToken", accessToken);
-        data.put("refreshToken", refreshToken);
+        MemberLoginResponseDto loginResponseDto = MemberLoginResponseDto.builder()
+                .loginId(loginId)
+                .nickname(nickname)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
 
-        return new ObjectMapper().writeValueAsString(ApiResult.success("로그인 성공", data));
+        return new ObjectMapper().writeValueAsString(ApiResult.success("로그인 성공", loginResponseDto));
     }
 }

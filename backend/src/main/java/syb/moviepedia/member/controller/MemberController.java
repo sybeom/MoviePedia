@@ -43,7 +43,7 @@ public class MemberController {
                     @ApiResponse(
                             responseCode = "201",
                             description = "성공",
-                            content =  @Content( // 성공 응답 데이터 타입
+                            content =  @Content( // 성공 응답 데이터 타입 // TODO: 여긴 DTO 응답으로 안쓰는데?
                                     schema = @Schema(implementation = MemberDto.class)
                             )
                     ),
