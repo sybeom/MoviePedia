@@ -23,7 +23,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode,"입력값 검증에 실패했습니다."));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, "입력값 검증에 실패했습니다."));
     }
-    // JwtService
+
+    // 소셜 로그인 쿠키 존재 X 예외
+    @ExceptionHandler(RefreshTokenCookieNotFoundException.class)
+    public ResponseEntity<ApiResult<Void>> handleCookieNotFoundException(RefreshTokenCookieNotFoundException e) {
+        ErrorCode errorCode = ErrorCode.REFRESH_TOKEN_COOKIE_NOT_FOUND;
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResult.fail(errorCode, e.getMessage()));
+    }
+
+    // 유효하지 않은 리프레쉬 토큰
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiResult<Void>> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
+        ErrorCode errorCode = ErrorCode.INVALID_REFRESH_TOKEN;
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResult.fail(errorCode, e.getMessage()));
+    }
 }

@@ -32,7 +32,7 @@ public class SocialSuccessHandler implements AuthenticationSuccessHandler {
      * 소셜 로그인 성공하면 실행
      */
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
         // username, role
         String username =  authentication.getName();
@@ -45,7 +45,7 @@ public class SocialSuccessHandler implements AuthenticationSuccessHandler {
         jwtService.save(username, refreshToken);
 
         // 응답 - 소셜 로그인 방식은 쿠키로 밖에 응답하지 못한다.
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
+        Cookie refreshCookie = new Cookie("refreshToken", refreshToken); // JwtService에서 쓰인다.
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(false);
         refreshCookie.setPath("/");
@@ -57,5 +57,4 @@ public class SocialSuccessHandler implements AuthenticationSuccessHandler {
         // 웹 브라우저는 3xx 응답의 결과에 Location 헤더가 있으면, Location 위치로 자동 이동한다 (리다이렉트)
         response.sendRedirect("http://localhost:5173/cookie");
     }
-
 }

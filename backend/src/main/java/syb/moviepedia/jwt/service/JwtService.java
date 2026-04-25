@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.exception.InvalidRefreshTokenException;
+import syb.moviepedia.common.exception.RefreshTokenCookieNotFoundException;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.domain.JwtRefresh;
 import syb.moviepedia.jwt.dto.JwtDto;
@@ -15,6 +17,7 @@ import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
 import syb.moviepedia.jwt.repository.JwtRepository;
 import syb.moviepedia.member.repository.MemberRepository;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -35,30 +38,23 @@ public class JwtService {
                                  HttpServletRequest request,
                                  HttpServletResponse response
     ) {
-        // 쿠키 리스트
+        // 쿠키에서 리프레쉬 토큰 획득
         Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            throw new RuntimeException("쿠키가 존재하지 않습니다.");
-        }
-
-        // Refresh 토큰 획득
-        String refreshToken = null;
-        for (Cookie cookie : cookies) {
-            if ("refreshToken".equals(cookie.getName())) {
-                refreshToken = cookie.getValue();
-                break;
-            }
-        }
-
-        if (refreshToken == null) {
-            throw new RuntimeException("refreshToken 쿠키가 없습니다.");
-        }
+        String refreshToken = Arrays.stream(Optional.ofNullable(cookies)
+                        .orElse(new Cookie[0])) // 쿠키가 없으면 빈 배열을 던진다. 빈 쿠키 배열을 던지면 어쨌건 예외가 발생하는건 똑같다.
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .map(cookie -> cookie.getValue())
+                .findFirst()
+                .orElseThrow(() ->
+                        new RefreshTokenCookieNotFoundException("refreshToken 쿠키가 없습니다.")
+                );
 
         // Refresh 토큰 검증
         Boolean isValid = JwtUtil.validateToken(refreshToken, false);
         if (!isValid) {
-            throw new RuntimeException("유효하지 않은 refreshToken입니다.");
+            throw new InvalidRefreshTokenException("유효하지 않은 refreshToken입니다.");
         }
+
         // 정보 추출
         String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);
