@@ -14,9 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import syb.moviepedia.security.filter.JwtFilter;
 import syb.moviepedia.security.filter.LoginFilter;
 
 @EnableWebSecurity
@@ -93,6 +95,10 @@ public class SecurityConfig {
 //        http
 //                .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers())
+
+        // 커스텀 필터 추가
+        http
+                .addFilterBefore(new JwtFilter(), LogoutFilter.class);
 
         // 커스텀 필터 추가
         http

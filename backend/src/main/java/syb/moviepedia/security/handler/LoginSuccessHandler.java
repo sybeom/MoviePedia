@@ -51,6 +51,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         // 발급한 Refresh DB 테이블 저장 (Refresh whitelist)
         jwtService.save(loginId, refreshToken);
 
+        // TODO: 이부분도 APiResult 응답 형식 고민해보기
         // 응답
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
