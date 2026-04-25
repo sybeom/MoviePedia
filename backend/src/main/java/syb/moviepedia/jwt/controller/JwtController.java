@@ -1,15 +1,16 @@
 package syb.moviepedia.jwt.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.jwt.dto.JwtDto;
 import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
 import syb.moviepedia.jwt.service.JwtService;
@@ -35,12 +36,12 @@ public class JwtController {
             description = "소셜 로그인의 쿠키를 JWT 방식으로 변환한다."
     )
     @PostMapping(value = "/jwt/exchange")
-    public JwtDto jwtExchangeApi(
+    public ResponseEntity<ApiResult<JwtDto>> jwtExchangeApi(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
         log.info("JwtController 호출됨. uri: /jwt/exchange");
-        return jwtService.cookieToHeader(request, response);
+        return ResponseEntity.ok(ApiResult.success("JWT 변환 성공", jwtService.cookieToHeader(request,response)));
     }
 
     // 액세스 토큰 만료시 재발급
@@ -56,5 +57,4 @@ public class JwtController {
         log.info("JwtController 호출됨. uri: /jwt/refresh");
         return jwtService.refreshRotate(dto);
     }
-
 }
