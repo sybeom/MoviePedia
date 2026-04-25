@@ -20,6 +20,13 @@ export type LoginResponse = {
   nickname: string
 }
 
+// 쿠키 교환 응답 데이터 타입 정의
+export type ExchangeJwtResponse = {
+  accessToken: string
+  refreshToken: string
+  nickname?: string
+}
+
 // 회원가입 API 요청 처리
 export function signup(data: SignupRequest) {
   return request<void>('/members', {
@@ -33,5 +40,13 @@ export function login(data: LoginRequest) {
   return request<LoginResponse>('/login', {
     method: 'POST',
     body: data,
+  })
+}
+
+// 쿠키 기반 토큰 교환 요청 처리
+export function exchangeJwt() {
+  return request<ExchangeJwtResponse>('/jwt/exchange', {
+    method: 'POST',
+    credentials: 'include',
   })
 }

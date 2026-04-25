@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080'
+export const API_BASE_URL = 'http://localhost:8080'
 
 // 백엔드 공통 API 응답 타입 정의
 export type ApiResult<T> = {

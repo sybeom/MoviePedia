@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { API_BASE_URL } from '../api/client'
 import { login } from '../api/auth'
 import Header from '../components/Header'
 import { saveAuthSession } from '../utils/authStorage'
@@ -63,6 +64,12 @@ function LoginPage() {
     }
   }
 
+  // 네이버 로그인 화면 이동 처리
+  function handleNaverLogin() {
+    // 백엔드 네이버 인증 주소 이동 처리
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/naver`
+  }
+
   return (
     <div className="app">
       <Header />
@@ -97,9 +104,9 @@ function LoginPage() {
               {isSubmitting ? '로그인 요청 중...' : '로그인'}
             </button>
 
-            <a className="secondary-action" href="/ouath2/authorization/naver">
+            <button className="secondary-action" type="button" onClick={handleNaverLogin}>
               네이버로 로그인하기
-            </a>
+            </button>
 
             {message && <p className="form-message">{message}</p>}
           </form>
