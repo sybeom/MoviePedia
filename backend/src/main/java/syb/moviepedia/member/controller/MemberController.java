@@ -29,7 +29,6 @@ public class MemberController {
 
     final private MemberService memberService;
 
-    // TODO: 응답 형식 변경
     @Operation(
             summary = "회원 가입",
             description = "회원 가입을 진행한다",

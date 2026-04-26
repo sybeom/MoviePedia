@@ -18,12 +18,17 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StreamUtils;
+import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ErrorCode;
+import syb.moviepedia.member.dto.request.MemberLoginResponseDto;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 자체 로그인을 위한 필터
@@ -47,8 +52,7 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
     }
 
     @Override
-    public @Nullable Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException,
-            IOException, ServletException {
+    public @Nullable Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         if (!request.getMethod().equals("POST")) {
             throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
         }
@@ -87,5 +91,25 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
         log.info("successfulAuthentication 호출");
         // 로그인 성공시 LoginSuccessHandler를 통해 프론트에 JWT를 발급한다.
         authenticationSuccessHandler.onAuthenticationSuccess(request, response, authResult);
+    }
+
+    // 로그인 실패시 수행되는 메서드
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+
+        String json = generateJsonBody();
+        response.getWriter().write(json);
+    }
+
+    // 응답 데이터 json화
+    public String generateJsonBody() {
+        Set<String> errors = new HashSet<>();
+        errors.add("loginId");
+        errors.add("password");
+
+        return new ObjectMapper().writeValueAsString(ApiResult.fail(ErrorCode.LOGIN_FAILED, "아이디 또는 비밀번호가 올바르지 않습니다.", errors));
     }
 }

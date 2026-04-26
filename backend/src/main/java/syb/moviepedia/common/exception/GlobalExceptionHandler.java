@@ -13,6 +13,9 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * 컨트롤러까지 도달한 경우의 예외를 처리한다.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
