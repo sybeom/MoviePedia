@@ -18,6 +18,7 @@ import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.dto.MemberDto;
 import syb.moviepedia.member.dto.OAuth2MemberDto;
+import syb.moviepedia.member.dto.request.MemberSignupRequestDto;
 import syb.moviepedia.member.repository.MemberRepository;
 
 import java.util.*;
@@ -35,13 +36,13 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
     }
 
     @Transactional
-    public Long signup(MemberDto memberDto) {
+    public Long signup(MemberSignupRequestDto memberDto) {
 
         Set<String> errors = new HashSet<>(); // 회원 가입시 에러 메시를 담음
-        if(memberRepository.existsByLoginId(memberDto.getLoginId())) { // true면 중복
+        if(memberRepository.existsByLoginId(memberDto.loginId())) { // true면 중복
             errors.add("loginId");
         }
-        if (memberRepository.existsByNickname(memberDto.getNickname())) { // true면 중복
+        if (memberRepository.existsByNickname(memberDto.nickname())) { // true면 중복
             errors.add("nickname");
         }
 
@@ -50,9 +51,9 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         }
 
         Member member = Member.builder()
-                .loginId(memberDto.getLoginId())
-                .password(passwordEncoder.encode(memberDto.getPassword()))
-                .nickname(memberDto.getNickname())
+                .loginId(memberDto.loginId())
+                .password(passwordEncoder.encode(memberDto.password()))
+                .nickname(memberDto.nickname())
                 .providerType(ProviderType.LOCAL)
                 .build();
         return memberRepository.save(member).getId();
@@ -110,6 +111,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
             // role 조회
 //            role = member.get().getRole().name();
             // 기존 유저 업데이트
+            // TODO: 소셜 전용 DTO로 변경 고려해보기
             MemberDto memberDto = new MemberDto(nickname, email);
             member.get().update(memberDto);
 

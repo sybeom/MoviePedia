@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.api.ErrorCode;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,7 +27,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, "입력값 검증에 실패했습니다."));
+        Set<String> errors = new HashSet<>();
+        if(e.hasErrors()) {
+            e.getFieldErrors().forEach(fieldError -> {
+                errors.add(fieldError.getField());
+            });
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, "입력값 검증 실패", errors));
     }
 
     // 소셜 로그인 쿠키 존재 X 예외

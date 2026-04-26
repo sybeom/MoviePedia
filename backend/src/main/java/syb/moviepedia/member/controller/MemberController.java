@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
-import syb.moviepedia.member.dto.MemberDto;
+import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.common.swagger.SwaggerFailResponse;
+import syb.moviepedia.member.dto.request.MemberSignupRequestDto;
 import syb.moviepedia.member.service.MemberService;
 
 @Tag(name = "Member API", description = "회원 도메인 API")
@@ -23,7 +25,6 @@ import syb.moviepedia.member.service.MemberService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/members")
-
 public class MemberController {
 
     final private MemberService memberService;
@@ -36,37 +37,32 @@ public class MemberController {
                     description = "가입할 회원 JSON Body 데이터",
                     required = true,
                     content = @Content( // 요청 데이터 타입
-                            schema = @Schema(implementation = MemberDto.class)
+                            schema = @Schema(implementation = MemberSignupRequestDto.class)
                     )
             ),
             responses = {
                     @ApiResponse(
                             responseCode = "201",
                             description = "성공",
-                            content =  @Content( // 성공 응답 데이터 타입 // TODO: 여긴 DTO 응답으로 안쓰는데?
-                                    schema = @Schema(implementation = MemberDto.class)
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerApiResponse.class)
                             )
                     ),
                     @ApiResponse(
                             responseCode = "400",
-                            description = "실패"
+                            description = "실패",
+                            content = @Content(
+                                    schema =  @Schema(implementation = SwaggerFailResponse.class)
+                            )
                     )
             }
     )
     @PostMapping
-    public ResponseEntity<ApiResult<Void>> signup(@Valid @RequestBody MemberDto dto) {
+    public ResponseEntity<ApiResult<Void>> signup(
+            @Valid
+            @RequestBody
+            MemberSignupRequestDto dto) {
 
-//        // 검증 실패시
-//        // 필드 입력 조건에 대한 검증을 하는 것임. 아이디, 비밀번호, 닉네임 등의 중복 체크는 하지 않음)
-//        if (bindingResult.hasErrors()) {
-//            Set<String> errors = new HashSet<>(); // 필드명, 에러코드 작성
-//            bindingResult.getFieldErrors().forEach(error -> {
-//                log.info("error: " + error);
-//                errors.add(error.getField()); // 에러 필드명과 필드에 대한 기본 에러 메시지 넣음
-//            });
-//            // 400 응답. 프론트에서 처리.
-//            return ResponseEntity.badRequest().build();
-//        }
         log.info("signup 호출");
         // 중복 검사 및 가입
         memberService.signup(dto);

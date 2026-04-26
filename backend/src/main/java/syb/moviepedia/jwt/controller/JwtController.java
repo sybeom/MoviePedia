@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.JwtApiResult;
+import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.jwt.dto.JwtDto;
 import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
 import syb.moviepedia.jwt.service.JwtService;
@@ -51,7 +52,7 @@ public class JwtController {
                             responseCode = "401",
                             description = "실패",
                             content =  @Content(
-                                    schema =  @Schema(implementation = ApiResult.class)
+                                    schema =  @Schema(implementation = SwaggerFailResponse.class)
                             )
                     )
             }

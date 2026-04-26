@@ -12,13 +12,10 @@ import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.service.JwtService;
 import syb.moviepedia.member.domain.CustomUserDetails;
-import syb.moviepedia.member.domain.Member;
-import syb.moviepedia.member.dto.MemberLoginResponseDto;
+import syb.moviepedia.member.dto.request.MemberLoginResponseDto;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 로그인 성공시 실행되는 핸들러
