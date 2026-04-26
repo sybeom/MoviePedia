@@ -13,7 +13,8 @@ public class JwtUtil {
     private static final SecretKey secretKey;
     private static final Long accessTokenExpiresIn;
     private static final Long refreshTokenExpiresIn;
-
+    // TODO: 리프레쉬 토큰 스케쥴링 추가하기
+    // TODO: 멤버에 ROLE 추가하기.(현재는 기본 ROLE값이 들어가는 것 같다.)
     static  {
         String secretKeyString = "dkssudgktpdywjsmstjddbsqjadlqslek";
         secretKey = new SecretKeySpec(secretKeyString.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());

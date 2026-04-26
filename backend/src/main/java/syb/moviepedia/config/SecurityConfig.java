@@ -78,23 +78,15 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-//        // 기본 Form 기반 인증 필터들 disable
-//        http
-//                .formLogin(AbstractHttpConfigurer::disable);
-//
-//        // 기본 Basic 인증 필터 disable
-//        http
-//                .httpBasic(AbstractHttpConfigurer::disable);
-//
         // OAuth2 인증용
         http
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(socialSuccessHandler));
-//
-//        // 인가 설정
-//        http
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers())
+
+        // 인가 설정
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll());
 
         // 커스텀 필터 추가
         http
@@ -105,9 +97,6 @@ public class SecurityConfig {
                 .addFilterBefore(
                         new LoginFilter(authenticationManager(authenticationConfiguration), loginSuccessHandler),
                         UsernamePasswordAuthenticationFilter.class);
-
-
-
         return http.build();
     }
 }

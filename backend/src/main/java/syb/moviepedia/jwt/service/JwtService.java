@@ -90,6 +90,7 @@ public class JwtService {
     public JwtDto refreshRotate(JwtRefreshRequestDto dto) {
         String refreshToken = dto.getRefreshToken();
 
+        // TODO: 아래 글로벌 예외 처리하기
         // Refresh 토큰 검증
         Boolean isValid = JwtUtil.validateToken(refreshToken, false);
         if (!isValid) {
@@ -104,7 +105,7 @@ public class JwtService {
         // 정보 추출
         String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);
-        String nickname = memberRepository.findByNickname(loginId)
+        String nickname = memberRepository.findNicknameByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("해당 아이디를 찾을 수 없습니다: " + loginId));
 
         // 토큰 생성

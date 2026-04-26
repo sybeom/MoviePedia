@@ -69,16 +69,17 @@ public class JwtController {
 
     // 액세스 토큰 만료시 재발급
     // Refresh 토큰으로 Access 토큰 재발급 (Rotate 포함)
+    // TODO: 응답 swagger 작성하기
     @Operation(
             summary = "access 토큰 재발급",
             description = "access 토큰 만료시 refresh 토큰을 사용해 재발급한다"
     )
     @PostMapping(value = "/jwt/refresh")
-    public JwtDto jwtRefreshApi(
+    public ResponseEntity<ApiResult<JwtDto>> jwtRefreshApi(
             @Validated @RequestBody JwtRefreshRequestDto dto
     ) {
         log.info("JwtController 호출됨. uri: /jwt/refresh");
-        return jwtService.refreshRotate(dto);
+        return ResponseEntity.ok().body(ApiResult.success("액세스 토큰 재발급 성공", jwtService.refreshRotate(dto)));
     }
 
     @GetMapping(value = "/movies")
