@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.JwtApiResult;
+import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.jwt.dto.JwtDto;
 import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
 import syb.moviepedia.jwt.service.JwtService;
+import syb.moviepedia.member.dto.request.MemberSignupRequestDto;
 
 /**
  * 쿠키에 실어보낸 리프레쉬 토큰을 다시 헤더 방식으로 변경하거나
@@ -69,10 +71,32 @@ public class JwtController {
 
     // 액세스 토큰 만료시 재발급
     // Refresh 토큰으로 Access 토큰 재발급 (Rotate 포함)
-    // TODO: 응답 swagger 작성하기
     @Operation(
             summary = "access 토큰 재발급",
-            description = "access 토큰 만료시 refresh 토큰을 사용해 재발급한다"
+            description = "access 토큰 만료시 refresh 토큰을 사용해 재발급한다",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "액세스 토큰 재발급 위한 리프레쉬 토큰",
+                    required = true,
+                    content = @Content(
+                            schema =  @Schema(implementation = JwtRefreshRequestDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "액세스 토큰 재발급 성공",
+                            content = @Content(
+                                    schema = @Schema(implementation = JwtApiResult.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "리프레쉬 토큰 재발급 실패",
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerApiResponse.class)
+                            )
+                    )
+            }
     )
     @PostMapping(value = "/jwt/refresh")
     public ResponseEntity<ApiResult<JwtDto>> jwtRefreshApi(
