@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,10 +15,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import syb.moviepedia.jwt.service.JwtService;
+import syb.moviepedia.member.handler.RefreshTokenLogoutHandler;
 import syb.moviepedia.security.filter.JwtFilter;
 import syb.moviepedia.security.filter.LoginFilter;
 
@@ -27,15 +31,17 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final AuthenticationSuccessHandler loginSuccessHandler;
     private final AuthenticationSuccessHandler socialSuccessHandler;
+    private final JwtService jwtService;
 
     // @RequiredArgsConstructor 사용해도 될듯
     public SecurityConfig(
             AuthenticationConfiguration authenticationConfiguration,
             @Qualifier("LoginSuccessHandler") AuthenticationSuccessHandler loginSuccessHandler,
-            @Qualifier("SocialSuccessHandler") AuthenticationSuccessHandler socialSuccessHandler) {
+            @Qualifier("SocialSuccessHandler") AuthenticationSuccessHandler socialSuccessHandler, JwtService jwtService) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.loginSuccessHandler = loginSuccessHandler;
         this.socialSuccessHandler = socialSuccessHandler;
+        this.jwtService = jwtService;
     }
 
     // 비밀번호 암호화용 Bean
@@ -77,6 +83,15 @@ public class SecurityConfig {
         // CORS 설정
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // 기본 로그아웃 필터 + 커스텀 Refresh 토큰 삭제 핸들러 추가. (로그아웃 필터는 자동 활성화 되어있음)
+        // 기본 로그아웃 필터가 적용되는 경로는 POST /logout
+        http
+                .logout(logout -> logout
+                        // logoutSuccessHandler() : 로그아웃 성공시 상태코드만 반환하도록 변경. 기본 설정은 302 Found + Location으로 리다이렉트였음.
+                        // 기본 리다이렉트 경로는 /login?logout. 즉 로그아웃 성공시 자동으로 /login?logout으로 리다이렉트 함.
+//                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
+                        .addLogoutHandler(new RefreshTokenLogoutHandler(jwtService))); // 리프레쉬 토큰 삭제 핸들러
 
         // OAuth2 인증용
         http
