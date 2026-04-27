@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
+import { isApiError } from '../api/client'
 import Header from '../components/Header'
 import { saveAuthSession } from '../utils/authStorage'
 import './Auth.css'
@@ -53,9 +54,13 @@ function LoginPage() {
 
       // 홈 화면 이동 처리
       navigate('/')
-    } catch {
-      // 로그인 실패 메시지 반영
-      setMessage('로그인 요청에 실패했습니다. 아이디와 비밀번호를 확인해주세요.')
+    } catch (error) {
+      // 서버 로그인 실패 메시지 반영
+      if (isApiError(error) && error.status === 401) {
+        setMessage(error.message)
+      } else {
+        setMessage('로그인 요청에 실패했습니다. 아이디와 비밀번호를 확인해주세요.')
+      }
     } finally {
       // 요청 종료 상태 반영
       isSubmittingRef.current = false
@@ -93,6 +98,10 @@ function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
             />
 
+            <div className="form-message-slot">
+              {message && <p className="form-message form-error-message">{message}</p>}
+            </div>
+
             <button className="submit-button" type="submit" disabled={isSubmitting}>
               {isSubmitting ? '로그인 요청 중...' : '로그인'}
             </button>
@@ -100,8 +109,6 @@ function LoginPage() {
             <a className="secondary-action" href="http://localhost:8080/oauth2/authorization/naver">
               네이버로 로그인하기
             </a>
-
-            {message && <p className="form-message">{message}</p>}
           </form>
 
           <div className="auth-footer">

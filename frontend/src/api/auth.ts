@@ -1,3 +1,4 @@
+import { getAuthSession } from '../utils/authStorage'
 import { request } from './client'
 
 // 회원가입 요청 데이터 타입 정의
@@ -40,6 +41,19 @@ export function login(data: LoginRequest) {
   return request<LoginResponse>('/login', {
     method: 'POST',
     body: data,
+  })
+}
+
+// 로그아웃 API 요청 처리
+export function logout() {
+  // 현재 로그인 세션 조회 처리
+  const session = getAuthSession()
+
+  return request<void>('/logout', {
+    method: 'POST',
+    body: {
+      refreshToken: session?.refreshToken,
+    },
   })
 }
 

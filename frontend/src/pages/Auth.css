@@ -131,6 +131,15 @@
   line-height: 1.5;
 }
 
+.form-message-slot {
+  min-height: 25px;
+}
+
+.form-error-message {
+  margin: 0;
+  color: #e11d48;
+}
+
 .secondary-action {
   display: grid;
   min-height: 52px;

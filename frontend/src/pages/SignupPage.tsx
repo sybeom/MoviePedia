@@ -19,7 +19,7 @@ type DuplicateSignupField = 'loginId' | 'nickname'
 
 // 회원가입 화면 구성
 function SignupPage() {
-  // 회원가입 성공 후 로그인 화면 이동 함수 준비
+  // 회원가입 성공 후 로그인 화면 이동 준비
   const navigate = useNavigate()
 
   // 회원가입 입력값 상태 관리
@@ -27,14 +27,14 @@ function SignupPage() {
   const [password, setPassword] = useState('')
   const [nickname, setNickname] = useState('')
 
-  // 회원가입 버튼 클릭 시점의 검증 결과 상태 관리
+  // 서버 응답 기반 필드 에러 상태 관리
   const [validationErrors, setValidationErrors] = useState<SignupFormErrors>({})
 
   // 요청 결과 메시지와 진행 상태 관리
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // 현재 폼 값 객체 구성
+  // 현재 입력값 객체 구성
   const formValues: SignupFormValues = {
     loginId,
     password,
@@ -48,12 +48,12 @@ function SignupPage() {
 
   // 중복 필드 목록 추출 처리
   function getDuplicateFields(errors: unknown): DuplicateSignupField[] {
-    // errors가 배열이 아니면 빈 목록 반환
+    // 배열 형태 응답 여부 확인
     if (!Array.isArray(errors)) {
       return []
     }
 
-    // loginId, nickname만 중복 필드로 인정
+    // 중복 허용 대상 필드 추출 처리
     return errors.filter(
       (field): field is DuplicateSignupField => field === 'loginId' || field === 'nickname',
     )
@@ -61,7 +61,7 @@ function SignupPage() {
 
   // 회원가입 중복 필드 에러 처리
   function handleDuplicateSignupError(errors: unknown) {
-    // 백엔드 errors 목록에서 실제 중복 필드만 추출
+    // 중복 필드 목록 추출 처리
     const duplicateFields = getDuplicateFields(errors)
     const duplicateFieldErrors: SignupFormErrors = {}
 
@@ -82,6 +82,8 @@ function SignupPage() {
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     // 브라우저 기본 form 제출 방지
     event.preventDefault()
+
+    // 이전 메시지 초기화
     setMessage('')
 
     // 프론트 입력값 검증 결과 계산
@@ -107,13 +109,13 @@ function SignupPage() {
       // 회원가입 성공 후 로그인 화면 이동
       navigate('/login')
     } catch (error) {
-      // 백엔드 중복 필드 응답 처리
+      // 중복 필드 응답 분기 처리
       if (isApiError(error) && error.status === 400 && error.code === 'DUPLICATE_FIELD') {
         handleDuplicateSignupError(error.errors)
         return
       }
 
-      // 일반 실패 메시지 표시
+      // 일반 실패 메시지 반영
       setMessage('회원가입 요청에 실패했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       // 서버 요청 종료 상태 반영
