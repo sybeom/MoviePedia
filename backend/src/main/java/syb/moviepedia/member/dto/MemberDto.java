@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 /**
  * 회원 가입에 필요한 MemberDto
  */
-// TODO: 추후 응답 Dto와 요청 Dto 별도로 생성하도록 한다.
+// TODO: 추후 요청,응답 Dto 별도로 분리하도록 한다.
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

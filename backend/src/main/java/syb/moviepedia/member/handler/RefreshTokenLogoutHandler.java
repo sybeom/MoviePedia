@@ -2,6 +2,7 @@ package syb.moviepedia.member.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.util.StringUtils;
@@ -18,6 +19,7 @@ import java.io.InputStreamReader;
 /**
  * 로그아웃시, 발급한 Refresh 토큰을 받고 검증 후 무효화(삭제)를 진행.
  */
+@Slf4j
 public class RefreshTokenLogoutHandler implements LogoutHandler {
 
     private final JwtService jwtService;
@@ -31,13 +33,11 @@ public class RefreshTokenLogoutHandler implements LogoutHandler {
         try {
             String body = new BufferedReader(new InputStreamReader(request.getInputStream()))
                     .lines().reduce("", String::concat);
-
             if (!StringUtils.hasText(body)) return;
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.readTree(body);
             String refreshToken = jsonNode.has("refreshToken") ? jsonNode.get("refreshToken").asText() : null;
-
             // 유효성 검증
             if (refreshToken == null) {
                 return;
@@ -48,6 +48,8 @@ public class RefreshTokenLogoutHandler implements LogoutHandler {
             }
 
             // Refresh 토큰 삭제
+            // 혹시 스케쥴링이 실행되어 리프레쉬 토큰이 삭제된 후, 로그아웃 버튼을 누르더라도
+            // 리프레쉬 토큰이 존재하지 않는다고 예외가 발생하지 않는다. 다만 삭제 건수가 0일뿐이다.
             jwtService.removeRefresh(refreshToken);
 
         } catch (IOException e) {

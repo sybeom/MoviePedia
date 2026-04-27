@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 /**
  * jwt CRUD를 위한 엔티티
  */
-@EntityListeners(AuditingEntityListener.class) // 엔티티 생성시 생성시간이 부여됨
 @Table(name = "jwt_refresh")
 @Getter
 @Builder
+@EntityListeners(AuditingEntityListener.class) // 엔티티 생성시 생성시간이 부여됨
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity

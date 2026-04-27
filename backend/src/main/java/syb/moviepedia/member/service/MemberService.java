@@ -60,7 +60,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .build();
         return memberRepository.save(member).getId();
     }
-
+    // TODO: Transactional 수정하기 여기가 아니라 서비스에 있어야하는거아닌가
     @Override
     public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(username)
@@ -70,7 +70,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .password(member.getPassword())
                 .build();
     }
-
+    // TODO: Transactional 수정하기 여기가 아니라 서비스에 있어야하는거아닌가
     // 소셜 회원가입 및 로그인
     @Override // Oath2 관련 빈이 유저 정보를 받으면 loadUser()를 호출해 네이버로부터 받은 유저 정보를 객체를 userRequest에 넣어줌.
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
