@@ -18,10 +18,9 @@ import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.JwtApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
-import syb.moviepedia.jwt.dto.JwtDto;
 import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
+import syb.moviepedia.jwt.dto.JwtResponseDto;
 import syb.moviepedia.jwt.service.JwtService;
-import syb.moviepedia.member.dto.request.MemberSignupRequestDto;
 
 /**
  * 쿠키에 실어보낸 리프레쉬 토큰을 다시 헤더 방식으로 변경하거나
@@ -61,7 +60,7 @@ public class JwtController {
 
     )
     @PostMapping(value = "/jwt/exchange")
-    public ResponseEntity<ApiResult<JwtDto>> jwtExchangeApi(
+    public ResponseEntity<ApiResult<JwtResponseDto>> jwtExchangeApi(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
@@ -99,7 +98,7 @@ public class JwtController {
             }
     )
     @PostMapping(value = "/jwt/refresh")
-    public ResponseEntity<ApiResult<JwtDto>> jwtRefreshApi(
+    public ResponseEntity<ApiResult<JwtResponseDto>> jwtRefreshApi(
             @Validated @RequestBody JwtRefreshRequestDto dto
     ) {
         log.info("JwtController 호출됨. uri: /jwt/refresh");

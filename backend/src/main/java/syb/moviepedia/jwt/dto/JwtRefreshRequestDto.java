@@ -9,7 +9,6 @@ import lombok.Getter;
  */
 @Getter
 public class JwtRefreshRequestDto {
-
     @NotBlank
     private String refreshToken;
 }
