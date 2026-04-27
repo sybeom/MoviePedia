@@ -68,6 +68,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         return CustomUserDetails.builder()
                 .loginId(username)
                 .password(member.getPassword())
+                .nickname(member.getNickname())
                 .build();
     }
     // TODO: Transactional 수정하기 여기가 아니라 서비스에 있어야하는거아닌가

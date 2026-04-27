@@ -1,8 +1,7 @@
 package syb.moviepedia.common.swagger;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import syb.moviepedia.common.api.ApiResult;
-import syb.moviepedia.jwt.dto.JwtDto;
+import syb.moviepedia.jwt.dto.JwtResponseDto;
 
 /**
  * 현재 API 응답은 공통으로 ApiResult<T> 형식으로 응답된다.
@@ -14,5 +13,5 @@ import syb.moviepedia.jwt.dto.JwtDto;
 public record JwtApiResult(
         String code,
         String message,
-        JwtDto data) {
+        JwtResponseDto data) {
 }

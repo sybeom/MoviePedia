@@ -68,7 +68,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-
+        log.info("loginResponseDto: {}", loginResponseDto);
         return new ObjectMapper().writeValueAsString(ApiResult.success("로그인 성공", loginResponseDto));
     }
 }
