@@ -90,7 +90,7 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         // logoutSuccessHandler() : 로그아웃 성공시 상태코드만 반환하도록 변경. 기본 설정은 302 Found + Location으로 리다이렉트였음.
                         // 기본 리다이렉트 경로는 /login?logout. 즉 로그아웃 성공시 자동으로 /login?logout으로 리다이렉트 함.
-//                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
+                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
                         .addLogoutHandler(new RefreshTokenLogoutHandler(jwtService))); // 리프레쉬 토큰 삭제 핸들러
 
         // OAuth2 인증용
