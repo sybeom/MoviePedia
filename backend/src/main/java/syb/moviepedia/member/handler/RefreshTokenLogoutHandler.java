@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.util.StringUtils;
+import syb.moviepedia.common.exception.LogoutFailedException;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.service.JwtService;
 import tools.jackson.databind.JsonNode;
@@ -50,7 +51,7 @@ public class RefreshTokenLogoutHandler implements LogoutHandler {
             jwtService.removeRefresh(refreshToken);
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read refresh token", e);
+            throw new LogoutFailedException("로그아웃 실패하였습니다", e);
         }
     }
 }

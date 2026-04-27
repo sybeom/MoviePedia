@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
         Set<String> errors = new HashSet<>();
-        if(e.hasErrors()) {
+        if (e.hasErrors()) {
             e.getFieldErrors().forEach(fieldError -> {
                 errors.add(fieldError.getField());
             });
@@ -51,5 +51,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
         ErrorCode errorCode = ErrorCode.INVALID_REFRESH_TOKEN;
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResult.fail(errorCode, e.getMessage()));
+    }
+
+    @ExceptionHandler(LogoutFailedException.class)
+    public ResponseEntity<ApiResult<Void>> handleLogoutFailedException(LogoutFailedException e) {
+        ErrorCode errorCode = ErrorCode.LOGOUT_FAILED;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage()));
     }
 }
