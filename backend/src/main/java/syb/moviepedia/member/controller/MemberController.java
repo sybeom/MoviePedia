@@ -61,7 +61,6 @@ public class MemberController {
             @Valid
             @RequestBody
             MemberSignupRequestDto dto) {
-
         log.info("signup 호출");
         // 중복 검사 및 가입
         memberService.signup(dto);

@@ -90,7 +90,6 @@ public class JwtService {
     public JwtDto refreshRotate(JwtRefreshRequestDto dto) {
         String refreshToken = dto.getRefreshToken();
 
-        // TODO: 아래 글로벌 예외 처리하기
         // Refresh 토큰 검증
         Boolean isValid = JwtUtil.validateToken(refreshToken, false);
         if (!isValid) {

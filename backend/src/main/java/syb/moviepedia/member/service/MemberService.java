@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.ProviderType;
+import syb.moviepedia.common.RoleType;
 import syb.moviepedia.common.exception.DuplicateSignupFieldException;
 import syb.moviepedia.member.domain.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
@@ -54,6 +55,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .loginId(memberDto.loginId())
                 .password(passwordEncoder.encode(memberDto.password()))
                 .nickname(memberDto.nickname())
+                .role(RoleType.USER)
                 .providerType(ProviderType.LOCAL)
                 .build();
         return memberRepository.save(member).getId();
@@ -81,7 +83,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         List<GrantedAuthority> authorities;
 
         String loginId;
-//        String role = UserRole.USER.name();
+        RoleType role = RoleType.USER;
         String email;
         String nickname;
 
@@ -111,7 +113,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
             // role 조회
 //            role = member.get().getRole().name();
             // 기존 유저 업데이트
-            // TODO: 소셜 전용 DTO로 변경 고려해보기
+            // TODO: 소셜 전용 DTO로 변경 고려해보기(또는 Member Base 엔티티 선언하고 로컬, 소셜 구현으로 나누는 방법 고려)
             MemberDto memberDto = new MemberDto(nickname, email);
             member.get().update(memberDto);
 
@@ -121,7 +123,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                     .loginId(loginId)
                     .password("")
                     .providerType(provider)
-//                    .role(UserRole.USER)
+                    .role(role)
                     .nickname(nickname)
                     .email(email)
                     .build();
