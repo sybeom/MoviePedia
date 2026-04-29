@@ -18,7 +18,7 @@ public class ScheduleConfig {
     private final JwtRepository jwtRepository;
 
     // 새벽 3시마다 Refresh 토큰 저장소 8일 지난 토큰 삭제
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 600000) // 기본 0 0 3 * * * (새벽 3시 진행
     public void JwtRefreshSchedule() {
         log.info("Refresh Schedule 호출");
         LocalDateTime cutoff = LocalDateTime.now().minusDays(8);

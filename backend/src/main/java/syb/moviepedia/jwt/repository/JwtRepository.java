@@ -9,11 +9,8 @@ import java.time.LocalDateTime;
 public interface JwtRepository extends JpaRepository<JwtRefresh, Long> {
     Boolean existsByRefreshToken(String refreshToken);
 
-    // TODO: Transactional 수정하기 여기가 아니라 서비스에 있어야하는거아닌가
-    @Transactional
     void deleteByRefreshToken(String refresh);
 
-    @Transactional
     void deleteByLoginId(String loginId);
 
     @Transactional

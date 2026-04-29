@@ -1,6 +1,7 @@
 package syb.moviepedia.common.exception;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,12 +11,12 @@ import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.api.ErrorCode;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * 컨트롤러까지 도달한 경우의 예외를 처리한다.
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
