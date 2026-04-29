@@ -104,10 +104,4 @@ public class JwtController {
         log.info("JwtController 호출됨. uri: /jwt/refresh");
         return ResponseEntity.ok().body(ApiResult.success("액세스 토큰 재발급 성공", jwtService.refreshRotate(dto)));
     }
-
-    @GetMapping(value = "/movies")
-    public ResponseEntity<Void> test() {
-        log.info("호출확인");
-        return ResponseEntity.ok().build();
-    }
 }
