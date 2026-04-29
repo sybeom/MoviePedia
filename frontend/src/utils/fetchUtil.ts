@@ -17,6 +17,19 @@ type RefreshResponse = {
   nickname?: string
 }
 
+// 인증 세션 만료 에러 타입 정의
+export class AuthSessionError extends Error {
+  constructor(message = '로그인이 필요합니다.') {
+    super(message)
+    this.name = 'AuthSessionError'
+  }
+}
+
+// 인증 세션 에러 여부 확인
+export function isAuthSessionError(error: unknown): error is AuthSessionError {
+  return error instanceof AuthSessionError
+}
+
 // JSON 응답 여부 확인
 function isJsonResponse(response: Response) {
   return response.headers.get('Content-Type')?.includes('application/json')
@@ -39,10 +52,10 @@ async function parseApiResult<T>(response: Response): Promise<ApiResult<T> | und
   }
 }
 
-// 인증 실패 후 로그인 화면 이동 처리
-function redirectToLogin() {
+// 인증 세션 초기화 후 에러 생성 처리
+function createAuthSessionError(message: string) {
   clearAuthSession()
-  window.location.replace('/login')
+  return new AuthSessionError(message)
 }
 
 // 토큰 재발급 요청 처리
@@ -51,8 +64,7 @@ async function refreshAccessToken() {
 
   // 리프레시 토큰 존재 여부 확인
   if (!session?.refreshToken) {
-    redirectToLogin()
-    throw new Error('리프레시 토큰이 없습니다.')
+    throw createAuthSessionError('리프레시 토큰이 없습니다.')
   }
 
   const response = await fetch(`${API_BASE_URL}${REFRESH_PATH}`, {
@@ -69,13 +81,7 @@ async function refreshAccessToken() {
 
   // 재발급 실패 분기 처리
   if (!response.ok || !result?.data?.accessToken) {
-    redirectToLogin()
-    throw new ApiError(
-      response.status,
-      result?.message ?? '토큰 재발급에 실패했습니다.',
-      result?.code,
-      result?.errors,
-    )
+    throw createAuthSessionError(result?.message ?? '토큰 재발급에 실패했습니다.')
   }
 
   // 재발급 세션 저장 처리
@@ -95,8 +101,7 @@ async function executeAuthorizedFetch(path: string, options: AuthRequestOptions 
 
   // 액세스 토큰 존재 여부 확인
   if (!session?.accessToken) {
-    redirectToLogin()
-    throw new Error('액세스 토큰이 없습니다.')
+    throw createAuthSessionError('액세스 토큰이 없습니다.')
   }
 
   return fetch(`${API_BASE_URL}${path}`, {
@@ -111,15 +116,11 @@ async function executeAuthorizedFetch(path: string, options: AuthRequestOptions 
 }
 
 // 인증 필요 API 요청 처리
-export async function authRequest<T>(
-  path: string,
-  options: AuthRequestOptions = {},
-  hasRetried = false,
-): Promise<T | undefined> {
+export async function authRequest<T>(path: string, options: AuthRequestOptions = {}): Promise<T | undefined> {
   const response = await executeAuthorizedFetch(path, options)
 
   // 액세스 토큰 만료 분기 처리
-  if (response.status === 401 && !hasRetried) {
+  if (response.status === 401) {
     const refreshedAccessToken = await refreshAccessToken()
     const { body, headers, ...restOptions } = options
 

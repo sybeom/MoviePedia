@@ -11,8 +11,8 @@ type HeaderProps = {
 
 // 상단 공통 헤더 렌더링
 function Header({ showAuthActions = false }: HeaderProps) {
-  // 현재 로그인 세션 상태 관리
-  const [authSession, setAuthSession] = useState(() => getAuthSession())
+  // 현재 로그인 세션 조회
+  const authSession = getAuthSession()
 
   // 로그아웃 진행 상태 관리
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -36,7 +36,6 @@ function Header({ showAuthActions = false }: HeaderProps) {
     } finally {
       // 로컬 세션 정리 처리
       clearAuthSession()
-      setAuthSession(null)
 
       // 홈 화면 이동 처리
       navigate('/')
