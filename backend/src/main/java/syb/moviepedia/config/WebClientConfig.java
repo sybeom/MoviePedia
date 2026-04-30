@@ -2,6 +2,7 @@ package syb.moviepedia.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -14,7 +15,21 @@ public class WebClientConfig {
     @Bean
     public WebClient webClient() {
         return WebClient.builder()
+                .baseUrl("https://www.kobis.or.kr/kobisopenapi/webservice/rest") // https://api.koreafilm.or.kr
+                .build();
+    }
+
+    @Bean
+    public WebClient kmdbWebClient() {
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+                .codecs(configurer ->
+                        configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)
+                )
+                .build();
+
+        return WebClient.builder()
                 .baseUrl("https://api.koreafilm.or.kr")
+                .exchangeStrategies(strategies)
                 .build();
     }
 }
