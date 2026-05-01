@@ -7,7 +7,5 @@ public record WeeklyBoxOfficeDto(
         String title,
         String poster,
         String genre,
-        String rating,
-        String plot,
         String nation
 ) { }

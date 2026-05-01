@@ -50,12 +50,25 @@ public class KmdbClient {
         JsonNode result = mapper.readTree(json).path("Data").get(0).path("Result").get(0);
 
         return WeeklyBoxOfficeDto.builder()
-                .title(result.path("title").asText())
+                .title(cleanTitle(result.path("title").asText()))
                 .poster(result.path("posters").asText())
+//                .releaseDate(result.path("repRlsDate").asText())
                 .genre(result.path("genre").asText())
-                .rating(result.path("rating").asText())
-                .plot(result.path("plots").path("plot").get(0).path("plotText").asText())
+//                .rating(result.path("rating").asText())
+//                .runtime(result.path("runtime").asText() + "분")
                 .nation(result.path("nation").asText())
+//                .plot(result.path("plots").path("plot").get(0).path("plotText").asText())
                 .build();
+    }
+
+    private String cleanTitle(String title) {
+        if (title == null) {
+            return null;
+        }
+
+        return title
+                .replace("!HS", "")
+                .replace("!HE", "")
+                .trim();
     }
 }

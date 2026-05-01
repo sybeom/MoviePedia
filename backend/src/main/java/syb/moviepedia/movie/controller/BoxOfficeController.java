@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.movie.WeeklyBoxOfficeDto;
 import syb.moviepedia.movie.external.kobis.KobisBoxOfficeInfo;
 import syb.moviepedia.movie.service.BoxOfficeService;
 
@@ -24,8 +25,8 @@ public class BoxOfficeController {
     private final BoxOfficeService boxOfficeService;
 
     @GetMapping
-    public ResponseEntity<ApiResult<String>> getMovies() throws JsonProcessingException {
-        List<KobisBoxOfficeInfo> boxOfficeWeekly = boxOfficeService.getBoxOfficeWeekly();
-        return ResponseEntity.ok().body(ApiResult.success("주간 박스 오피스 조회 성공", "ASd"));
+    public ResponseEntity<ApiResult<List<WeeklyBoxOfficeDto>>> getMovies() throws JsonProcessingException {
+        List<WeeklyBoxOfficeDto> data = boxOfficeService.getBoxOfficeWeekly();
+        return ResponseEntity.ok().body(ApiResult.success("주간 박스 오피스 조회 성공", data));
     }
 }
