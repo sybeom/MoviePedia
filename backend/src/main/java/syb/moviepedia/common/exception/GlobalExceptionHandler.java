@@ -59,4 +59,11 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.LOGOUT_FAILED;
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage()));
     }
+
+    // Json 파싱 실패
+    @ExceptionHandler(JsonParsingFailedException.class)
+    public ResponseEntity<ApiResult<Void>> handleJsonParsingFailedException(JsonParsingFailedException e) {
+        ErrorCode errorCode = ErrorCode.JSON_PARSING_FAILED;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage()));
+    }
 }

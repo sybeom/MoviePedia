@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import syb.moviepedia.common.exception.JsonParsingFailedException;
 import syb.moviepedia.movie.WeeklyBoxOfficeDto;
 
 
@@ -24,7 +25,7 @@ public class KmdbClient {
             String json = fetchKmdbApiJson(movieName);
             return parseToWeeklyBoxOffice(json);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("KMDb 응답 파싱 실패", e); // TODO: 예외 클래스 만들기 및 글로벌 설정하기
+            throw new JsonParsingFailedException("KMDb Api Json 파싱 실패");
         }
     }
 
@@ -52,12 +53,8 @@ public class KmdbClient {
         return WeeklyBoxOfficeDto.builder()
                 .title(cleanTitle(result.path("title").asText()))
                 .poster(result.path("posters").asText())
-//                .releaseDate(result.path("repRlsDate").asText())
                 .genre(result.path("genre").asText())
-//                .rating(result.path("rating").asText())
-//                .runtime(result.path("runtime").asText() + "분")
                 .nation(result.path("nation").asText())
-//                .plot(result.path("plots").path("plot").get(0).path("plotText").asText())
                 .build();
     }
 
@@ -65,7 +62,6 @@ public class KmdbClient {
         if (title == null) {
             return null;
         }
-
         return title
                 .replace("!HS", "")
                 .replace("!HE", "")

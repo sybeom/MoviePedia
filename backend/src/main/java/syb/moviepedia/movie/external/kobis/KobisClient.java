@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import syb.moviepedia.common.exception.JsonParsingFailedException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,9 +26,13 @@ import static java.time.DayOfWeek.SUNDAY;
 public class KobisClient {
     private final WebClient webClient;
 
-    public List<KobisBoxOfficeInfo> fetchWeeklyBoxOffice() throws JsonProcessingException {
-        String json = fetchWeeklyBoxOfficeJson();
-        return parseToBoxOfficeInfo(json);
+    public List<KobisBoxOfficeInfo> fetchWeeklyBoxOffice() {
+        try {
+            String json = fetchWeeklyBoxOfficeJson();
+            return parseToBoxOfficeInfo(json);
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingFailedException("Kobis Api Json 파싱 실패");
+        }
     }
 
     // 박스 오피스 Api 호출
