@@ -1,21 +1,16 @@
 package syb.moviepedia.movie.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
 import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.movie.external.kobis.KobisBoxOfficeInfo;
 import syb.moviepedia.movie.service.BoxOfficeService;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
-
-import static java.time.LocalDate.*;
+import java.util.List;
 
 /**
  * 박스 오피스 컨트롤러를 굳이 나눈이유는
@@ -29,8 +24,8 @@ public class BoxOfficeController {
     private final BoxOfficeService boxOfficeService;
 
     @GetMapping
-    public ResponseEntity<ApiResult<String>> getMovies() {
-        String data = boxOfficeService.getBoxOfficeWeekly();
-        return ResponseEntity.ok().body(ApiResult.success("주간 박스 오피스 조회 성공", data));
+    public ResponseEntity<ApiResult<String>> getMovies() throws JsonProcessingException {
+        List<KobisBoxOfficeInfo> boxOfficeWeekly = boxOfficeService.getBoxOfficeWeekly();
+        return ResponseEntity.ok().body(ApiResult.success("주간 박스 오피스 조회 성공", "ASd"));
     }
 }
