@@ -48,6 +48,7 @@ public class KobisClient {
                 .block();
     }
 
+    // json 파싱
     private List<KobisBoxOfficeInfo> parseToBoxOfficeInfo(String json) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNode = mapper.readTree(json).path("boxOfficeResult").path("weeklyBoxOfficeList");
