@@ -53,7 +53,18 @@ function getGenreValue(record: Record<string, unknown>) {
 
   if (Array.isArray(genreValue)) {
     return genreValue
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .map((value) => {
+        if (typeof value === 'string' && value.trim().length > 0) {
+          return value
+        }
+
+        if (isRecord(value)) {
+          return getStringValue(value, ['name', 'genre'])
+        }
+
+        return ''
+      })
+      .filter(Boolean)
       .join(', ')
   }
 
@@ -100,6 +111,9 @@ function getMovieSource(data: unknown) {
   const candidateLists = [
     parsedData.items,
     parsedData.movies,
+    parsedData.popularMovies,
+    parsedData.nowPlayingMovies,
+    parsedData.movieList,
     parsedData.weeklyBoxOfficeList,
     parsedData.results,
     parsedData.content,
@@ -115,6 +129,10 @@ function getMovieSource(data: unknown) {
     return parsedData.boxOfficeResult.weeklyBoxOfficeList
   }
 
+  if (isRecord(parsedData.data)) {
+    return getMovieSource(parsedData.data)
+  }
+
   return []
 }
 
@@ -123,14 +141,16 @@ function normalizeMovies(data: unknown): MovieCard[] {
   return getMovieSource(data)
     .filter(isRecord)
     .map((movie, index) => {
-      const title = getStringValue(movie, ['title', 'movieNm', 'name']) || `영화 ${index + 1}`
+      const title = getStringValue(movie, ['title', 'movieNm', 'name', 'movieTitle']) || `영화 ${index + 1}`
       const rank = getStringValue(movie, ['rank', 'rnum']) || String(index + 1)
-      const poster = getPrimaryPosterUrl(getStringValue(movie, ['poster', 'posterUrl', 'imageUrl']))
-      const voteAverage = getStringValue(movie, ['voteAverage', 'vote', 'rating'])
+      const poster = getPrimaryPosterUrl(
+        getStringValue(movie, ['poster', 'posterUrl', 'imageUrl', 'posterPath', 'poster_path']),
+      )
+      const voteAverage = getStringValue(movie, ['voteAverage', 'vote', 'rating', 'vote_average'])
       const genre = getGenreValue(movie)
 
       return {
-        id: getStringValue(movie, ['movieCd', 'id']) || `${title}-${rank}-${index}`,
+        id: getStringValue(movie, ['movieCd', 'id', 'movieId']) || `${title}-${rank}-${index}`,
         rank,
         title,
         poster,
@@ -175,6 +195,30 @@ function HomePage() {
   // 인기 영화 페이지 상태 관리
   const [popularPage, setPopularPage] = useState(0)
 
+  // 현재 상영중 영화 목록 상태 관리
+  const [nowPlayingMovies, setNowPlayingMovies] = useState<MovieCard[]>([])
+
+  // 현재 상영중 영화 로딩 상태 관리
+  const [isNowPlayingLoading, setIsNowPlayingLoading] = useState(true)
+
+  // 현재 상영중 영화 안내 메시지 상태 관리
+  const [nowPlayingMessage, setNowPlayingMessage] = useState('')
+
+  // 현재 상영중 영화 페이지 상태 관리
+  const [nowPlayingPage, setNowPlayingPage] = useState(0)
+
+  // 개봉 예정작 영화 목록 상태 관리
+  const [upcomingMovies, setUpcomingMovies] = useState<MovieCard[]>([])
+
+  // 개봉 예정작 영화 로딩 상태 관리
+  const [isUpcomingLoading, setIsUpcomingLoading] = useState(true)
+
+  // 개봉 예정작 영화 안내 메시지 상태 관리
+  const [upcomingMessage, setUpcomingMessage] = useState('')
+
+  // 개봉 예정작 영화 페이지 상태 관리
+  const [upcomingPage, setUpcomingPage] = useState(0)
+
   // 인증 상태 반영 유도 상태 관리
   const [, setAuthStateVersion] = useState(0)
 
@@ -184,10 +228,13 @@ function HomePage() {
   // 인기 영화 요청 중복 방지 참조 준비
   const hasLoadedPopularMoviesRef = useRef(false)
 
-  const placeholderMovies = createPlaceholderMovies('placeholder')
+  // 현재 상영중 요청 중복 방지 참조 준비
+  const hasLoadedNowPlayingMoviesRef = useRef(false)
 
-  // 현재 상영중 임시 카드 목록 준비
-  const nowPlayingPlaceholderMovies = createPlaceholderMovies('now-playing')
+  // 개봉 예정작 요청 중복 방지 참조 준비
+  const hasLoadedUpcomingMoviesRef = useRef(false)
+
+  const placeholderMovies = createPlaceholderMovies('placeholder')
 
   // 개봉 예정작 임시 카드 목록 준비
   const upcomingPlaceholderMovies = createPlaceholderMovies('upcoming')
@@ -205,6 +252,51 @@ function HomePage() {
     return (
       carouselMovies[movieIndex] ?? {
         id: `empty-${movieIndex}`,
+        rank: '',
+        title: '',
+        poster: '',
+        genre: '',
+        voteAverage: '',
+      }
+    )
+  })
+
+  // 현재 상영중 캐러셀 표시용 영화 목록 계산
+  const nowPlayingCarouselMovies =
+    nowPlayingMovies.length > 0 ? nowPlayingMovies : createPlaceholderMovies('now-playing')
+
+  // 현재 상영중 전체 페이지 수 계산
+  const nowPlayingTotalPages = Math.max(1, Math.ceil(nowPlayingCarouselMovies.length / MOVIES_PER_PAGE))
+
+  // 현재 상영중 현재 페이지 기준 표시 영화 목록 계산
+  const visibleNowPlayingMovies = Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
+    const movieIndex = nowPlayingPage * MOVIES_PER_PAGE + index
+
+    return (
+      nowPlayingCarouselMovies[movieIndex] ?? {
+        id: `now-playing-empty-${movieIndex}`,
+        rank: '',
+        title: '',
+        poster: '',
+        genre: '',
+        voteAverage: '',
+      }
+    )
+  })
+
+  // 개봉 예정작 캐러셀 표시용 영화 목록 계산
+  const upcomingCarouselMovies = upcomingMovies.length > 0 ? upcomingMovies : upcomingPlaceholderMovies
+
+  // 개봉 예정작 전체 페이지 수 계산
+  const upcomingTotalPages = Math.max(1, Math.ceil(upcomingCarouselMovies.length / MOVIES_PER_PAGE))
+
+  // 개봉 예정작 현재 페이지 기준 표시 영화 목록 계산
+  const visibleUpcomingMovies = Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
+    const movieIndex = upcomingPage * MOVIES_PER_PAGE + index
+
+    return (
+      upcomingCarouselMovies[movieIndex] ?? {
+        id: `upcoming-empty-${movieIndex}`,
         rank: '',
         title: '',
         poster: '',
@@ -259,7 +351,7 @@ function HomePage() {
     // 인기 영화 목록 조회 처리
     async function fetchPopularMovies() {
       try {
-        const response = await request<unknown>('/movies', {
+        const response = await request<unknown>('/movies/popular', {
           method: 'GET',
         })
 
@@ -280,6 +372,68 @@ function HomePage() {
     void fetchPopularMovies()
   }, [])
 
+  useEffect(() => {
+    if (hasLoadedNowPlayingMoviesRef.current) {
+      return
+    }
+
+    hasLoadedNowPlayingMoviesRef.current = true
+
+    // 현재 상영중 영화 목록 조회 처리
+    async function fetchNowPlayingMovies() {
+      try {
+        const response = await request<unknown>('/movies/now_playing', {
+          method: 'GET',
+        })
+
+        const normalizedMovies = normalizeMovies(response)
+        setNowPlayingMovies(normalizedMovies)
+        setNowPlayingPage(0)
+
+        if (normalizedMovies.length === 0) {
+          setNowPlayingMessage('현재 상영중 영화가 아직 없습니다.')
+        }
+      } catch {
+        setNowPlayingMessage('현재 상영중 영화를 불러오지 못했습니다.')
+      } finally {
+        setIsNowPlayingLoading(false)
+      }
+    }
+
+    void fetchNowPlayingMovies()
+  }, [])
+
+  useEffect(() => {
+    if (hasLoadedUpcomingMoviesRef.current) {
+      return
+    }
+
+    hasLoadedUpcomingMoviesRef.current = true
+
+    // 개봉 예정작 영화 목록 조회 처리
+    async function fetchUpcomingMovies() {
+      try {
+        const response = await request<unknown>('/movies/upcoming', {
+          method: 'GET',
+        })
+
+        const normalizedMovies = normalizeMovies(response)
+        setUpcomingMovies(normalizedMovies)
+        setUpcomingPage(0)
+
+        if (normalizedMovies.length === 0) {
+          setUpcomingMessage('개봉 예정작이 아직 없습니다.')
+        }
+      } catch {
+        setUpcomingMessage('개봉 예정작을 불러오지 못했습니다.')
+      } finally {
+        setIsUpcomingLoading(false)
+      }
+    }
+
+    void fetchUpcomingMovies()
+  }, [])
+
   // 이전 영화 묶음 이동 처리
   function handlePrevPopularPage() {
     setPopularPage((previousPage) => Math.max(previousPage - 1, 0))
@@ -288,6 +442,26 @@ function HomePage() {
   // 다음 영화 묶음 이동 처리
   function handleNextPopularPage() {
     setPopularPage((previousPage) => Math.min(previousPage + 1, totalPages - 1))
+  }
+
+  // 이전 현재 상영중 영화 묶음 이동 처리
+  function handlePrevNowPlayingPage() {
+    setNowPlayingPage((previousPage) => Math.max(previousPage - 1, 0))
+  }
+
+  // 다음 현재 상영중 영화 묶음 이동 처리
+  function handleNextNowPlayingPage() {
+    setNowPlayingPage((previousPage) => Math.min(previousPage + 1, nowPlayingTotalPages - 1))
+  }
+
+  // 이전 개봉 예정작 영화 묶음 이동 처리
+  function handlePrevUpcomingPage() {
+    setUpcomingPage((previousPage) => Math.max(previousPage - 1, 0))
+  }
+
+  // 다음 개봉 예정작 영화 묶음 이동 처리
+  function handleNextUpcomingPage() {
+    setUpcomingPage((previousPage) => Math.min(previousPage + 1, upcomingTotalPages - 1))
   }
 
   // 검색 요청 제출 처리
@@ -435,19 +609,76 @@ function HomePage() {
             </div>
           </div>
 
-          <div className="movie-carousel">
-            <div className="movie-grid">
-              {nowPlayingPlaceholderMovies.map((movie) => (
-                <article className="movie-card-shell" key={movie.id}>
-                  <div className="movie-poster-shell movie-poster-shell-placeholder" />
-                  <div className="movie-card-content movie-card-content-skeleton">
-                    <div className="movie-title-shell" />
-                    <div className="movie-meta-shell" />
-                  </div>
-                </article>
-              ))}
+          {isNowPlayingLoading ? (
+            <div className="movie-carousel">
+              <div className="movie-grid">
+                {createPlaceholderMovies('now-playing-skeleton').map((movie) => (
+                  <article className="movie-card-shell" key={movie.id}>
+                    <div className="movie-poster-shell movie-poster-shell-placeholder" />
+                    <div className="movie-card-content movie-card-content-skeleton">
+                      <div className="movie-title-shell" />
+                      <div className="movie-meta-shell" />
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : nowPlayingMovies.length > 0 ? (
+            <div className="movie-carousel">
+              {nowPlayingMovies.length > MOVIES_PER_PAGE && (
+                <>
+                  <button
+                    className="movie-nav-button movie-nav-button-left"
+                    type="button"
+                    onClick={handlePrevNowPlayingPage}
+                    disabled={nowPlayingPage === 0}
+                    aria-label="이전 현재 상영중 영화 보기"
+                  >
+                    <span className="movie-nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="M14.5 5 8 12l6.5 7" />
+                      </svg>
+                    </span>
+                  </button>
+                  <button
+                    className="movie-nav-button movie-nav-button-right"
+                    type="button"
+                    onClick={handleNextNowPlayingPage}
+                    disabled={nowPlayingPage === nowPlayingTotalPages - 1}
+                    aria-label="다음 현재 상영중 영화 보기"
+                  >
+                    <span className="movie-nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="m9.5 5 6.5 7-6.5 7" />
+                      </svg>
+                    </span>
+                  </button>
+                </>
+              )}
+
+              <div className="movie-grid">
+                {visibleNowPlayingMovies.map((movie) => (
+                  <article
+                    className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
+                    key={movie.id}
+                  >
+                    <div className="movie-poster-shell">
+                      {movie.poster ? (
+                        <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
+                      ) : null}
+                    </div>
+                    <div className="movie-card-content">
+                      <h3>{movie.title || ' '}</h3>
+                      <p>{movie.genre || ' '}</p>
+                      <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="movie-section-message">{nowPlayingMessage}</p>
+          )}
         </section>
 
         <section className="movie-list-section" aria-labelledby="upcoming-movie-title">
@@ -458,19 +689,76 @@ function HomePage() {
             </div>
           </div>
 
-          <div className="movie-carousel">
-            <div className="movie-grid">
-              {upcomingPlaceholderMovies.map((movie) => (
-                <article className="movie-card-shell" key={movie.id}>
-                  <div className="movie-poster-shell movie-poster-shell-placeholder" />
-                  <div className="movie-card-content movie-card-content-skeleton">
-                    <div className="movie-title-shell" />
-                    <div className="movie-meta-shell" />
-                  </div>
-                </article>
-              ))}
+          {isUpcomingLoading ? (
+            <div className="movie-carousel">
+              <div className="movie-grid">
+                {upcomingPlaceholderMovies.map((movie) => (
+                  <article className="movie-card-shell" key={movie.id}>
+                    <div className="movie-poster-shell movie-poster-shell-placeholder" />
+                    <div className="movie-card-content movie-card-content-skeleton">
+                      <div className="movie-title-shell" />
+                      <div className="movie-meta-shell" />
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : upcomingMovies.length > 0 ? (
+            <div className="movie-carousel">
+              {upcomingMovies.length > MOVIES_PER_PAGE && (
+                <>
+                  <button
+                    className="movie-nav-button movie-nav-button-left"
+                    type="button"
+                    onClick={handlePrevUpcomingPage}
+                    disabled={upcomingPage === 0}
+                    aria-label="이전 개봉 예정작 영화 보기"
+                  >
+                    <span className="movie-nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="M14.5 5 8 12l6.5 7" />
+                      </svg>
+                    </span>
+                  </button>
+                  <button
+                    className="movie-nav-button movie-nav-button-right"
+                    type="button"
+                    onClick={handleNextUpcomingPage}
+                    disabled={upcomingPage === upcomingTotalPages - 1}
+                    aria-label="다음 개봉 예정작 영화 보기"
+                  >
+                    <span className="movie-nav-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                        <path d="m9.5 5 6.5 7-6.5 7" />
+                      </svg>
+                    </span>
+                  </button>
+                </>
+              )}
+
+              <div className="movie-grid">
+                {visibleUpcomingMovies.map((movie) => (
+                  <article
+                    className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
+                    key={movie.id}
+                  >
+                    <div className="movie-poster-shell">
+                      {movie.poster ? (
+                        <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
+                      ) : null}
+                    </div>
+                    <div className="movie-card-content">
+                      <h3>{movie.title || ' '}</h3>
+                      <p>{movie.genre || ' '}</p>
+                      <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="movie-section-message">{upcomingMessage}</p>
+          )}
         </section>
       </main>
     </div>
