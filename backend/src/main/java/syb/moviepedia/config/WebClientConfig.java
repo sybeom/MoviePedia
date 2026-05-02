@@ -1,5 +1,6 @@
 package syb.moviepedia.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
@@ -11,15 +12,20 @@ import org.springframework.web.reactive.function.client.WebClient;
  */
 @Configuration
 public class WebClientConfig {
+    @Value("${tmdb.api.base-url}")
+    private String tmdbBaseUrl;
 
-    @Bean
-    public WebClient webClient() {
+    @Value("${tmdb.api.token}")
+    private String tmdbToken;
+
+    @Bean // 영화진흥위원회
+    public WebClient kobisWebClient() {
         return WebClient.builder()
-                .baseUrl("https://www.kobis.or.kr/kobisopenapi/webservice/rest") // https://api.koreafilm.or.kr
+                .baseUrl("https://www.kobis.or.kr/kobisopenapi/webservice/rest")
                 .build();
     }
 
-    @Bean
+    @Bean // KMDb
     public WebClient kmdbWebClient() {
         ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(configurer ->
@@ -30,6 +36,17 @@ public class WebClientConfig {
         return WebClient.builder()
                 .baseUrl("https://api.koreafilm.or.kr")
                 .exchangeStrategies(strategies)
+                .build();
+    }
+
+    @Bean // TMDB
+    public WebClient tmdbWebClient(
+            @Value("${tmdb.api.base-url}") String baseUrl,
+            @Value("${tmdb.api.token}") String token
+    ) {
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader("Authorization", "Bearer " + token)
                 .build();
     }
 }

@@ -1,14 +1,13 @@
 package syb.moviepedia.movie.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
-import syb.moviepedia.movie.WeeklyBoxOfficeDto;
-import syb.moviepedia.movie.external.kobis.KobisBoxOfficeInfo;
+import syb.moviepedia.movie.dto.WeeklyBoxOfficeDto;
 import syb.moviepedia.movie.service.BoxOfficeService;
 
 import java.util.List;
@@ -19,13 +18,20 @@ import java.util.List;
  */
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/box-office")
+@RequestMapping("/moviese")
 public class BoxOfficeController {
 
     private final BoxOfficeService boxOfficeService;
 
     @GetMapping
-    public ResponseEntity<ApiResult<List<WeeklyBoxOfficeDto>>> getMovies() throws JsonProcessingException {
+    public String getMovies(
+            @RequestParam(required = false, defaultValue = "popular") String category
+    ) {
+        return boxOfficeService.getMovies();
+    }
+
+    @GetMapping("/ser")
+    public ResponseEntity<ApiResult<List<WeeklyBoxOfficeDto>>> getMovies() {
         List<WeeklyBoxOfficeDto> data = boxOfficeService.getBoxOfficeWeekly();
         return ResponseEntity.ok().body(ApiResult.success("주간 박스 오피스 조회 성공", data));
     }

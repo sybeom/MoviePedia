@@ -24,7 +24,7 @@ import static java.time.DayOfWeek.SUNDAY;
 @Component
 @RequiredArgsConstructor
 public class KobisClient {
-    private final WebClient webClient;
+    private final WebClient kobisWebClient;
 
     public List<KobisBoxOfficeInfo> fetchWeeklyBoxOffice() {
         try {
@@ -41,12 +41,13 @@ public class KobisClient {
                 .with(TemporalAdjusters.previous(SUNDAY))
                 .format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        return webClient.get()
+        return kobisWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/boxoffice/searchWeeklyBoxOfficeList.json") // /openapi-data2/wisenut/search_api/search_json2.jsp
                         .queryParam("key", "27bf7372d6e67e530a9406bf1de74cfc")
                         .queryParam("targetDt", targetDt)
                         .queryParam("weekGb", "0")
+                        .queryParam("multiMovieYn","N")
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)

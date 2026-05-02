@@ -20,6 +20,8 @@ import java.util.Set;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    //TODO: 응답 생성 메서드 고려해보기, 모두 공통이라 메서드화 해도 될듯.
+
     // 회원 가입 필드 중복 검사 예외
     @ExceptionHandler(DuplicateSignupFieldException.class)
     public ResponseEntity<ApiResult<Void>> handleSignupFieldException(DuplicateSignupFieldException e) {
