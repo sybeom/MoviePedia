@@ -23,13 +23,6 @@ public class BoxOfficeController {
 
     private final BoxOfficeService boxOfficeService;
 
-    @GetMapping
-    public String getMovies(
-            @RequestParam(required = false, defaultValue = "popular") String category
-    ) {
-        return boxOfficeService.getMovies();
-    }
-
     @GetMapping("/ser")
     public ResponseEntity<ApiResult<List<WeeklyBoxOfficeDto>>> getMovies() {
         List<WeeklyBoxOfficeDto> data = boxOfficeService.getBoxOfficeWeekly();

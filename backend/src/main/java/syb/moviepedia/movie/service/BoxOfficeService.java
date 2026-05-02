@@ -18,7 +18,6 @@ public class BoxOfficeService {
 
     private final KobisClient kobisClient;
     private final KmdbClient kmdbClient;
-    private final TmdbClient tmdbClient;
 
     /**
      * 영화진흥위원회 API 호출 -> 박스 오피스 json 파싱 후 정보(제목, 순위) 가져옴 -> 제목 기반(쿼리파라미터) kmdb api 호출
@@ -32,7 +31,4 @@ public class BoxOfficeService {
                 .toList();
     }
 
-    public String getMovies() {
-        return tmdbClient.getPopularMovies();
-    }
 }
