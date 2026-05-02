@@ -192,7 +192,7 @@
   min-width: 0;
   display: grid;
   gap: 14px;
-  grid-template-rows: auto 56px;
+  grid-template-rows: auto 82px;
 }
 
 .movie-card-shell-empty {
@@ -219,7 +219,7 @@
 .movie-info-shell,
 .movie-card-content {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .movie-card-content h3 {
