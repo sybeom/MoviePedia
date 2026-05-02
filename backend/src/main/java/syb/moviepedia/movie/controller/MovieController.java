@@ -19,8 +19,18 @@ import java.util.List;
 public class MovieController {
     private final MovieService movieService;
 
-    @GetMapping
+    @GetMapping("/popular")
     public ResponseEntity<ApiResult<List<PopularMovieDto>>> getPopularMovies() {
         return ResponseEntity.ok().body(ApiResult.success("TMDB 인기 영화 목록", movieService.getPopularMovies()));
+    }
+
+    @GetMapping("/now_playing")
+    public ResponseEntity<ApiResult<List<PopularMovieDto>>> getNowPlayingMovies() {
+        return ResponseEntity.ok().body(ApiResult.success("TMDB 현재 상영 중인 영화", movieService.getNowPlayingMovies()));
+    }
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<ApiResult<List<PopularMovieDto>>> getUpcomingMovies() {
+        return ResponseEntity.ok().body(ApiResult.success("TMDB 개봉 예정작", movieService.getUpcomingMovies()));
     }
 }

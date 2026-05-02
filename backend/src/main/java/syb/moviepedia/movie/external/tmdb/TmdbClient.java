@@ -16,9 +16,14 @@ public class TmdbClient {
 
     private final WebClient tmdbWebClient;
 
-    // 인기 영화 목록
+    // 인기 영화
     public TmdbPopularMovieList getPopularMovies() {
         return fetchPopularMovies(); // api 호출
+    }
+
+    // 현재 상영 영화
+    public TmdbPopularMovieList getNowPlayingMovies() {
+        return fetchNowPlayingMovies();
     }
 
     // 영화 장르 정보
@@ -26,11 +31,39 @@ public class TmdbClient {
         return fetchMovieGenres(); // api 호출
     }
 
-    // tmdb api 호출
+    // 인기 영화 api 호출
     public TmdbPopularMovieList fetchPopularMovies() {
         return tmdbWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/movie/popular")
+                        .queryParam("language", "ko-KR")
+                        .queryParam("page", 1)
+                        .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
+                        .build())
+                .retrieve()
+                .bodyToMono(TmdbPopularMovieList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
+                .block();
+    }
+
+    // 현재 상영중인 영화 api 호출
+    private TmdbPopularMovieList fetchNowPlayingMovies() {
+        return tmdbWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/movie/now_playing")
+                        .queryParam("language", "ko-KR")
+                        .queryParam("page", 1)
+                        .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
+                        .build())
+                .retrieve()
+                .bodyToMono(TmdbPopularMovieList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
+                .block();
+    }
+
+    // 개봉 예정작 api 호출
+    public TmdbPopularMovieList getUpcomingMovies() {
+        return tmdbWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/movie/upcoming")
                         .queryParam("language", "ko-KR")
                         .queryParam("page", 1)
                         .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
