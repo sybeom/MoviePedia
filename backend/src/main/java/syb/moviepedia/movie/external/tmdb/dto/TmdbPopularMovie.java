@@ -9,7 +9,7 @@ import java.util.List;
  * 인기 영화 api로 오는 json 응답에서 필드에 맞게 자동 매핑된다.
  * 즉, 필드명과 json의 키 명이 동일해야한다.
  */
-public record TmdbPopularMovieResponse(
+public record TmdbPopularMovie(
         Long id,
         String title,
         @JsonProperty("poster_path")

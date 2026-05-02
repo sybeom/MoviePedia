@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import syb.moviepedia.movie.dto.PopularMovieDto;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreListResponse;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreResponse;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbPopularMovieListResponse;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbPopularMovieResponse;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbPopularMovie;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbPopularMovieList;
 
 import java.util.List;
 import java.util.Map;
@@ -28,8 +27,8 @@ public class MovieService {
      * -> 동시에 응답 객체로 변환
      */
     public List<PopularMovieDto> getPopularMovies() {
-        TmdbPopularMovieListResponse movieResponse = tmdbClient.getPopularMovies();
-        TmdbGenreListResponse genreResponse = tmdbClient.getMovieGenres();
+        TmdbPopularMovieList movieResponse = tmdbClient.getPopularMovies();
+        TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
         Map<Integer, String> genreMap = genreResponse.genres().stream()
@@ -45,7 +44,7 @@ public class MovieService {
 
     // 프론트 응답 DTO 변환
     private PopularMovieDto toPopularMovieDto(
-            TmdbPopularMovieResponse movie,
+            TmdbPopularMovie movie,
             Map<Integer, String> genreMap
     ) {
         List<String> genreNames = movie.genreIds().stream()
