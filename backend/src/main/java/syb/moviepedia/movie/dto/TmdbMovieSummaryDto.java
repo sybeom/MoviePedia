@@ -5,10 +5,10 @@ import lombok.Builder;
 import java.util.List;
 
 /**
- * TMDB api 인기영화 목록 응답 DTO
+ * 메인 화면에 표시될 영화 요약 응답 DTO
  */
 @Builder
-public record PopularMovieDto(
+public record TmdbMovieSummaryDto(
         String title, // 제목
         String poster, // 포스터
         List<String> genre, // 장르

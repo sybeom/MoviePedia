@@ -3,11 +3,11 @@ package syb.moviepedia.movie.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import syb.moviepedia.movie.dto.PopularMovieDto;
+import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbPopularMovie;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbPopularMovieList;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummary;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
 
 import java.util.List;
 import java.util.Map;
@@ -28,8 +28,8 @@ public class MovieService {
      * -> 동시에 응답 객체로 변환
      */
     // 인기 영화
-    public List<PopularMovieDto> getPopularMovies() {
-        TmdbPopularMovieList movieResponse = tmdbClient.getPopularMovies();
+    public List<TmdbMovieSummaryDto> getPopularMovies() {
+        TmdbMovieSummaryList movieResponse = tmdbClient.getPopularMovies();
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
@@ -45,8 +45,8 @@ public class MovieService {
     }
 
     // 상영중인 영화
-    public List<PopularMovieDto> getNowPlayingMovies() {
-        TmdbPopularMovieList movieResponse = tmdbClient.getNowPlayingMovies();
+    public List<TmdbMovieSummaryDto> getNowPlayingMovies() {
+        TmdbMovieSummaryList movieResponse = tmdbClient.getNowPlayingMovies();
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
@@ -62,8 +62,8 @@ public class MovieService {
     }
 
     // 개봉 예정작
-    public List<PopularMovieDto> getUpcomingMovies() {
-        TmdbPopularMovieList movieResponse = tmdbClient.getUpcomingMovies();
+    public List<TmdbMovieSummaryDto> getUpcomingMovies() {
+        TmdbMovieSummaryList movieResponse = tmdbClient.getUpcomingMovies();
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
@@ -79,8 +79,8 @@ public class MovieService {
     }
 
     // 프론트 응답 DTO 변환
-    private PopularMovieDto toPopularMovieDto(
-            TmdbPopularMovie movie,
+    private TmdbMovieSummaryDto toPopularMovieDto(
+            TmdbMovieSummary movie,
             Map<Integer, String> genreMap
     ) {
         List<String> genreNames = movie.genreIds().stream()
@@ -88,7 +88,7 @@ public class MovieService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        return PopularMovieDto.builder()
+        return TmdbMovieSummaryDto.builder()
                 .title(movie.title())
                 .poster(generatePosterURL(movie.posterPath()))
                 .genre(genreNames)
