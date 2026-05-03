@@ -40,7 +40,7 @@ public class MovieService {
                 ));
 
         return movieResponse.results().stream()
-                .map(movie -> toPopularMovieDto(movie, genreMap))
+                .map(movie -> toMovieSummaryDto(movie, genreMap, true))
                 .toList();
     }
 
@@ -57,7 +57,7 @@ public class MovieService {
                 ));
 
         return movieResponse.results().stream()
-                .map(movie -> toPopularMovieDto(movie, genreMap))
+                .map(movie -> toMovieSummaryDto(movie, genreMap, true))
                 .toList();
     }
 
@@ -74,14 +74,15 @@ public class MovieService {
                 ));
 
         return movieResponse.results().stream()
-                .map(movie -> toPopularMovieDto(movie, genreMap))
+                .map(movie -> toMovieSummaryDto(movie, genreMap, false))
                 .toList();
     }
 
     // 프론트 응답 DTO 변환
-    private TmdbMovieSummaryDto toPopularMovieDto(
+    private TmdbMovieSummaryDto toMovieSummaryDto(
             TmdbMovieSummary movie,
-            Map<Integer, String> genreMap
+            Map<Integer, String> genreMap,
+            boolean includeVoteAverage
     ) {
         List<String> genreNames = movie.genreIds().stream()
                 .map(genreId -> genreMap.get(genreId))
@@ -92,7 +93,7 @@ public class MovieService {
                 .title(movie.title())
                 .poster(generatePosterURL(movie.posterPath()))
                 .genre(genreNames)
-                .voteAverage(movie.voteAverage())
+                .voteAverage(includeVoteAverage ? movie.voteAverage() : null) // 개봉예정에는 평점없도록하기 위해 voteAverage은 null
                 .build();
     }
 
