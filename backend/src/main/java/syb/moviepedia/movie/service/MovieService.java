@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-// TODO: 메서드 공통화 하기, Popular 클래스 통일하기, 개봉예정작은 평점이 나타나지 않아야한다.
+// TODO: 메서드 공통화 하기, 개봉예정작은 평점이 나타나지 않아야한다.
 // TODO: swagger 작성하기
 @Slf4j
 @RequiredArgsConstructor
