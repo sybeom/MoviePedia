@@ -23,7 +23,7 @@ public class TmdbClient {
 
     // 현재 상영 영화
     public TmdbMovieSummaryList getNowPlayingMovies() {
-        return fetchMovieSummaryList("/movie/popular");
+        return fetchMovieSummaryList("/movie/now_playing");
     }
 
     // 개봉 예정작 api 호출
