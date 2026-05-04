@@ -68,4 +68,10 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.JSON_PARSING_FAILED;
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage()));
     }
+
+    @ExceptionHandler(TmdbApiException.class)
+    public ResponseEntity<ApiResult<Void>> handleTmdbApiException(TmdbApiException e) {
+        ErrorCode errorCode = ErrorCode.TMDB_API_FAILED;
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(ApiResult.fail(errorCode, e.getMessage()));
+    }
 }

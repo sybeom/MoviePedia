@@ -3,6 +3,7 @@ package syb.moviepedia.movie.external.tmdb;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import syb.moviepedia.common.exception.TmdbApiException;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
 
@@ -38,27 +39,35 @@ public class TmdbClient {
 
     // 영화 api 호출
     private TmdbMovieSummaryList fetchMovieSummaryList(String path) {
-        return tmdbWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(path)
-                        .queryParam("language", "ko-KR")
-                        .queryParam("page", 1)
-                        .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
-                        .build())
-                .retrieve()
-                .bodyToMono(TmdbMovieSummaryList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
-                .block();
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path(path)
+                            .queryParam("language", "ko-KR")
+                            .queryParam("page", 1)
+                            .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
+                            .build())
+                    .retrieve()
+                    .bodyToMono(TmdbMovieSummaryList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 영화 목록 API 호출 실패. path=" + path, e);
+        }
     }
 
     // 장르 api 호출
     public TmdbGenreList fetchMovieGenres() {
-        return tmdbWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/genre/movie/list")
-                        .queryParam("language", "ko-KR")
-                        .build())
-                .retrieve()
-                .bodyToMono(TmdbGenreList.class)
-                .block();
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/genre/movie/list")
+                            .queryParam("language", "ko-KR")
+                            .build())
+                    .retrieve()
+                    .bodyToMono(TmdbGenreList.class)
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 장르 목록 API 호출 실패.", e);
+        }
     }
 }
