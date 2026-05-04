@@ -25,53 +25,70 @@ public class GlobalExceptionHandler {
     // 회원 가입 필드 중복 검사 예외
     @ExceptionHandler(DuplicateSignupFieldException.class)
     public ResponseEntity<ApiResult<Void>> handleSignupFieldException(DuplicateSignupFieldException e) {
-        ErrorCode errorCode = ErrorCode.DUPLICATE_FIELD;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage(), e.getErrors()));
+        return fail(ErrorCode.DUPLICATE_FIELD, HttpStatus.BAD_REQUEST, e);
     }
 
     // @Valid 검증 예외
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResult<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
         Set<String> errors = new HashSet<>();
         if (e.hasErrors()) {
             e.getFieldErrors().forEach(fieldError -> {
                 errors.add(fieldError.getField());
             });
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, "입력값 검증 실패", errors));
+        return fail(ErrorCode.VALIDATION_ERROR, HttpStatus.BAD_REQUEST, "입력값 검증 실패", errors);
     }
 
     // 소셜 로그인 쿠키 존재 X 예외
     @ExceptionHandler(RefreshTokenCookieNotFoundException.class)
     public ResponseEntity<ApiResult<Void>> handleCookieNotFoundException(RefreshTokenCookieNotFoundException e) {
-        ErrorCode errorCode = ErrorCode.REFRESH_TOKEN_COOKIE_NOT_FOUND;
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResult.fail(errorCode, e.getMessage()));
+        return fail(ErrorCode.REFRESH_TOKEN_COOKIE_NOT_FOUND, HttpStatus.UNAUTHORIZED, e);
     }
 
     // 유효하지 않은 리프레쉬 토큰
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ResponseEntity<ApiResult<Void>> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
-        ErrorCode errorCode = ErrorCode.INVALID_REFRESH_TOKEN;
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResult.fail(errorCode, e.getMessage()));
+        return fail(ErrorCode.INVALID_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED, e);
     }
 
     @ExceptionHandler(LogoutFailedException.class)
     public ResponseEntity<ApiResult<Void>> handleLogoutFailedException(LogoutFailedException e) {
-        ErrorCode errorCode = ErrorCode.LOGOUT_FAILED;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage()));
+        return fail(ErrorCode.LOGOUT_FAILED, HttpStatus.BAD_REQUEST, e);
     }
 
     // Json 파싱 실패
     @ExceptionHandler(JsonParsingFailedException.class)
     public ResponseEntity<ApiResult<Void>> handleJsonParsingFailedException(JsonParsingFailedException e) {
-        ErrorCode errorCode = ErrorCode.JSON_PARSING_FAILED;
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResult.fail(errorCode, e.getMessage()));
+        return fail(ErrorCode.LOGOUT_FAILED, HttpStatus.BAD_REQUEST, e);
     }
 
+    // TMDB API 호출 실패 에러 (API 실패 에러는 서버 문제보다는 API 문제이기에 502 상태코드를 전송한다.)
     @ExceptionHandler(TmdbApiException.class)
     public ResponseEntity<ApiResult<Void>> handleTmdbApiException(TmdbApiException e) {
-        ErrorCode errorCode = ErrorCode.TMDB_API_FAILED;
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(ApiResult.fail(errorCode, e.getMessage()));
+        return fail(ErrorCode.TMDB_API_FAILED, HttpStatus.BAD_GATEWAY, e);
+    }
+
+    // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
+    private ResponseEntity<ApiResult<Void>> fail(
+            ErrorCode errorCode,
+            HttpStatus status,
+            Exception e
+    ) {
+        return ResponseEntity
+                .status(status)
+                .body(ApiResult.fail(errorCode, e.getMessage()));
+    }
+
+    // 실패 응답 생성 - errors 있는 경우
+    private ResponseEntity<ApiResult<Void>> fail(
+            ErrorCode errorCode,
+            HttpStatus status,
+            String message,
+            Object errors
+    ) {
+        return ResponseEntity
+                .status(status)
+                .body(ApiResult.fail(errorCode, message, errors));
     }
 }
