@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerTmdbMovieSummaryListResponse;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.service.MovieService;
@@ -36,6 +37,13 @@ public class MovieController {
                             content = @Content(
                                     schema = @Schema(implementation = SwaggerTmdbMovieSummaryListResponse.class)
                             )
+                    ),
+                    @ApiResponse(
+                            responseCode = "502",
+                            description = "실패",
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerApiResponse.class)
+                            )
                     )
             }
     )
@@ -54,6 +62,13 @@ public class MovieController {
                             content = @Content(
                                     schema = @Schema(implementation = SwaggerTmdbMovieSummaryListResponse.class)
                             )
+                    ),
+                    @ApiResponse(
+                            responseCode = "502",
+                            description = "실패",
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerApiResponse.class)
+                            )
                     )
             }
     )
@@ -71,6 +86,13 @@ public class MovieController {
                             description = "성공",
                             content = @Content(
                                     schema = @Schema(implementation = SwaggerTmdbMovieSummaryListResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "502",
+                            description = "실패",
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerApiResponse.class)
                             )
                     )
             }
