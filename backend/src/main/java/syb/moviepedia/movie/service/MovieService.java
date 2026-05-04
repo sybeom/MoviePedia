@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-// TODO: 메서드 공통화 하기, 개봉예정작은 평점이 나타나지 않아야한다.
-// TODO: swagger 작성하기
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -23,7 +21,7 @@ public class MovieService {
     private final TmdbClient tmdbClient;
     /**
      * 인기 영화 흐름 *
-     * 인기 영화 목록 APi 호출 및 목록 가져옴 -> 장르 API 호출 및 장르 정보 가져옴
+     * 인기 영화 목록 APi 호출 및 목록(json) 가져옴 -> 장르 API 호출 및 장르 정보 가져옴
      * -> 얻은 장르 정보 Map에 담기 -> 인기 영화목록의 장르 값과 장르 정보를 맵핑
      * -> 동시에 응답 객체로 변환
      */
@@ -33,11 +31,7 @@ public class MovieService {
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
-        Map<Integer, String> genreMap = genreResponse.genres().stream()
-                .collect(Collectors.toMap(
-                        genre -> genre.id(),
-                        genre -> genre.name()
-                ));
+        Map<Integer, String> genreMap = genreListToMap(genreResponse);
 
         return movieResponse.results().stream()
                 .map(movie -> toMovieSummaryDto(movie, genreMap, true))
@@ -50,11 +44,7 @@ public class MovieService {
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
-        Map<Integer, String> genreMap = genreResponse.genres().stream()
-                .collect(Collectors.toMap(
-                        genre -> genre.id(),
-                        genre -> genre.name()
-                ));
+        Map<Integer, String> genreMap = genreListToMap(genreResponse);
 
         return movieResponse.results().stream()
                 .map(movie -> toMovieSummaryDto(movie, genreMap, true))
@@ -67,15 +57,20 @@ public class MovieService {
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
-        Map<Integer, String> genreMap = genreResponse.genres().stream()
-                .collect(Collectors.toMap(
-                        genre -> genre.id(),
-                        genre -> genre.name()
-                ));
+        Map<Integer, String> genreMap = genreListToMap(genreResponse);
 
         return movieResponse.results().stream()
                 .map(movie -> toMovieSummaryDto(movie, genreMap, false))
                 .toList();
+    }
+
+    // 장르 리스트 Map 변환
+    private Map<Integer,String> genreListToMap(TmdbGenreList genreList) {
+        return genreList.genres().stream()
+                .collect(Collectors.toMap(
+                        genre -> genre.id(),
+                        genre -> genre.name()
+                ));
     }
 
     // 프론트 응답 DTO 변환
