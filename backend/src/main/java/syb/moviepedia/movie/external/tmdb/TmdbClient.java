@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import syb.moviepedia.common.exception.TmdbApiException;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
 
 /**
@@ -35,6 +36,11 @@ public class TmdbClient {
     // 영화 장르 정보
     public TmdbGenreList getMovieGenres() {
         return fetchMovieGenres(); // api 호출
+    }
+
+    // 관람 등급
+    public TmdbMovieCertification getMovieCertification(Long movieId) {
+        return fetchMovieReleaseDate(movieId); // 개봉일 api로 관람등급을 얻는다.
     }
 
     // 영화 api 호출
@@ -68,6 +74,22 @@ public class TmdbClient {
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 장르 목록 API 호출 실패.", e);
+        }
+    }
+
+    // 개봉일 api 호출 - 연령 등급 얻기(개봉일 api에서 영화 연령 등급을 얻을 수 있기때문)
+    public TmdbMovieCertification fetchMovieReleaseDate(Long moveId) {
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/movie/" + moveId + "/release_dates")
+                            .queryParam("language", "ko-KR")
+                            .build())
+                    .retrieve()
+                    .bodyToMono(TmdbMovieCertification.class)
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 개봉 날짜 API 호출 실패", e);
         }
     }
 }

@@ -14,5 +14,6 @@ public record TmdbMovieSummaryDto(
         String title, // 제목
         String poster, // 포스터
         List<String> genre, // 장르
+        String certification,
         String voteAverage // 평점
 ) {}

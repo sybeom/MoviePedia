@@ -3,11 +3,10 @@ package syb.moviepedia.movie.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import syb.moviepedia.common.ReleaseType;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummary;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
+import syb.moviepedia.movie.external.tmdb.dto.*;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,8 @@ public class MovieService {
         Map<Integer, String> genreMap = genreListToMap(genreResponse);
 
         return movieResponse.results().stream()
-                .map(movie -> toMovieSummaryDto(movie, genreMap, true))
+                .map(movie ->
+                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.id()), true))
                 .toList();
     }
 
@@ -47,7 +47,8 @@ public class MovieService {
         Map<Integer, String> genreMap = genreListToMap(genreResponse);
 
         return movieResponse.results().stream()
-                .map(movie -> toMovieSummaryDto(movie, genreMap, true))
+                .map(movie ->
+                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.id()), true))
                 .toList();
     }
 
@@ -60,7 +61,8 @@ public class MovieService {
         Map<Integer, String> genreMap = genreListToMap(genreResponse);
 
         return movieResponse.results().stream()
-                .map(movie -> toMovieSummaryDto(movie, genreMap, false))
+                .map(movie ->
+                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.id()), false))
                 .toList();
     }
 
@@ -77,19 +79,46 @@ public class MovieService {
     private TmdbMovieSummaryDto toMovieSummaryDto(
             TmdbMovieSummary movie,
             Map<Integer, String> genreMap,
+            TmdbMovieCertification movieCertification,
             boolean includeVoteAverage
     ) {
-        List<String> genreNames = movie.genreIds().stream()
-                .map(genreId -> genreMap.get(genreId))
-                .filter(Objects::nonNull)
-                .toList();
+        // 장르 번호에 해당하는 장르를 맵에서 가져옴(장르는 여럿 있을 수 있다)
+        List<String> genreNames = extractGenres(movie, genreMap);
+
+        String certification= extractCertification(movieCertification);
+
 
         return TmdbMovieSummaryDto.builder()
                 .title(movie.title())
                 .poster(generatePosterURL(movie.posterPath()))
                 .genre(genreNames)
+                .certification(certification)
                 .voteAverage(includeVoteAverage ? movie.voteAverage() : null) // 개봉예정에는 평점없도록하기 위해 voteAverage은 null
                 .build();
+    }
+
+    // 장르 번호에 해당하는 장르들 추출
+    private List<String> extractGenres(TmdbMovieSummary movie, Map<Integer, String> genreMap) {
+        return movie.genreIds().stream()
+                .map(genreId -> genreMap.get(genreId))
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    // 관람 등급 추출
+    private String extractCertification(TmdbMovieCertification certification) {
+        List<TmdbMovieReleaseInfo> releaseInfoList = certification.results().stream()
+                .filter(country -> "KR".equals(country.iso31661())) // 개봉 국가 한국인것만 꺼냄
+                .filter(country -> country.releaseDates() != null)
+                .flatMap(country ->
+                        country.releaseDates().stream())
+                            .filter(date -> date.certification() != null && !date.certification().isBlank())
+                .toList();
+        return releaseInfoList.stream()
+                .filter(info -> ReleaseType.THEATRICAL.matches(info.type())) // 영화 개봉 정보만 가져오기
+                .map(info -> info.certification())
+                .findFirst()
+                .orElse("등급 미정");
     }
 
     // 포스터 완전 URL로 변경(포스터는 파일 경로만 데이터로 오기때문에 완전한 URL로 변경한다)

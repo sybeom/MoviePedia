@@ -12,7 +12,7 @@ public enum ProviderType {
     GOOGLE("GOOGLE");
 
     private final String type;
-        ProviderType(final String type) {
+    ProviderType(final String type) {
         this.type = type;
     }
 
