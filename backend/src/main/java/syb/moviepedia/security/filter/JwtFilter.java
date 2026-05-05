@@ -28,7 +28,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        log.info("JwtFilter 호출");
+        log.info("JwtFilter 호출 : {}", request.getRequestURI());
         // 액세스 토큰 재발급을 위한 /jwt/refresh 요청에는 Authorization 헤더는 없고, json 바디에 리프레쉬 토큰만 있으므로
         // authorization을 통과 못하고 return 된다. return되고 Controller로 요청이 넘어간다
         String authorization = request.getHeader("Authorization"); // 요청 헤더에서 jwt를 가져옴

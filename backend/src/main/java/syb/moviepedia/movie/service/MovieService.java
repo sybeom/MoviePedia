@@ -115,7 +115,8 @@ public class MovieService {
                             .filter(date -> date.certification() != null && !date.certification().isBlank())
                 .toList();
         return releaseInfoList.stream()
-                .filter(info -> ReleaseType.THEATRICAL.matches(info.type())) // 영화 개봉 정보만 가져오기
+                .filter(info ->
+                        ReleaseType.THEATRICAL.matches(info.type()) || ReleaseType.DIGITAL.matches(info.type())) // 극장 개봉 및 OTT 개봉 둘 다 가져오기
                 .map(info -> info.certification())
                 .findFirst()
                 .orElse("등급 미정");
