@@ -219,7 +219,9 @@ function MovieTitleRow({ movie }: { movie: MovieCard }) {
           <span className="movie-certification-fallback">{movie.certification}</span>
         )
       ) : null}
-      <h3>{movie.title || ' '}</h3>
+      <h3>
+        <span className="movie-title-text">{movie.title || ' '}</span>
+      </h3>
     </div>
   )
 }
