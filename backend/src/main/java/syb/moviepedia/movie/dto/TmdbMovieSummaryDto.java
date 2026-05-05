@@ -11,6 +11,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL) // 개봉 예정작 평점 제외하기 위함
 @Builder
 public record TmdbMovieSummaryDto(
+        Long id,
         String title, // 제목
         String poster, // 포스터
         List<String> genre, // 장르

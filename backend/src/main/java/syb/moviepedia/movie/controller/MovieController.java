@@ -5,10 +5,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
@@ -19,6 +21,7 @@ import syb.moviepedia.movie.service.MovieService;
 
 import java.util.List;
 
+// TODO: 세번의 요청 호출 말고 하나로 묶어보는 것 생각해보기
 @Tag(name = "Movie API", description = "영화 도메인 API")
 @Slf4j
 @RequiredArgsConstructor
@@ -100,5 +103,14 @@ public class MovieController {
     @GetMapping("/upcoming")
     public ResponseEntity<ApiResult<List<TmdbMovieSummaryDto>>> getUpcomingMovies() {
         return ResponseEntity.ok().body(ApiResult.success("TMDB 개봉 예정작", movieService.getUpcomingMovies()));
+    }
+
+    @Operation(
+            summary = "영화 상세",
+            description = "영화 상세 정보를 응답한다"
+    )
+    @GetMapping("/{movieId}")
+    public String getMovieDetail(@PathVariable Long movieId) {
+        return movieService.getMovieDetail(movieId);
     }
 }

@@ -43,6 +43,12 @@ public class TmdbClient {
         return fetchMovieReleaseDate(movieId); // 개봉일 api로 관람등급을 얻는다.
     }
 
+
+    // 영화 상세
+    public String getMovieDetail(Long movieId) {
+        return fetchMovieDetail(movieId);
+    }
+
     // 영화 api 호출
     private TmdbMovieSummaryList fetchMovieSummaryList(String path) {
         try {
@@ -62,7 +68,7 @@ public class TmdbClient {
     }
 
     // 장르 api 호출
-    public TmdbGenreList fetchMovieGenres() {
+    private TmdbGenreList fetchMovieGenres() {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -78,18 +84,36 @@ public class TmdbClient {
     }
 
     // 개봉일 api 호출 - 연령 등급 얻기(개봉일 api에서 영화 연령 등급을 얻을 수 있기때문)
-    public TmdbMovieCertification fetchMovieReleaseDate(Long moveId) {
+    private TmdbMovieCertification fetchMovieReleaseDate(Long moveId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/movie/" + moveId + "/release_dates")
                             .queryParam("language", "ko-KR")
+                            .queryParam("region", "KR")
                             .build())
                     .retrieve()
                     .bodyToMono(TmdbMovieCertification.class)
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 개봉 날짜 API 호출 실패", e);
+        }
+    }
+
+    // 영화 상세 api 호출
+    private String fetchMovieDetail(Long movieId) {
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/movie/{movieId}")
+                            .queryParam("language", "ko-KR")
+                            .queryParam("region", "KR")
+                            .build(movieId))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 영화 상세 API 호출 실패", e);
         }
     }
 }

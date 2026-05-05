@@ -66,6 +66,11 @@ public class MovieService {
                 .toList();
     }
 
+    // 영화 상세
+    public String getMovieDetail(Long movieId) {
+        return tmdbClient.getMovieDetail(movieId);
+    }
+
     // 장르 리스트 Map 변환
     private Map<Integer,String> genreListToMap(TmdbGenreList genreList) {
         return genreList.genres().stream()
@@ -85,10 +90,11 @@ public class MovieService {
         // 장르 번호에 해당하는 장르를 맵에서 가져옴(장르는 여럿 있을 수 있다)
         List<String> genreNames = extractGenres(movie, genreMap);
 
+        // 관람 등급 추출
         String certification= extractCertification(movieCertification);
 
-
         return TmdbMovieSummaryDto.builder()
+                .id(movie.id())
                 .title(movie.title())
                 .poster(generatePosterURL(movie.posterPath()))
                 .genre(genreNames)
@@ -128,6 +134,6 @@ public class MovieService {
             return "";
         }
         String size = "original";
-        return  "https://image.tmdb.org/t/p/" + size + path;
+        return  "https://image.tmdb.org/t/p/" + size + path; // TODO: 이거 경로 상수화 하기
     }
 }
