@@ -199,6 +199,20 @@
   visibility: hidden;
 }
 
+.movie-card-link,
+.movie-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.movie-card-link {
+  display: block;
+}
+
+.movie-title-link {
+  min-width: 0;
+}
+
 .movie-poster-shell {
   position: relative;
   width: 100%;

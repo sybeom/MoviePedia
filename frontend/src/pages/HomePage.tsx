@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { API_BASE_URL, isApiError, request } from '../api/client'
 import rating12Icon from '../assets/ratings/12.svg'
 import rating15Icon from '../assets/ratings/15.svg'
@@ -52,6 +53,23 @@ function getStringValue(record: Record<string, unknown>, keys: string[]) {
 
     if (typeof value === 'string' && value.trim()) {
       return value
+    }
+  }
+
+  return ''
+}
+
+// 문자열 또는 숫자 필드 문자열 변환 처리
+function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (typeof value === 'string' && value.trim()) {
+      return value
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value)
     }
   }
 
@@ -178,7 +196,7 @@ function normalizeMovies(data: unknown): MovieCard[] {
       const certification = getCertificationValue(movie)
 
       return {
-        id: getStringValue(movie, ['movieCd', 'id', 'movieId']) || `${title}-${rank}-${index}`,
+        id: getScalarStringValue(movie, ['movieCd', 'id', 'movieId']) || `${title}-${rank}-${index}`,
         rank,
         title,
         poster,
@@ -224,6 +242,11 @@ function MovieTitleRow({ movie }: { movie: MovieCard }) {
       </h3>
     </div>
   )
+}
+
+// 영화 상세 이동 경로 계산 처리
+function getMovieDetailPath(movie: MovieCard) {
+  return `/movies/${movie.id}`
 }
 
 // 홈 화면 구성
@@ -636,14 +659,26 @@ function HomePage() {
                     className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
                     key={movie.id}
                   >
-                    <div className="movie-poster-shell">
-                      {movie.poster ? (
-                        <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                      ) : null}
-                      {movie.rank && <span className="movie-rank-badge">{movie.rank}</span>}
-                    </div>
+                    <Link
+                      className="movie-card-link"
+                      to={getMovieDetailPath(movie)}
+                      state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                    >
+                      <div className="movie-poster-shell">
+                        {movie.poster ? (
+                          <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
+                        ) : null}
+                        {movie.rank && <span className="movie-rank-badge">{movie.rank}</span>}
+                      </div>
+                    </Link>
                     <div className="movie-card-content">
-                      <MovieTitleRow movie={movie} />
+                      <Link
+                        className="movie-title-link"
+                        to={getMovieDetailPath(movie)}
+                        state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                      >
+                        <MovieTitleRow movie={movie} />
+                      </Link>
                       <p>{movie.genre || ' '}</p>
                       <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
                     </div>
@@ -717,13 +752,25 @@ function HomePage() {
                     className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
                     key={movie.id}
                   >
-                    <div className="movie-poster-shell">
-                      {movie.poster ? (
-                        <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                      ) : null}
-                    </div>
+                    <Link
+                      className="movie-card-link"
+                      to={getMovieDetailPath(movie)}
+                      state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                    >
+                      <div className="movie-poster-shell">
+                        {movie.poster ? (
+                          <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
+                        ) : null}
+                      </div>
+                    </Link>
                     <div className="movie-card-content">
-                      <MovieTitleRow movie={movie} />
+                      <Link
+                        className="movie-title-link"
+                        to={getMovieDetailPath(movie)}
+                        state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                      >
+                        <MovieTitleRow movie={movie} />
+                      </Link>
                       <p>{movie.genre || ' '}</p>
                       <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
                     </div>
@@ -797,13 +844,25 @@ function HomePage() {
                     className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
                     key={movie.id}
                   >
-                    <div className="movie-poster-shell">
-                      {movie.poster ? (
-                        <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                      ) : null}
-                    </div>
+                    <Link
+                      className="movie-card-link"
+                      to={getMovieDetailPath(movie)}
+                      state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                    >
+                      <div className="movie-poster-shell">
+                        {movie.poster ? (
+                          <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
+                        ) : null}
+                      </div>
+                    </Link>
                     <div className="movie-card-content">
-                      <MovieTitleRow movie={movie} />
+                      <Link
+                        className="movie-title-link"
+                        to={getMovieDetailPath(movie)}
+                        state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                      >
+                        <MovieTitleRow movie={movie} />
+                      </Link>
                       <p>{movie.genre || ' '}</p>
                       <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
                     </div>
