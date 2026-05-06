@@ -18,6 +18,13 @@ type MovieDetailView = {
   id: string
   title: string
   poster: string
+  backdrop: string
+  genres: string
+  overview: string
+  releaseDate: string
+  originCountry: string
+  runtime: string
+  voteAverage: string
 }
 
 // 객체 데이터 여부 확인
@@ -42,9 +49,41 @@ function getStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
-// 대표 포스터 URL 추출 처리
-function getPrimaryPosterUrl(poster: string) {
-  return poster
+// 문자열 배열 결합 처리
+function getJoinedStringArrayValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (!Array.isArray(value)) {
+      continue
+    }
+
+    const joinedValue = value
+      .map((item) => {
+        if (typeof item === 'string' && item.trim()) {
+          return item
+        }
+
+        if (isRecord(item)) {
+          return getStringValue(item, ['name'])
+        }
+
+        return ''
+      })
+      .filter(Boolean)
+      .join(', ')
+
+    if (joinedValue) {
+      return joinedValue
+    }
+  }
+
+  return ''
+}
+
+// 대표 이미지 URL 추출 처리
+function getPrimaryImageUrl(imageUrl: string) {
+  return imageUrl
     .split('|')
     .map((url) => url.trim())
     .find(Boolean) ?? ''
@@ -56,13 +95,22 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     return null
   }
 
-  const title = getStringValue(data, ['title', 'movieNm', 'name', 'movieTitle'])
-  const poster = getPrimaryPosterUrl(
-    getStringValue(data, ['poster', 'posterUrl', 'imageUrl', 'posterPath', 'poster_path']),
-  )
   const id = getStringValue(data, ['id', 'movieId', 'movieCd'])
+  const title = getStringValue(data, ['title', 'movieNm', 'name', 'movieTitle'])
+  const poster = getPrimaryImageUrl(
+    getStringValue(data, ['poster_path', 'poster', 'posterUrl', 'imageUrl', 'posterPath']),
+  )
+  const backdrop = getPrimaryImageUrl(
+    getStringValue(data, ['backdrop_path', 'backdrop', 'backdropUrl', 'backdropPath']),
+  )
+  const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
+  const overview = getStringValue(data, ['overview', 'plot'])
+  const releaseDate = getStringValue(data, ['release_date', 'releaseDate', 'openDt'])
+  const originCountry = getJoinedStringArrayValue(data, ['origin_country'])
+  const runtime = getStringValue(data, ['runtime'])
+  const voteAverage = getStringValue(data, ['vote_average', 'voteAverage', 'vote', 'rating'])
 
-  if (!title && !poster && !id) {
+  if (!id && !title && !poster && !overview) {
     return null
   }
 
@@ -70,6 +118,29 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     id,
     title,
     poster,
+    backdrop,
+    genres,
+    overview,
+    releaseDate,
+    originCountry,
+    runtime,
+    voteAverage,
+  }
+}
+
+// 영화 상세 기본값 생성 처리
+function createInitialMovieDetail(movieId: string, movie?: MovieDetailState['movie']): MovieDetailView {
+  return {
+    id: movie?.id?.trim() || movieId,
+    title: movie?.title?.trim() || '영화 상세',
+    poster: movie?.poster?.trim() || '',
+    backdrop: '',
+    genres: '',
+    overview: '',
+    releaseDate: '',
+    originCountry: '',
+    runtime: '',
+    voteAverage: '',
   }
 }
 
@@ -85,11 +156,9 @@ function MovieDetailPage() {
   const initialMovie = state?.movie
 
   // 영화 상세 데이터 상태 관리
-  const [movieDetail, setMovieDetail] = useState<MovieDetailView>({
-    id: initialMovie?.id?.trim() || resolvedMovieId,
-    title: initialMovie?.title?.trim() || '영화 상세',
-    poster: initialMovie?.poster?.trim() || '',
-  })
+  const [movieDetail, setMovieDetail] = useState<MovieDetailView>(() =>
+    createInitialMovieDetail(resolvedMovieId, initialMovie),
+  )
 
   // 영화 상세 로딩 상태 관리
   const [isLoading, setIsLoading] = useState(Boolean(resolvedMovieId))
@@ -125,6 +194,13 @@ function MovieDetailPage() {
             id: normalizedDetail.id || resolvedMovieId,
             title: normalizedDetail.title || initialMovie?.title?.trim() || '영화 상세',
             poster: normalizedDetail.poster || initialMovie?.poster?.trim() || '',
+            backdrop: normalizedDetail.backdrop,
+            genres: normalizedDetail.genres,
+            overview: normalizedDetail.overview,
+            releaseDate: normalizedDetail.releaseDate,
+            originCountry: normalizedDetail.originCountry,
+            runtime: normalizedDetail.runtime,
+            voteAverage: normalizedDetail.voteAverage,
           })
         } else {
           setMessage('영화 정보를 불러오지 못했습니다.')
@@ -150,18 +226,55 @@ function MovieDetailPage() {
           </Link>
 
           <section className="movie-detail-hero" aria-labelledby="movie-detail-title">
-            <div className="movie-detail-poster-shell">
-              {movieDetail.poster ? (
-                <img className="movie-detail-poster" src={movieDetail.poster} alt={movieDetail.title} />
+            <div className="movie-detail-backdrop-shell">
+              {movieDetail.backdrop ? (
+                <img className="movie-detail-backdrop" src={movieDetail.backdrop} alt={movieDetail.title} />
               ) : null}
             </div>
 
-            <div className="movie-detail-copy">
-              <p className="movie-detail-id">{movieDetail.id || resolvedMovieId}</p>
-              <h1 id="movie-detail-title">{movieDetail.title}</h1>
-              {isLoading ? <p className="movie-detail-message">영화 정보를 불러오는 중입니다...</p> : null}
-              {!isLoading && message ? <p className="movie-detail-message">{message}</p> : null}
+            <div className="movie-detail-summary">
+              <div className="movie-detail-poster-shell">
+                {movieDetail.poster ? (
+                  <img className="movie-detail-poster" src={movieDetail.poster} alt={movieDetail.title} />
+                ) : null}
+              </div>
+
+              <div className="movie-detail-copy">
+                <p className="movie-detail-id">{movieDetail.id || resolvedMovieId}</p>
+                <h1 id="movie-detail-title">{movieDetail.title}</h1>
+
+                <dl className="movie-detail-meta">
+                  <div className="movie-detail-meta-row">
+                    <dt>장르</dt>
+                    <dd>{movieDetail.genres || '-'}</dd>
+                  </div>
+                  <div className="movie-detail-meta-row">
+                    <dt>개봉일</dt>
+                    <dd>{movieDetail.releaseDate || '-'}</dd>
+                  </div>
+                  <div className="movie-detail-meta-row">
+                    <dt>국가</dt>
+                    <dd>{movieDetail.originCountry || '-'}</dd>
+                  </div>
+                  <div className="movie-detail-meta-row">
+                    <dt>상영시간</dt>
+                    <dd>{movieDetail.runtime ? `${movieDetail.runtime}분` : '-'}</dd>
+                  </div>
+                  <div className="movie-detail-meta-row">
+                    <dt>평점</dt>
+                    <dd>{movieDetail.voteAverage || '-'}</dd>
+                  </div>
+                </dl>
+
+                {isLoading ? <p className="movie-detail-message">영화 정보를 불러오는 중입니다...</p> : null}
+                {!isLoading && message ? <p className="movie-detail-message">{message}</p> : null}
+              </div>
             </div>
+          </section>
+
+          <section className="movie-detail-overview-section" aria-labelledby="movie-overview-title">
+            <h2 id="movie-overview-title">줄거리</h2>
+            <p className="movie-detail-overview">{movieDetail.overview || '줄거리 정보가 아직 없습니다.'}</p>
           </section>
         </div>
       </main>
