@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerTmdbMovieSummaryListResponse;
+import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.service.MovieService;
 
@@ -110,7 +111,7 @@ public class MovieController {
             description = "영화 상세 정보를 응답한다"
     )
     @GetMapping("/{movieId}")
-    public String getMovieDetail(@PathVariable Long movieId) {
-        return movieService.getMovieDetail(movieId);
+    public ResponseEntity<ApiResult<MovieDetailDto>> getMovieDetail(@PathVariable Long movieId) {
+        return ResponseEntity.ok().body(ApiResult.success("영화 상세 정보",movieService.getMovieDetail(movieId)));
     }
 }

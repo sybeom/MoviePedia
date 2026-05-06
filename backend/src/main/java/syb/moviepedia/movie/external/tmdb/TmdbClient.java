@@ -1,9 +1,11 @@
 package syb.moviepedia.movie.external.tmdb;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import syb.moviepedia.common.exception.TmdbApiException;
+import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
@@ -12,6 +14,7 @@ import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
  * TMDB API 호출하는 클라이언트 클래스
  * 인기, 개봉예정, 현재 상영 API는 장르가 이름이 아닌 번호로 오기때문에 장르 번호와 장르명을 응답 받는 장르 API를 별도 호출한다
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TmdbClient {
@@ -43,9 +46,8 @@ public class TmdbClient {
         return fetchMovieReleaseDate(movieId); // 개봉일 api로 관람등급을 얻는다.
     }
 
-
     // 영화 상세
-    public String getMovieDetail(Long movieId) {
+    public MovieDetailDto getMovieDetail(Long movieId) {
         return fetchMovieDetail(movieId);
     }
 
@@ -84,11 +86,11 @@ public class TmdbClient {
     }
 
     // 개봉일 api 호출 - 연령 등급 얻기(개봉일 api에서 영화 연령 등급을 얻을 수 있기때문)
-    private TmdbMovieCertification fetchMovieReleaseDate(Long moveId) {
+    private TmdbMovieCertification fetchMovieReleaseDate(Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/movie/" + moveId + "/release_dates")
+                            .path("/movie/" + movieId + "/release_dates")
                             .queryParam("language", "ko-KR")
                             .queryParam("region", "KR")
                             .build())
@@ -100,8 +102,8 @@ public class TmdbClient {
         }
     }
 
-    // 영화 상세 api 호출
-    private String fetchMovieDetail(Long movieId) {
+    // 영화 상세 api 호출 (영화 상세는 변환할 데이터가 크게 없기 때문에 Dto 클래스로 받고 그대로 반환)
+    private MovieDetailDto fetchMovieDetail(Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -110,9 +112,10 @@ public class TmdbClient {
                             .queryParam("region", "KR")
                             .build(movieId))
                     .retrieve()
-                    .bodyToMono(String.class)
+                    .bodyToMono(MovieDetailDto.class)
                     .block();
         } catch (Exception e) {
+            log.error("TMDB 개봉 날짜 API 호출 실패. movieId={}", movieId, e);
             throw new TmdbApiException("TMDB 영화 상세 API 호출 실패", e);
         }
     }

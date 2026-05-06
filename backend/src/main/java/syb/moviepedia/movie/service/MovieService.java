@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import syb.moviepedia.common.ReleaseType;
+import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
@@ -66,8 +67,8 @@ public class MovieService {
                 .toList();
     }
 
-    // 영화 상세
-    public String getMovieDetail(Long movieId) {
+    // 영화 상세 (영화 상세는 변환할 데이터가 크게 없기에 Dto 그대로 반환)
+    public MovieDetailDto getMovieDetail(Long movieId) {
         return tmdbClient.getMovieDetail(movieId);
     }
 
@@ -80,7 +81,7 @@ public class MovieService {
                 ));
     }
 
-    // 프론트 응답 DTO 변환
+    // 프론트 응답 Json -> 영화 요약 dto 변환
     private TmdbMovieSummaryDto toMovieSummaryDto(
             TmdbMovieSummary movie,
             Map<Integer, String> genreMap,
