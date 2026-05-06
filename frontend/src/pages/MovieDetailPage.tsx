@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { request } from '../api/client'
 import Header from '../components/Header'
 import './MovieDetailPage.css'
@@ -83,10 +83,17 @@ function getJoinedStringArrayValue(record: Record<string, unknown>, keys: string
 
 // 대표 이미지 URL 추출 처리
 function getPrimaryImageUrl(imageUrl: string) {
-  return imageUrl
-    .split('|')
-    .map((url) => url.trim())
-    .find(Boolean) ?? ''
+  return (
+    imageUrl
+      .split('|')
+      .map((url) => url.trim())
+      .find(Boolean) ?? ''
+  )
+}
+
+// 평점 표시 문자열 반환 처리
+function getDisplayRating(value: string) {
+  return value.trim() || '-'
 }
 
 // 영화 상세 응답 정규화 처리
@@ -219,64 +226,86 @@ function MovieDetailPage() {
     <div className="app">
       <Header showAuthActions />
 
-      <main className="movie-detail-container">
-        <div className="movie-detail-content">
-          <Link className="movie-detail-back-link" to="/">
-            홈으로
-          </Link>
+      <main className="movie-detail-page">
+        <section className="movie-detail-hero" aria-labelledby="movie-detail-title">
+          <div className="movie-detail-backdrop-shell">
+            {movieDetail.backdrop ? (
+              <img className="movie-detail-backdrop" src={movieDetail.backdrop} alt={movieDetail.title} />
+            ) : null}
+          </div>
+          <div className="movie-detail-overlay" />
 
-          <section className="movie-detail-hero" aria-labelledby="movie-detail-title">
-            <div className="movie-detail-backdrop-shell">
-              {movieDetail.backdrop ? (
-                <img className="movie-detail-backdrop" src={movieDetail.backdrop} alt={movieDetail.title} />
-              ) : null}
-            </div>
+          <div className="movie-detail-hero-content">
+            <div className="movie-detail-panel">
+              <div className="movie-detail-summary">
+                <div className="movie-detail-poster-shell">
+                  {movieDetail.poster ? (
+                    <img className="movie-detail-poster" src={movieDetail.poster} alt={movieDetail.title} />
+                  ) : null}
+                </div>
 
-            <div className="movie-detail-summary">
-              <div className="movie-detail-poster-shell">
-                {movieDetail.poster ? (
-                  <img className="movie-detail-poster" src={movieDetail.poster} alt={movieDetail.title} />
-                ) : null}
-              </div>
+                <div className="movie-detail-copy">
+                  <h1 id="movie-detail-title">{movieDetail.title}</h1>
 
-              <div className="movie-detail-copy">
-                <p className="movie-detail-id">{movieDetail.id || resolvedMovieId}</p>
-                <h1 id="movie-detail-title">{movieDetail.title}</h1>
+                  <dl className="movie-detail-meta">
+                    <div className="movie-detail-meta-row">
+                      <dt>장르</dt>
+                      <dd>{movieDetail.genres || '-'}</dd>
+                    </div>
+                    <div className="movie-detail-meta-row">
+                      <dt>개봉일</dt>
+                      <dd>{movieDetail.releaseDate || '-'}</dd>
+                    </div>
+                    <div className="movie-detail-meta-row">
+                      <dt>국가</dt>
+                      <dd>{movieDetail.originCountry || '-'}</dd>
+                    </div>
+                    <div className="movie-detail-meta-row">
+                      <dt>상영시간</dt>
+                      <dd>{movieDetail.runtime ? `${movieDetail.runtime}분` : '-'}</dd>
+                    </div>
+                  </dl>
 
-                <dl className="movie-detail-meta">
-                  <div className="movie-detail-meta-row">
-                    <dt>장르</dt>
-                    <dd>{movieDetail.genres || '-'}</dd>
-                  </div>
-                  <div className="movie-detail-meta-row">
-                    <dt>개봉일</dt>
-                    <dd>{movieDetail.releaseDate || '-'}</dd>
-                  </div>
-                  <div className="movie-detail-meta-row">
-                    <dt>국가</dt>
-                    <dd>{movieDetail.originCountry || '-'}</dd>
-                  </div>
-                  <div className="movie-detail-meta-row">
-                    <dt>상영시간</dt>
-                    <dd>{movieDetail.runtime ? `${movieDetail.runtime}분` : '-'}</dd>
-                  </div>
-                  <div className="movie-detail-meta-row">
-                    <dt>평점</dt>
-                    <dd>{movieDetail.voteAverage || '-'}</dd>
-                  </div>
-                </dl>
+                  <section className="movie-detail-overview-section">
+                    <p className="movie-detail-overview">{movieDetail.overview || '줄거리 정보가 아직 없습니다.'}</p>
+                  </section>
 
-                {isLoading ? <p className="movie-detail-message">영화 정보를 불러오는 중입니다...</p> : null}
-                {!isLoading && message ? <p className="movie-detail-message">{message}</p> : null}
+                  {isLoading ? <p className="movie-detail-message">영화 정보를 불러오는 중입니다...</p> : null}
+                  {!isLoading && message ? <p className="movie-detail-message">{message}</p> : null}
+                </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="movie-detail-overview-section" aria-labelledby="movie-overview-title">
-            <h2 id="movie-overview-title">줄거리</h2>
-            <p className="movie-detail-overview">{movieDetail.overview || '줄거리 정보가 아직 없습니다.'}</p>
-          </section>
-        </div>
+        <section className="movie-detail-ratings-shell" aria-label="영화 평점">
+          <div className="movie-detail-ratings">
+            <article className="movie-detail-rating-card">
+              <p className="movie-detail-rating-label">피디아 평점</p>
+              <p className="movie-detail-rating-value">-</p>
+            </article>
+
+            <article className="movie-detail-rating-card">
+              <p className="movie-detail-rating-label">글로벌 평점</p>
+              <p className="movie-detail-rating-value">{getDisplayRating(movieDetail.voteAverage)}</p>
+            </article>
+          </div>
+        </section>
+
+        <section className="movie-detail-comments-shell" aria-labelledby="movie-detail-comments-title">
+          <div className="movie-detail-comments">
+            <h2 id="movie-detail-comments-title">한줄 코멘트</h2>
+          </div>
+        </section>
+
+        <section
+          className="movie-detail-recommendations-shell"
+          aria-labelledby="movie-detail-recommendations-title"
+        >
+          <div className="movie-detail-recommendations">
+            <h2 id="movie-detail-recommendations-title">관련 추천 영화</h2>
+          </div>
+        </section>
       </main>
     </div>
   )

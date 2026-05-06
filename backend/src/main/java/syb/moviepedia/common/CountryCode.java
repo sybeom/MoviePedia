@@ -14,7 +14,8 @@ public enum CountryCode {
     CA("캐나다"),
     AU("호주"),
     ES("스페인"),
-    IT("이탈리아");
+    IT("이탈리아"),
+    RU("러시아");
 
     private final String koreanName;
 
