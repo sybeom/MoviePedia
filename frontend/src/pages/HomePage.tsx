@@ -40,7 +40,7 @@ const CERTIFICATION_ICON_MAP: Record<string, string> = {
   '19': rating19Icon,
   ALL: ratingAllIcon,
 }
-
+ 
 // 객체 데이터 여부 확인
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
