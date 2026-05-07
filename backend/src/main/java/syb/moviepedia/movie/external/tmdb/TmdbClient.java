@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import syb.moviepedia.common.exception.TmdbApiException;
 import syb.moviepedia.movie.dto.MovieDetailDto;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
+import syb.moviepedia.movie.external.tmdb.dto.*;
+
+import java.util.List;
 
 /**
  * TMDB API 호출하는 클라이언트 클래스
@@ -20,6 +20,11 @@ import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieSummaryList;
 public class TmdbClient {
 
     private final WebClient tmdbWebClient;
+
+    // 전체 영화
+    public TmdbInitMovieList getInitMovies() {
+        return fetchInitMovies("/discover/movie");
+    }
 
     // 인기 영화
     public TmdbMovieSummaryList getPopularMovies() {
@@ -51,7 +56,25 @@ public class TmdbClient {
         return fetchMovieDetail(movieId);
     }
 
-    // 영화 api 호출
+    // 초기 영화 호출
+    private TmdbInitMovieList fetchInitMovies(String path) {
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                                    .path(path)
+                                    .queryParam("language", "ko-KR")
+                                    .queryParam("page",1)
+                                    .queryParam("region", "KR")
+                                    .build())
+                    .retrieve()
+                    .bodyToMono(TmdbInitMovieList.class)
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 영화 초기화 API 호출 실패. path=" + path, e);
+        }
+    }
+
+    // 영화 api 호출  // TODO: 주석 고치기 카테고리 API로
     private TmdbMovieSummaryList fetchMovieSummaryList(String path) {
         try {
             return tmdbWebClient.get()

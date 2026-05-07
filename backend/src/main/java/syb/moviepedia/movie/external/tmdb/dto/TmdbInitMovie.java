@@ -1,0 +1,37 @@
+package syb.moviepedia.movie.external.tmdb.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+
+/**
+ * /discover api 호출 응답의 results를 매핑하는 클래스
+ */
+public record TmdbInitMovie(
+        Long id,
+
+        String title,
+
+        @JsonProperty("backdrop_path")
+        String backdropPath,
+
+        @JsonProperty("poster_path")
+        String posterPath,
+
+        @JsonProperty("genre_ids")
+        List<String> genres,
+
+        String overview,
+
+        @JsonProperty("release_date")
+        String releaseDate,
+
+        @JsonProperty("origin_country")
+        List<String> country,
+
+        String runtime,
+
+        @JsonProperty("vote_average")
+        String globalRating
+) {
+}

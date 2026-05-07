@@ -25,7 +25,7 @@ public class Movie {
     @Column(name = "poster_path")
     String posterPath;
 
-    List<TmdbGenre> genres;
+//    List<TmdbGenre> genres; // TODO: 엔티티에 TmdbGenre 타입으로 저장 불가. String으로 변경하기
 
     String overview;
 
