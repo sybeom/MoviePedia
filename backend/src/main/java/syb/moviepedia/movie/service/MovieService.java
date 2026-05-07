@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import syb.moviepedia.common.ReleaseType;
+import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 @Service
 public class MovieService {
     private final TmdbClient tmdbClient;
+    private MemberRepository memberRepository;
     /**
      * 인기 영화 흐름 *
      * 인기 영화 목록 APi 호출 및 목록(json) 가져옴 -> 장르 API 호출 및 장르 정보 가져옴
