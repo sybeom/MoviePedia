@@ -2,7 +2,9 @@ package syb.moviepedia.movie.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import syb.moviepedia.common.CountryCode;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenre;
+import syb.moviepedia.movie.domain.TmdbGenre;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreResponse;
+import syb.moviepedia.movie.repository.TmdbGenreRepository;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public record MovieDetailDto(
         @JsonProperty("poster_path")
         String posterPath,
 
-        List<TmdbGenre> genres,
+        List<TmdbGenreResponse> genres,
 
         String overview,
 

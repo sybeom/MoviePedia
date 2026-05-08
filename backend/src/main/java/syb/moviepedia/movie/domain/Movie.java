@@ -1,9 +1,7 @@
 package syb.moviepedia.movie.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Builder;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenre;
 
 import java.util.List;
 // TODO: DB에서 불러오는 방식이면 데이터 정보 최신화에 대해서 고민할텐데 이 부분은 일주일에 한번만 최신화를 진행하든 그렇게 해야할 듯하다.

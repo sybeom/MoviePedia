@@ -8,6 +8,6 @@ import java.util.List;
  * 즉, 필드명과 키 명이 동일해야한다.
  */
 public record TmdbGenreList(
-        List<TmdbGenre> genres
+        List<TmdbGenreResponse> genres
 ) {
 }
