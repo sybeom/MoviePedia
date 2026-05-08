@@ -19,7 +19,7 @@ public record TmdbInitMovie(
         String posterPath,
 
         @JsonProperty("genre_ids")
-        List<String> genres,
+        List<Integer> genres,
 
         String overview,
 
