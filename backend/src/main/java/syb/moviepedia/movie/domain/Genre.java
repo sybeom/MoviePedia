@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TmdbGenre {
+public class Genre {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 

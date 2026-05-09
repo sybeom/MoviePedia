@@ -5,13 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.movie.domain.Country;
+import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.domain.Movie;
-import syb.moviepedia.movie.domain.TmdbGenre;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbInitMovieList;
+import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
 import syb.moviepedia.movie.repository.TmdbCountryRepository;
-import syb.moviepedia.movie.repository.TmdbGenreRepository;
 
 import java.util.List;
 
@@ -26,11 +26,11 @@ public class MovieInitService {
 
     private final TmdbClient tmdbClient;
     private final MovieRepository movieRepository;
-    private final TmdbGenreRepository tmdbGenreRepository;
+    private final GenreRepository tmdbGenreRepository;
     private final TmdbCountryRepository tmdbCountryRepository;
 
     public void initMovies() {
-        if (tmdbGenreRepository.count() > 0) {
+        if (movieRepository.count() > 0) {
             return;
         }
         log.info("init() 초기 데이터 호출");
@@ -49,11 +49,11 @@ public class MovieInitService {
         }
 
         log.info("initGenres() 실행, 장르 데이터 변경 감지");
-        List<TmdbGenre> genres = tmdbClient.getMovieGenres().genres().stream()
+        List<Genre> genres = tmdbClient.getMovieGenres().genres().stream()
                 .filter(genre ->
                     !tmdbGenreRepository.existsByGenreId(genre.id())) // 존재하지 않는 값들만
                 .map(genre ->
-                        TmdbGenre.builder()
+                        Genre.builder()
                                 .genreId(genre.id())
                                 .name(genre.name())
                                 .build())
