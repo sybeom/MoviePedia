@@ -51,6 +51,11 @@ public class TmdbClient {
         return fetchMovieReleaseDate(movieId); // 개봉일 api로 관람등급을 얻는다.
     }
 
+    // 국가 정보
+    public List<TmdbCountryResponse> getCountries() {
+        return fetchCountries();
+    }
+
     // 영화 상세
     public MovieDetailDto getMovieDetail(Long movieId) {
         return fetchMovieDetail(movieId);
@@ -105,6 +110,23 @@ public class TmdbClient {
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 장르 목록 API 호출 실패.", e);
+        }
+    }
+
+    // 국가 코드 정보 API 호출
+    private List<TmdbCountryResponse> fetchCountries() {
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/configuration/countries")
+                            .queryParam("language", "ko-KR")
+                            .build())
+                    .retrieve()
+                    .bodyToFlux(TmdbCountryResponse.class) // 응답의 최상위 구조가 객체가 아니라 배열이기때문에 List로 곧바로 받아야한다.
+                    .collectList()
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 국가 코드 API 호출 실패.", e);
         }
     }
 

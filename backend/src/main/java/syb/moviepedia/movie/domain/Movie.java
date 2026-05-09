@@ -23,7 +23,10 @@ public class Movie {
     @Column(name = "poster_path")
     String posterPath;
 
+    @Column(columnDefinition = "json")
     List<String> genres;
+
+    String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
 
     @Column(columnDefinition = "TEXT")
     String overview;
@@ -37,6 +40,4 @@ public class Movie {
 
     @Column(name = "global_rating")
     String globalRating;
-
-    String certification;
 }

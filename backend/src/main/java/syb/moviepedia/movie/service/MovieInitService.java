@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.movie.domain.Country;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.TmdbGenre;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbInitMovieList;
 import syb.moviepedia.movie.repository.MovieRepository;
+import syb.moviepedia.movie.repository.TmdbCountryRepository;
 import syb.moviepedia.movie.repository.TmdbGenreRepository;
 
 import java.util.List;
@@ -25,15 +27,18 @@ public class MovieInitService {
     private final TmdbClient tmdbClient;
     private final MovieRepository movieRepository;
     private final TmdbGenreRepository tmdbGenreRepository;
+    private final TmdbCountryRepository tmdbCountryRepository;
 
-    public TmdbInitMovieList init() {
+    public void initMovies() {
+        if (tmdbGenreRepository.count() > 0) {
+            return;
+        }
+        log.info("init() 초기 데이터 호출");
         // 데이터 가공
         List<Movie> movies = toMovies(tmdbClient.getInitMovies());
 
         // 리포지토리 저장
         movieRepository.saveAll(movies);
-
-        return tmdbClient.getInitMovies();
     }
 
     // 장르 데이터 초기화(로드)
@@ -46,7 +51,7 @@ public class MovieInitService {
         log.info("initGenres() 실행, 장르 데이터 변경 감지");
         List<TmdbGenre> genres = tmdbClient.getMovieGenres().genres().stream()
                 .filter(genre ->
-                    !tmdbGenreRepository.existsByGenreId(genre.id()))
+                    !tmdbGenreRepository.existsByGenreId(genre.id())) // 존재하지 않는 값들만
                 .map(genre ->
                         TmdbGenre.builder()
                                 .genreId(genre.id())
@@ -56,9 +61,26 @@ public class MovieInitService {
         tmdbGenreRepository.saveAll(genres);
     }
 
+    // 국가 데이터 초기화
+    public void initCountries() {
+        if (tmdbCountryRepository.count() > 0) {
+            return;
+        }
+        log.info("initCountries() 실행, 국가 데이터 변경 감지");
+        List<Country> countries = tmdbClient.getCountries().stream()
+                .map(country ->
+                        Country.builder()
+                                .code(country.code())
+                                .name(country.name())
+                                .build())
+                .toList();
+        tmdbCountryRepository.saveAll(countries);
+    }
+
     // Tmdb 영화 -> Movie 엔티티 가공
     private List<Movie> toMovies(TmdbInitMovieList tmdbMovieList) {
         // TODO: 백드롭 및 포스터 완전 경로로 변경, 관람 등급 설정, 국가 설정, 글로벌 평점 소숫점 변경, runtime 설정
+        // TODO: 국가 및 관람 등급도 별도로 가져와야한다.
         return tmdbMovieList.results().stream()
                 .map(movie ->
                         Movie.builder()

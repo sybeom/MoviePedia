@@ -19,6 +19,7 @@ public class MovieDataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         movieInitService.initGenres();
-        log.info("init: {}", movieInitService.init());
+        movieInitService.initMovies();
+        movieInitService.initCountries();
     }
 }
