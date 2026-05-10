@@ -8,7 +8,8 @@ import java.util.List;
  * /discover api 호출 응답의 results를 매핑하는 클래스
  */
 public record TmdbInitMovie( // TODO: 클래스명 변경 고민 해보기
-        Long id,
+        @JsonProperty("id")
+        Long movieId,
 
         String title,
 
@@ -30,6 +31,8 @@ public record TmdbInitMovie( // TODO: 클래스명 변경 고민 해보기
         List<String> country,
 
         String runtime,
+
+        Double popularity,
 
         @JsonProperty("vote_average")
         String globalRating

@@ -22,23 +22,23 @@ public class TmdbClient {
     private final WebClient tmdbWebClient;
 
     // 전체 영화
-    public TmdbInitMovieList getInitMovies() {
+    public TmdbMovieList getInitMovies() {
         return fetchInitMovies("/discover/movie");
     }
 
     // 인기 영화
-    public TmdbMovieSummaryList getPopularMovies() {
-        return fetchMovieSummaryList("/movie/popular");
+    public TmdbMovieList getPopularMovies() {
+        return fetchMovieList("/movie/popular");
     }
 
     // 현재 상영 영화
-    public TmdbMovieSummaryList getNowPlayingMovies() {
-        return fetchMovieSummaryList("/movie/now_playing");
+    public TmdbMovieList getNowPlayingMovies() {
+        return fetchMovieList("/movie/now_playing");
     }
 
     // 개봉 예정작 api 호출
-    public TmdbMovieSummaryList getUpcomingMovies() {
-        return fetchMovieSummaryList("/movie/upcoming");
+    public TmdbMovieList getUpcomingMovies() {
+        return fetchMovieList("/movie/upcoming");
     }
 
     // 영화 장르 정보
@@ -62,7 +62,7 @@ public class TmdbClient {
     }
 
     // 초기 영화 호출
-    private TmdbInitMovieList fetchInitMovies(String path) {
+    private TmdbMovieList fetchInitMovies(String path) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -72,7 +72,7 @@ public class TmdbClient {
                                     .queryParam("region", "KR")
                                     .build())
                     .retrieve()
-                    .bodyToMono(TmdbInitMovieList.class)
+                    .bodyToMono(TmdbMovieList.class)
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 영화 초기화 API 호출 실패. path=" + path, e);
@@ -80,7 +80,7 @@ public class TmdbClient {
     }
 
     // 영화 api 호출  // TODO: 주석 고치기 카테고리 API로
-    private TmdbMovieSummaryList fetchMovieSummaryList(String path) {
+    private TmdbMovieList fetchMovieList(String path) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -90,7 +90,7 @@ public class TmdbClient {
                             .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
                             .build())
                     .retrieve()
-                    .bodyToMono(TmdbMovieSummaryList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
+                    .bodyToMono(TmdbMovieList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 영화 목록 API 호출 실패. path=" + path, e);

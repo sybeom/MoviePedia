@@ -29,7 +29,7 @@ public class MovieService {
      */
     // 인기 영화
     public List<TmdbMovieSummaryDto> getPopularMovies() {
-        TmdbMovieSummaryList movieResponse = tmdbClient.getPopularMovies();
+        TmdbMovieList movieResponse = tmdbClient.getPopularMovies();
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
@@ -37,13 +37,13 @@ public class MovieService {
 
         return movieResponse.results().stream()
                 .map(movie ->
-                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.id()), true))
+                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.movieId()), true))
                 .toList();
     }
 
     // 상영중인 영화
     public List<TmdbMovieSummaryDto> getNowPlayingMovies() {
-        TmdbMovieSummaryList movieResponse = tmdbClient.getNowPlayingMovies();
+        TmdbMovieList movieResponse = tmdbClient.getNowPlayingMovies();
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
@@ -51,13 +51,13 @@ public class MovieService {
 
         return movieResponse.results().stream()
                 .map(movie ->
-                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.id()), true))
+                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.movieId()), true))
                 .toList();
     }
 
     // 개봉 예정작
     public List<TmdbMovieSummaryDto> getUpcomingMovies() {
-        TmdbMovieSummaryList movieResponse = tmdbClient.getUpcomingMovies();
+        TmdbMovieList movieResponse = tmdbClient.getUpcomingMovies();
         TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
 
         // 장르 정보 Map 저장
@@ -65,7 +65,7 @@ public class MovieService {
 
         return movieResponse.results().stream()
                 .map(movie ->
-                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.id()), false))
+                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.movieId()), false))
                 .toList();
     }
 
@@ -85,7 +85,7 @@ public class MovieService {
 
     // 프론트 응답 Json -> 영화 요약 dto 변환
     private TmdbMovieSummaryDto toMovieSummaryDto(
-            TmdbMovieSummary movie,
+            TmdbInitMovie movie,
             Map<Integer, String> genreMap,
             TmdbMovieCertification movieCertification,
             boolean includeVoteAverage
@@ -97,18 +97,18 @@ public class MovieService {
         String certification= extractCertification(movieCertification);
 
         return TmdbMovieSummaryDto.builder()
-                .id(movie.id())
+                .id(movie.movieId())
                 .title(movie.title())
                 .poster(generatePosterURL(movie.posterPath()))
                 .genre(genreNames)
                 .certification(certification)
-                .voteAverage(includeVoteAverage ? movie.voteAverage() : null) // 개봉예정에는 평점없도록하기 위해 voteAverage은 null
+                .voteAverage(includeVoteAverage ? movie.globalRating() : null) // 개봉예정에는 평점없도록하기 위해 voteAverage은 null
                 .build();
     }
 
     // 장르 번호에 해당하는 장르들 추출
-    private List<String> extractGenres(TmdbMovieSummary movie, Map<Integer, String> genreMap) {
-        return movie.genreIds().stream()
+    private List<String> extractGenres(TmdbInitMovie movie, Map<Integer, String> genreMap) {
+        return movie.genres().stream()
                 .map(genreId -> genreMap.get(genreId))
                 .filter(Objects::nonNull)
                 .toList();
