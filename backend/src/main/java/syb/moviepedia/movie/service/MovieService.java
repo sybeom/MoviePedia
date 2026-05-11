@@ -110,7 +110,10 @@ public class MovieService {
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
     private MovieSummaryDto toMovieSummaryDto(MovieCategory category) {
-        Movie movie = category.getMovie();
+
+        // TODO: N+1 문제 추후 해결해보기
+        Movie movie = category.getMovie(); // N+1 문제 발생할 수 있음. 추후 알아보고 수정
+
         return MovieSummaryDto.builder()
                 .movieCode(movie.getMovieId())
                 .title(movie.getTitle())

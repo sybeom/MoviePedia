@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
-import syb.moviepedia.common.swagger.SwaggerTmdbMovieSummaryListResponse;
+import syb.moviepedia.common.swagger.SwaggerMovieCategoriesDtoResponse;
 import syb.moviepedia.movie.dto.MovieCategoriesDto;
 import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
@@ -32,6 +31,26 @@ import java.util.List;
 public class MovieController {
     private final MovieService movieService;
 
+    @Operation(
+            summary = "카테고리 별 영화 목록",
+            description = "홈 화면 카테고리 별 영화 목록을 가져온다.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "성공",
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerMovieCategoriesDtoResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "502",
+                            description = "실패",
+                            content = @Content(
+                                    schema = @Schema(implementation = SwaggerApiResponse.class)
+                            )
+                    )
+            }
+    )
     @GetMapping
     public ResponseEntity<ApiResult<MovieCategoriesDto>> home() {
         return ResponseEntity.ok().body(ApiResult.success("카테고리 별 영화 목록 조회 성공",movieService.getCategoryMovies()));
@@ -45,7 +64,7 @@ public class MovieController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(
-                                    schema = @Schema(implementation = SwaggerTmdbMovieSummaryListResponse.class)
+                                    schema = @Schema(implementation = SwaggerMovieCategoriesDtoResponse.class)
                             )
                     ),
                     @ApiResponse(
@@ -70,7 +89,7 @@ public class MovieController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(
-                                    schema = @Schema(implementation = SwaggerTmdbMovieSummaryListResponse.class)
+                                    schema = @Schema(implementation = SwaggerMovieCategoriesDtoResponse.class)
                             )
                     ),
                     @ApiResponse(
@@ -95,7 +114,7 @@ public class MovieController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(
-                                    schema = @Schema(implementation = SwaggerTmdbMovieSummaryListResponse.class)
+                                    schema = @Schema(implementation = SwaggerMovieCategoriesDtoResponse.class)
                             )
                     ),
                     @ApiResponse(
