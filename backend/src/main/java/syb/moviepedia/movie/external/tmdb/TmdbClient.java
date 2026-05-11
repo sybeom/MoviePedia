@@ -48,7 +48,8 @@ public class TmdbClient {
 
     // 관람 등급
     public TmdbMovieCertification getMovieCertification(Long movieId) {
-        return fetchMovieReleaseDate(movieId); // 개봉일 api로 관람등급을 얻는다.
+        // 개봉일 api로 관람등급을 얻는다.
+        return fetchMovieReleaseDate(movieId);
     }
 
     // 국가 정보

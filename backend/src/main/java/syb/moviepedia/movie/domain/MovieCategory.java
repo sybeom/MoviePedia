@@ -1,9 +1,7 @@
 package syb.moviepedia.movie.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import syb.moviepedia.common.MovieCategoryType;
 
 import java.time.LocalDateTime;
@@ -13,6 +11,8 @@ import java.time.LocalDateTime;
  */
 @Builder
 @Entity
+@Getter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class MovieCategory {

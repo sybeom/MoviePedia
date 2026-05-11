@@ -3,12 +3,16 @@ package syb.moviepedia.movie.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.ReleaseType;
-import syb.moviepedia.member.repository.MemberRepository;
-import syb.moviepedia.movie.dto.MovieDetailDto;
-import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
+import syb.moviepedia.movie.domain.Movie;
+import syb.moviepedia.movie.domain.MovieCategory;
+import syb.moviepedia.movie.dto.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
+import syb.moviepedia.movie.repository.MovieCategoryRepository;
+import syb.moviepedia.movie.repository.MovieRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +24,28 @@ import java.util.stream.Collectors;
 @Service
 public class MovieService {
     private final TmdbClient tmdbClient;
-    private MemberRepository memberRepository;
+    private final MovieCategoryRepository movieCategoryRepository;
+    private final MovieRepository movieRepository;
+
+    @Transactional(readOnly = true)
+    public MovieCategoriesDto getCategoryMovies() {
+        // 각 카테고리별 데이터 가져오기
+        List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
+        List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
+        List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.NOW_PLAYING);
+
+        // DTO로 가공
+        List<MovieSummaryDto> popularListDto = popularList.stream().map(response -> toMovieSummaryDto(response)).toList();
+        List<MovieSummaryDto> upcomingListDto = upcomingList.stream().map(response -> toMovieSummaryDto(response)).toList();
+        List<MovieSummaryDto> nowPlayingListDto = nowPlayingList.stream().map(response -> toMovieSummaryDto(response)).toList();
+
+        log.info("Popular movies found: {}", popularList);
+        return MovieCategoriesDto.builder()
+                .popular(popularListDto)
+                .upcoming(upcomingListDto)
+                .nowPlaying(nowPlayingListDto)
+                .build();
+    }
     /**
      * 인기 영화 흐름 *
      * 인기 영화 목록 APi 호출 및 목록(json) 가져옴 -> 장르 API 호출 및 장르 정보 가져옴
@@ -81,6 +106,17 @@ public class MovieService {
                         genre -> genre.id(),
                         genre -> genre.name()
                 ));
+    }
+
+    // 카테고리 영화 -> 영화 요약 DTO 가공
+    private MovieSummaryDto toMovieSummaryDto(MovieCategory category) {
+        Movie movie = category.getMovie();
+        return MovieSummaryDto.builder()
+                .movieCode(movie.getMovieId())
+                .title(movie.getTitle())
+                .poster(movie.getPosterPath())
+                .genre(movie.getGenres())
+                .build();
     }
 
     // 프론트 응답 Json -> 영화 요약 dto 변환

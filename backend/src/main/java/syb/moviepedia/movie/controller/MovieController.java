@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerTmdbMovieSummaryListResponse;
+import syb.moviepedia.movie.dto.MovieCategoriesDto;
 import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 import syb.moviepedia.movie.service.MovieService;
@@ -30,6 +31,11 @@ import java.util.List;
 @RequestMapping("/movies")
 public class MovieController {
     private final MovieService movieService;
+
+    @GetMapping
+    public ResponseEntity<ApiResult<MovieCategoriesDto>> home() {
+        return ResponseEntity.ok().body(ApiResult.success("카테고리 별 영화 목록 조회 성공",movieService.getCategoryMovies()));
+    }
 
     @Operation(
             summary = "인기 영화 목록",
