@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { API_BASE_URL, isApiError, request } from '../api/client'
+import { request } from '../api/client'
 import rating12Icon from '../assets/ratings/12.svg'
 import rating15Icon from '../assets/ratings/15.svg'
 import rating19Icon from '../assets/ratings/19.svg'
@@ -10,15 +10,17 @@ import { clearAuthSession, getAuthSession } from '../utils/authStorage'
 import { authRequest, isAuthSessionError } from '../utils/fetchUtil'
 import './HomePage.css'
 
-// 검색 응답 데이터 타입 정의
-type MovieSearchResponse = {
-  items?: unknown[]
-}
-
-// 로그인 상태 확인 응답 데이터 타입 정의
+// 로그인 상태 확인 응답 타입 정의
 type AuthMeResponse = {
   loginId?: string
   nickname?: string
+}
+
+// 영화 묶음 응답 타입 정의
+type MovieCollectionResponse = {
+  popular?: unknown[]
+  upcoming?: unknown[]
+  nowPlaying?: unknown[]
 }
 
 // 영화 카드 데이터 타입 정의
@@ -32,6 +34,23 @@ type MovieCard = {
   certification: string
 }
 
+// 영화 섹션 속성 타입 정의
+type MovieSectionProps = {
+  title: string
+  description: string
+  titleId: string
+  movies: MovieCard[]
+  placeholderMovies: MovieCard[]
+  isLoading: boolean
+  message: string
+  currentPage: number
+  totalPages: number
+  visibleMovies: MovieCard[]
+  onPrevPage: () => void
+  onNextPage: () => void
+  showRankBadge?: boolean
+}
+
 const MOVIES_PER_PAGE = 5
 const PLACEHOLDER_CARD_COUNT = 5
 const CERTIFICATION_ICON_MAP: Record<string, string> = {
@@ -40,7 +59,7 @@ const CERTIFICATION_ICON_MAP: Record<string, string> = {
   '19': rating19Icon,
   ALL: ratingAllIcon,
 }
- 
+
 // 객체 데이터 여부 확인
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -59,7 +78,7 @@ function getStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
-// 문자열 또는 숫자 필드 문자열 변환 처리
+// 문자열 또는 숫자 필드 추출 처리
 function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -106,13 +125,15 @@ function getGenreValue(record: Record<string, unknown>) {
 
 // 대표 포스터 URL 추출 처리
 function getPrimaryPosterUrl(poster: string) {
-  return poster
-    .split('|')
-    .map((url) => url.trim())
-    .find(Boolean) ?? ''
+  return (
+    poster
+      .split('|')
+      .map((url) => url.trim())
+      .find(Boolean) ?? ''
+  )
 }
 
-// 관람 등급 문자열 추출 처리
+// 관람등급 문자열 추출 처리
 function getCertificationValue(record: Record<string, unknown>) {
   const certification = getStringValue(record, ['certification'])
 
@@ -123,88 +144,37 @@ function getCertificationValue(record: Record<string, unknown>) {
   return certification.toUpperCase()
 }
 
-// 관람 등급 아이콘 경로 조회 처리
+// 관람등급 아이콘 경로 조회 처리
 function getCertificationIcon(certification: string) {
   return CERTIFICATION_ICON_MAP[certification] ?? ''
 }
 
-// 문자열 JSON 응답 파싱 처리
-function parseMovieData(data: unknown) {
-  if (typeof data !== 'string') {
-    return data
-  }
-
-  try {
-    return JSON.parse(data) as unknown
-  } catch {
-    return data
-  }
-}
-
-// 영화 목록 원본 배열 추출 처리
-function getMovieSource(data: unknown) {
-  const parsedData = parseMovieData(data)
-
-  if (Array.isArray(parsedData)) {
-    return parsedData
-  }
-
-  if (!isRecord(parsedData)) {
+// 영화 목록 정규화 처리
+function normalizeMovies(data: unknown): MovieCard[] {
+  if (!Array.isArray(data)) {
     return []
   }
 
-  const candidateLists = [
-    parsedData.items,
-    parsedData.movies,
-    parsedData.popularMovies,
-    parsedData.nowPlayingMovies,
-    parsedData.movieList,
-    parsedData.weeklyBoxOfficeList,
-    parsedData.results,
-    parsedData.content,
-  ]
+  return data.filter(isRecord).map((movie, index) => {
+    const title = getStringValue(movie, ['title', 'movieNm', 'name', 'movieTitle']) || `영화 ${index + 1}`
+    const rank = getScalarStringValue(movie, ['rank', 'rnum']) || String(index + 1)
+    const poster = getPrimaryPosterUrl(
+      getStringValue(movie, ['poster', 'posterUrl', 'imageUrl', 'posterPath', 'poster_path']),
+    )
+    const genre = getGenreValue(movie)
+    const voteAverage = getScalarStringValue(movie, ['voteAverage', 'vote', 'rating', 'vote_average'])
+    const certification = getCertificationValue(movie)
 
-  for (const candidate of candidateLists) {
-    if (Array.isArray(candidate)) {
-      return candidate
+    return {
+      id: getScalarStringValue(movie, ['id', 'movieId', 'movieCd']) || `${title}-${rank}-${index}`,
+      rank,
+      title,
+      poster,
+      genre,
+      voteAverage,
+      certification,
     }
-  }
-
-  if (isRecord(parsedData.boxOfficeResult) && Array.isArray(parsedData.boxOfficeResult.weeklyBoxOfficeList)) {
-    return parsedData.boxOfficeResult.weeklyBoxOfficeList
-  }
-
-  if (isRecord(parsedData.data)) {
-    return getMovieSource(parsedData.data)
-  }
-
-  return []
-}
-
-// 영화 목록 정규화 처리
-function normalizeMovies(data: unknown): MovieCard[] {
-  return getMovieSource(data)
-    .filter(isRecord)
-    .map((movie, index) => {
-      const title = getStringValue(movie, ['title', 'movieNm', 'name', 'movieTitle']) || `영화 ${index + 1}`
-      const rank = getStringValue(movie, ['rank', 'rnum']) || String(index + 1)
-      const poster = getPrimaryPosterUrl(
-        getStringValue(movie, ['poster', 'posterUrl', 'imageUrl', 'posterPath', 'poster_path']),
-      )
-      const genre = getGenreValue(movie)
-      const voteAverage = getStringValue(movie, ['voteAverage', 'vote', 'rating', 'vote_average'])
-      const certification = getCertificationValue(movie)
-
-      return {
-        id: getScalarStringValue(movie, ['movieCd', 'id', 'movieId']) || `${title}-${rank}-${index}`,
-        rank,
-        title,
-        poster,
-        genre,
-        voteAverage,
-        certification,
-      }
-    })
+  })
 }
 
 // 빈 카드 목록 생성 처리
@@ -220,6 +190,25 @@ function createPlaceholderMovies(prefix: string, count = PLACEHOLDER_CARD_COUNT)
   }))
 }
 
+// 현재 페이지 노출 목록 계산 처리
+function getVisibleMovies(movies: MovieCard[], page: number) {
+  return Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
+    const movieIndex = page * MOVIES_PER_PAGE + index
+
+    return (
+      movies[movieIndex] ?? {
+        id: `movie-empty-${movieIndex}`,
+        rank: '',
+        title: '',
+        poster: '',
+        genre: '',
+        voteAverage: '',
+        certification: '',
+      }
+    )
+  })
+}
+
 // 등급 아이콘 포함 제목 행 구성 처리
 function MovieTitleRow({ movie }: { movie: MovieCard }) {
   const certificationIcon = getCertificationIcon(movie.certification)
@@ -228,11 +217,7 @@ function MovieTitleRow({ movie }: { movie: MovieCard }) {
     <div className="movie-title-row">
       {movie.certification ? (
         certificationIcon ? (
-          <img
-            className="movie-certification-icon"
-            src={certificationIcon}
-            alt={`${movie.certification} 등급`}
-          />
+          <img className="movie-certification-icon" src={certificationIcon} alt={`${movie.certification} 등급`} />
         ) : (
           <span className="movie-certification-fallback">{movie.certification}</span>
         )
@@ -249,6 +234,113 @@ function getMovieDetailPath(movie: MovieCard) {
   return `/movies/${movie.id}`
 }
 
+// 영화 섹션 공통 화면 구성
+function MovieSection({
+  title,
+  description,
+  titleId,
+  movies,
+  placeholderMovies,
+  isLoading,
+  message,
+  currentPage,
+  totalPages,
+  visibleMovies,
+  onPrevPage,
+  onNextPage,
+  showRankBadge = false,
+}: MovieSectionProps) {
+  return (
+    <section className="movie-list-section" aria-labelledby={titleId}>
+      <div className="movie-section-header">
+        <div className="movie-section-copy">
+          <h2 id={titleId}>{title}</h2>
+          <p>{description}</p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="movie-carousel">
+          <div className="movie-grid">
+            {placeholderMovies.map((movie) => (
+              <article className="movie-card-shell" key={movie.id}>
+                <div className="movie-poster-shell" />
+                <div className="movie-card-content movie-card-content-skeleton">
+                  <div className="movie-title-shell" />
+                  <div className="movie-meta-shell" />
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : movies.length > 0 ? (
+        <div className="movie-carousel">
+          {movies.length > MOVIES_PER_PAGE ? (
+            <>
+              <button
+                className="movie-nav-button movie-nav-button-left"
+                type="button"
+                onClick={onPrevPage}
+                disabled={currentPage === 0}
+                aria-label={`이전 ${title} 보기`}
+              >
+                <span className="movie-nav-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="M14.5 5 8 12l6.5 7" />
+                  </svg>
+                </span>
+              </button>
+              <button
+                className="movie-nav-button movie-nav-button-right"
+                type="button"
+                onClick={onNextPage}
+                disabled={currentPage === totalPages - 1}
+                aria-label={`다음 ${title} 보기`}
+              >
+                <span className="movie-nav-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <path d="m9.5 5 6.5 7-6.5 7" />
+                  </svg>
+                </span>
+              </button>
+            </>
+          ) : null}
+
+          <div className="movie-grid">
+            {visibleMovies.map((movie) => (
+              <article className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`} key={movie.id}>
+                <Link
+                  className="movie-card-link"
+                  to={getMovieDetailPath(movie)}
+                  state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                >
+                  <div className="movie-poster-shell">
+                    {movie.poster ? <img className="movie-poster-image" src={movie.poster} alt={movie.title} /> : null}
+                    {showRankBadge && movie.rank ? <span className="movie-rank-badge">{movie.rank}</span> : null}
+                  </div>
+                </Link>
+                <div className="movie-card-content">
+                  <Link
+                    className="movie-title-link"
+                    to={getMovieDetailPath(movie)}
+                    state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
+                  >
+                    <MovieTitleRow movie={movie} />
+                  </Link>
+                  <p>{movie.genre || ' '}</p>
+                  <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="movie-section-message">{message}</p>
+      )}
+    </section>
+  )
+}
+
 // 홈 화면 구성
 function HomePage() {
   // 검색어 상태 관리
@@ -263,126 +355,63 @@ function HomePage() {
   // 인기 영화 목록 상태 관리
   const [popularMovies, setPopularMovies] = useState<MovieCard[]>([])
 
-  // 인기 영화 로딩 상태 관리
-  const [isPopularLoading, setIsPopularLoading] = useState(true)
-
-  // 인기 영화 메시지 상태 관리
-  const [popularMessage, setPopularMessage] = useState('')
-
-  // 인기 영화 페이지 상태 관리
-  const [popularPage, setPopularPage] = useState(0)
-
   // 현재 상영중 목록 상태 관리
   const [nowPlayingMovies, setNowPlayingMovies] = useState<MovieCard[]>([])
-
-  // 현재 상영중 로딩 상태 관리
-  const [isNowPlayingLoading, setIsNowPlayingLoading] = useState(true)
-
-  // 현재 상영중 메시지 상태 관리
-  const [nowPlayingMessage, setNowPlayingMessage] = useState('')
-
-  // 현재 상영중 페이지 상태 관리
-  const [nowPlayingPage, setNowPlayingPage] = useState(0)
 
   // 개봉 예정작 목록 상태 관리
   const [upcomingMovies, setUpcomingMovies] = useState<MovieCard[]>([])
 
+  // 인기 영화 로딩 상태 관리
+  const [isPopularLoading, setIsPopularLoading] = useState(true)
+
+  // 현재 상영중 로딩 상태 관리
+  const [isNowPlayingLoading, setIsNowPlayingLoading] = useState(true)
+
   // 개봉 예정작 로딩 상태 관리
   const [isUpcomingLoading, setIsUpcomingLoading] = useState(true)
+
+  // 인기 영화 메시지 상태 관리
+  const [popularMessage, setPopularMessage] = useState('')
+
+  // 현재 상영중 메시지 상태 관리
+  const [nowPlayingMessage, setNowPlayingMessage] = useState('')
 
   // 개봉 예정작 메시지 상태 관리
   const [upcomingMessage, setUpcomingMessage] = useState('')
 
+  // 인기 영화 페이지 상태 관리
+  const [popularPage, setPopularPage] = useState(0)
+
+  // 현재 상영중 페이지 상태 관리
+  const [nowPlayingPage, setNowPlayingPage] = useState(0)
+
   // 개봉 예정작 페이지 상태 관리
   const [upcomingPage, setUpcomingPage] = useState(0)
 
-  // 인증 상태 반영 상태 관리
+  // 인증 상태 반영 갱신 상태 관리
   const [, setAuthStateVersion] = useState(0)
 
   // 인증 확인 중복 방지 참조 준비
   const hasCheckedAuthRef = useRef(false)
 
-  // 인기 영화 요청 중복 방지 참조 준비
-  const hasLoadedPopularMoviesRef = useRef(false)
-
-  // 현재 상영중 요청 중복 방지 참조 준비
-  const hasLoadedNowPlayingMoviesRef = useRef(false)
-
-  // 개봉 예정작 요청 중복 방지 참조 준비
-  const hasLoadedUpcomingMoviesRef = useRef(false)
+  // 영화 목록 요청 중복 방지 참조 준비
+  const hasLoadedMoviesRef = useRef(false)
 
   const popularPlaceholderMovies = createPlaceholderMovies('popular-placeholder')
   const nowPlayingPlaceholderMovies = createPlaceholderMovies('now-playing-placeholder')
   const upcomingPlaceholderMovies = createPlaceholderMovies('upcoming-placeholder')
 
-  // 인기 영화 캐러셀 목록 계산
   const popularCarouselMovies = popularMovies.length > 0 ? popularMovies : popularPlaceholderMovies
-
-  // 인기 영화 전체 페이지 수 계산
-  const popularTotalPages = Math.max(1, Math.ceil(popularCarouselMovies.length / MOVIES_PER_PAGE))
-
-  // 인기 영화 현재 페이지 목록 계산
-  const visiblePopularMovies = Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
-    const movieIndex = popularPage * MOVIES_PER_PAGE + index
-
-    return (
-      popularCarouselMovies[movieIndex] ?? {
-        id: `popular-empty-${movieIndex}`,
-        rank: '',
-        title: '',
-        poster: '',
-        genre: '',
-        voteAverage: '',
-        certification: '',
-      }
-    )
-  })
-
-  // 현재 상영중 캐러셀 목록 계산
   const nowPlayingCarouselMovies = nowPlayingMovies.length > 0 ? nowPlayingMovies : nowPlayingPlaceholderMovies
-
-  // 현재 상영중 전체 페이지 수 계산
-  const nowPlayingTotalPages = Math.max(1, Math.ceil(nowPlayingCarouselMovies.length / MOVIES_PER_PAGE))
-
-  // 현재 상영중 현재 페이지 목록 계산
-  const visibleNowPlayingMovies = Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
-    const movieIndex = nowPlayingPage * MOVIES_PER_PAGE + index
-
-    return (
-      nowPlayingCarouselMovies[movieIndex] ?? {
-        id: `now-playing-empty-${movieIndex}`,
-        rank: '',
-        title: '',
-        poster: '',
-        genre: '',
-        voteAverage: '',
-        certification: '',
-      }
-    )
-  })
-
-  // 개봉 예정작 캐러셀 목록 계산
   const upcomingCarouselMovies = upcomingMovies.length > 0 ? upcomingMovies : upcomingPlaceholderMovies
 
-  // 개봉 예정작 전체 페이지 수 계산
+  const popularTotalPages = Math.max(1, Math.ceil(popularCarouselMovies.length / MOVIES_PER_PAGE))
+  const nowPlayingTotalPages = Math.max(1, Math.ceil(nowPlayingCarouselMovies.length / MOVIES_PER_PAGE))
   const upcomingTotalPages = Math.max(1, Math.ceil(upcomingCarouselMovies.length / MOVIES_PER_PAGE))
 
-  // 개봉 예정작 현재 페이지 목록 계산
-  const visibleUpcomingMovies = Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
-    const movieIndex = upcomingPage * MOVIES_PER_PAGE + index
-
-    return (
-      upcomingCarouselMovies[movieIndex] ?? {
-        id: `upcoming-empty-${movieIndex}`,
-        rank: '',
-        title: '',
-        poster: '',
-        genre: '',
-        voteAverage: '',
-        certification: '',
-      }
-    )
-  })
+  const visiblePopularMovies = getVisibleMovies(popularCarouselMovies, popularPage)
+  const visibleNowPlayingMovies = getVisibleMovies(nowPlayingCarouselMovies, nowPlayingPage)
+  const visibleUpcomingMovies = getVisibleMovies(upcomingCarouselMovies, upcomingPage)
 
   // 로그아웃 상태 반영 처리
   function applyLoggedOutState() {
@@ -420,96 +449,46 @@ function HomePage() {
   }, [])
 
   useEffect(() => {
-    if (hasLoadedPopularMoviesRef.current) {
+    if (hasLoadedMoviesRef.current) {
       return
     }
 
-    hasLoadedPopularMoviesRef.current = true
+    hasLoadedMoviesRef.current = true
 
-    // 인기 영화 조회 처리
-    async function fetchPopularMovies() {
+    // 홈 영화 목록 통합 조회 처리
+    async function fetchMovies() {
       try {
-        const response = await request<unknown>('/movies/popular', {
+        const response = await request<MovieCollectionResponse>('/movies', {
           method: 'GET',
         })
 
-        const normalizedMovies = normalizeMovies(response)
-        setPopularMovies(normalizedMovies)
+        const normalizedPopularMovies = normalizeMovies(response?.popular ?? [])
+        const normalizedNowPlayingMovies = normalizeMovies(response?.nowPlaying ?? [])
+        const normalizedUpcomingMovies = normalizeMovies(response?.upcoming ?? [])
+
+        setPopularMovies(normalizedPopularMovies)
+        setNowPlayingMovies(normalizedNowPlayingMovies)
+        setUpcomingMovies(normalizedUpcomingMovies)
+
         setPopularPage(0)
-
-        if (normalizedMovies.length === 0) {
-          setPopularMessage('인기 영화가 아직 없습니다.')
-        }
-      } catch {
-        setPopularMessage('인기 영화를 불러오지 못했습니다.')
-      } finally {
-        setIsPopularLoading(false)
-      }
-    }
-
-    void fetchPopularMovies()
-  }, [])
-
-  useEffect(() => {
-    if (hasLoadedNowPlayingMoviesRef.current) {
-      return
-    }
-
-    hasLoadedNowPlayingMoviesRef.current = true
-
-    // 현재 상영중 조회 처리
-    async function fetchNowPlayingMovies() {
-      try {
-        const response = await request<unknown>('/movies/now_playing', {
-          method: 'GET',
-        })
-
-        const normalizedMovies = normalizeMovies(response)
-        setNowPlayingMovies(normalizedMovies)
         setNowPlayingPage(0)
-
-        if (normalizedMovies.length === 0) {
-          setNowPlayingMessage('현재 상영중인 영화가 아직 없습니다.')
-        }
-      } catch {
-        setNowPlayingMessage('현재 상영중인 영화를 불러오지 못했습니다.')
-      } finally {
-        setIsNowPlayingLoading(false)
-      }
-    }
-
-    void fetchNowPlayingMovies()
-  }, [])
-
-  useEffect(() => {
-    if (hasLoadedUpcomingMoviesRef.current) {
-      return
-    }
-
-    hasLoadedUpcomingMoviesRef.current = true
-
-    // 개봉 예정작 조회 처리
-    async function fetchUpcomingMovies() {
-      try {
-        const response = await request<unknown>('/movies/upcoming', {
-          method: 'GET',
-        })
-
-        const normalizedMovies = normalizeMovies(response)
-        setUpcomingMovies(normalizedMovies)
         setUpcomingPage(0)
 
-        if (normalizedMovies.length === 0) {
-          setUpcomingMessage('개봉 예정작이 아직 없습니다.')
-        }
+        setPopularMessage(normalizedPopularMovies.length === 0 ? '인기 영화가 아직 없습니다.' : '')
+        setNowPlayingMessage(normalizedNowPlayingMovies.length === 0 ? '현재 상영중인 영화가 아직 없습니다.' : '')
+        setUpcomingMessage(normalizedUpcomingMovies.length === 0 ? '개봉 예정작이 아직 없습니다.' : '')
       } catch {
+        setPopularMessage('인기 영화를 불러오지 못했습니다.')
+        setNowPlayingMessage('현재 상영중인 영화를 불러오지 못했습니다.')
         setUpcomingMessage('개봉 예정작을 불러오지 못했습니다.')
       } finally {
+        setIsPopularLoading(false)
+        setIsNowPlayingLoading(false)
         setIsUpcomingLoading(false)
       }
     }
 
-    void fetchUpcomingMovies()
+    void fetchMovies()
   }, [])
 
   // 이전 인기 영화 페이지 이동 처리
@@ -550,23 +529,18 @@ function HomePage() {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/movies`, {
+      const response = await request<MovieCollectionResponse>('/movies', {
         method: 'GET',
       })
 
-      if (!response.ok) {
-        throw new Error('영화 목록 요청이 실패했습니다.')
-      }
+      const resultCount =
+        (response?.popular?.length ?? 0) +
+        (response?.nowPlaying?.length ?? 0) +
+        (response?.upcoming?.length ?? 0)
 
-      const responseBody = (await response.json()) as MovieSearchResponse
-      const resultCount = responseBody?.items?.length ?? 0
-      setMessage(`검색 요청이 전달됐습니다. 응답 항목 수 ${resultCount}`)
-    } catch (error) {
-      if (isApiError(error)) {
-        setMessage(error.message)
-      } else {
-        setMessage('검색 요청이 실패했습니다.')
-      }
+      setMessage(`검색 요청이 전달되었습니다. 응답 항목 수 ${resultCount}`)
+    } catch {
+      setMessage('검색 요청에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -595,285 +569,54 @@ function HomePage() {
               {isSubmitting ? '검색 중...' : '검색'}
             </button>
           </form>
-          {message && <p className="search-message">{message}</p>}
+          {message ? <p className="search-message">{message}</p> : null}
         </section>
 
-        <section className="movie-list-section" aria-labelledby="popular-movie-title">
-          <div className="movie-section-header">
-            <div className="movie-section-copy">
-              <h2 id="popular-movie-title">인기 영화</h2>
-              <p>지금 가장 많이 찾는 영화들을 한눈에 볼 수 있습니다.</p>
-            </div>
-          </div>
+        <MovieSection
+          title="인기 영화"
+          description="지금 가장 많이 찾는 영화들을 순위로 보여드리고 있습니다."
+          titleId="popular-movie-title"
+          movies={popularMovies}
+          placeholderMovies={popularPlaceholderMovies}
+          isLoading={isPopularLoading}
+          message={popularMessage}
+          currentPage={popularPage}
+          totalPages={popularTotalPages}
+          visibleMovies={visiblePopularMovies}
+          onPrevPage={handlePrevPopularPage}
+          onNextPage={handleNextPopularPage}
+          showRankBadge
+        />
 
-          {isPopularLoading ? (
-            <div className="movie-carousel">
-              <div className="movie-grid">
-                {popularPlaceholderMovies.map((movie) => (
-                  <article className="movie-card-shell" key={movie.id}>
-                    <div className="movie-poster-shell" />
-                    <div className="movie-card-content movie-card-content-skeleton">
-                      <div className="movie-title-shell" />
-                      <div className="movie-meta-shell" />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : popularMovies.length > 0 ? (
-            <div className="movie-carousel">
-              {popularMovies.length > MOVIES_PER_PAGE && (
-                <>
-                  <button
-                    className="movie-nav-button movie-nav-button-left"
-                    type="button"
-                    onClick={handlePrevPopularPage}
-                    disabled={popularPage === 0}
-                    aria-label="이전 인기 영화 보기"
-                  >
-                    <span className="movie-nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                        <path d="M14.5 5 8 12l6.5 7" />
-                      </svg>
-                    </span>
-                  </button>
-                  <button
-                    className="movie-nav-button movie-nav-button-right"
-                    type="button"
-                    onClick={handleNextPopularPage}
-                    disabled={popularPage === popularTotalPages - 1}
-                    aria-label="다음 인기 영화 보기"
-                  >
-                    <span className="movie-nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                        <path d="m9.5 5 6.5 7-6.5 7" />
-                      </svg>
-                    </span>
-                  </button>
-                </>
-              )}
+        <MovieSection
+          title="현재 상영중"
+          description="지금 극장에서 만날 수 있는 영화들을 같은 형식으로 이어서 보여드리고 있습니다."
+          titleId="now-playing-movie-title"
+          movies={nowPlayingMovies}
+          placeholderMovies={nowPlayingPlaceholderMovies}
+          isLoading={isNowPlayingLoading}
+          message={nowPlayingMessage}
+          currentPage={nowPlayingPage}
+          totalPages={nowPlayingTotalPages}
+          visibleMovies={visibleNowPlayingMovies}
+          onPrevPage={handlePrevNowPlayingPage}
+          onNextPage={handleNextNowPlayingPage}
+        />
 
-              <div className="movie-grid">
-                {visiblePopularMovies.map((movie) => (
-                  <article
-                    className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
-                    key={movie.id}
-                  >
-                    <Link
-                      className="movie-card-link"
-                      to={getMovieDetailPath(movie)}
-                      state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                    >
-                      <div className="movie-poster-shell">
-                        {movie.poster ? (
-                          <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                        ) : null}
-                        {movie.rank && <span className="movie-rank-badge">{movie.rank}</span>}
-                      </div>
-                    </Link>
-                    <div className="movie-card-content">
-                      <Link
-                        className="movie-title-link"
-                        to={getMovieDetailPath(movie)}
-                        state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                      >
-                        <MovieTitleRow movie={movie} />
-                      </Link>
-                      <p>{movie.genre || ' '}</p>
-                      <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="movie-section-message">{popularMessage}</p>
-          )}
-        </section>
-
-        <section className="movie-list-section" aria-labelledby="now-playing-movie-title">
-          <div className="movie-section-header">
-            <div className="movie-section-copy">
-              <h2 id="now-playing-movie-title">현재 상영중</h2>
-              <p>지금 극장에서 만날 수 있는 영화들을 같은 형식으로 이어서 살펴볼 수 있습니다.</p>
-            </div>
-          </div>
-
-          {isNowPlayingLoading ? (
-            <div className="movie-carousel">
-              <div className="movie-grid">
-                {nowPlayingPlaceholderMovies.map((movie) => (
-                  <article className="movie-card-shell" key={movie.id}>
-                    <div className="movie-poster-shell movie-poster-shell-placeholder" />
-                    <div className="movie-card-content movie-card-content-skeleton">
-                      <div className="movie-title-shell" />
-                      <div className="movie-meta-shell" />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : nowPlayingMovies.length > 0 ? (
-            <div className="movie-carousel">
-              {nowPlayingMovies.length > MOVIES_PER_PAGE && (
-                <>
-                  <button
-                    className="movie-nav-button movie-nav-button-left"
-                    type="button"
-                    onClick={handlePrevNowPlayingPage}
-                    disabled={nowPlayingPage === 0}
-                    aria-label="이전 현재 상영중 영화 보기"
-                  >
-                    <span className="movie-nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                        <path d="M14.5 5 8 12l6.5 7" />
-                      </svg>
-                    </span>
-                  </button>
-                  <button
-                    className="movie-nav-button movie-nav-button-right"
-                    type="button"
-                    onClick={handleNextNowPlayingPage}
-                    disabled={nowPlayingPage === nowPlayingTotalPages - 1}
-                    aria-label="다음 현재 상영중 영화 보기"
-                  >
-                    <span className="movie-nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                        <path d="m9.5 5 6.5 7-6.5 7" />
-                      </svg>
-                    </span>
-                  </button>
-                </>
-              )}
-
-              <div className="movie-grid">
-                {visibleNowPlayingMovies.map((movie) => (
-                  <article
-                    className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
-                    key={movie.id}
-                  >
-                    <Link
-                      className="movie-card-link"
-                      to={getMovieDetailPath(movie)}
-                      state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                    >
-                      <div className="movie-poster-shell">
-                        {movie.poster ? (
-                          <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                        ) : null}
-                      </div>
-                    </Link>
-                    <div className="movie-card-content">
-                      <Link
-                        className="movie-title-link"
-                        to={getMovieDetailPath(movie)}
-                        state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                      >
-                        <MovieTitleRow movie={movie} />
-                      </Link>
-                      <p>{movie.genre || ' '}</p>
-                      <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="movie-section-message">{nowPlayingMessage}</p>
-          )}
-        </section>
-
-        <section className="movie-list-section" aria-labelledby="upcoming-movie-title">
-          <div className="movie-section-header">
-            <div className="movie-section-copy">
-              <h2 id="upcoming-movie-title">개봉 예정작</h2>
-              <p>곧 만날 수 있는 영화들을 같은 형식으로 이어서 살펴볼 수 있습니다.</p>
-            </div>
-          </div>
-
-          {isUpcomingLoading ? (
-            <div className="movie-carousel">
-              <div className="movie-grid">
-                {upcomingPlaceholderMovies.map((movie) => (
-                  <article className="movie-card-shell" key={movie.id}>
-                    <div className="movie-poster-shell movie-poster-shell-placeholder" />
-                    <div className="movie-card-content movie-card-content-skeleton">
-                      <div className="movie-title-shell" />
-                      <div className="movie-meta-shell" />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : upcomingMovies.length > 0 ? (
-            <div className="movie-carousel">
-              {upcomingMovies.length > MOVIES_PER_PAGE && (
-                <>
-                  <button
-                    className="movie-nav-button movie-nav-button-left"
-                    type="button"
-                    onClick={handlePrevUpcomingPage}
-                    disabled={upcomingPage === 0}
-                    aria-label="이전 개봉 예정작 보기"
-                  >
-                    <span className="movie-nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                        <path d="M14.5 5 8 12l6.5 7" />
-                      </svg>
-                    </span>
-                  </button>
-                  <button
-                    className="movie-nav-button movie-nav-button-right"
-                    type="button"
-                    onClick={handleNextUpcomingPage}
-                    disabled={upcomingPage === upcomingTotalPages - 1}
-                    aria-label="다음 개봉 예정작 보기"
-                  >
-                    <span className="movie-nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                        <path d="m9.5 5 6.5 7-6.5 7" />
-                      </svg>
-                    </span>
-                  </button>
-                </>
-              )}
-
-              <div className="movie-grid">
-                {visibleUpcomingMovies.map((movie) => (
-                  <article
-                    className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
-                    key={movie.id}
-                  >
-                    <Link
-                      className="movie-card-link"
-                      to={getMovieDetailPath(movie)}
-                      state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                    >
-                      <div className="movie-poster-shell">
-                        {movie.poster ? (
-                          <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                        ) : null}
-                      </div>
-                    </Link>
-                    <div className="movie-card-content">
-                      <Link
-                        className="movie-title-link"
-                        to={getMovieDetailPath(movie)}
-                        state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                      >
-                        <MovieTitleRow movie={movie} />
-                      </Link>
-                      <p>{movie.genre || ' '}</p>
-                      <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="movie-section-message">{upcomingMessage}</p>
-          )}
-        </section>
+        <MovieSection
+          title="개봉 예정작"
+          description="곧 만나볼 수 있는 영화들을 같은 형식으로 이어서 보여드리고 있습니다."
+          titleId="upcoming-movie-title"
+          movies={upcomingMovies}
+          placeholderMovies={upcomingPlaceholderMovies}
+          isLoading={isUpcomingLoading}
+          message={upcomingMessage}
+          currentPage={upcomingPage}
+          totalPages={upcomingTotalPages}
+          visibleMovies={visibleUpcomingMovies}
+          onPrevPage={handlePrevUpcomingPage}
+          onNextPage={handleNextUpcomingPage}
+        />
       </main>
     </div>
   )
