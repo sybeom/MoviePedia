@@ -10,8 +10,7 @@ import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbInitMovie;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbInitMovieList;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
@@ -43,6 +42,7 @@ public class MovieInitService {
         saveMovies(tmdbClient.getInitMovies());
     }
 
+    // 카테고리 별 영화 목록 초기화
     public void initCategoryMovies() {
         log.info("initCategoryMovies() 카테고리 영화 초기 데이터 호출");
 
@@ -62,11 +62,13 @@ public class MovieInitService {
 
     // 카테고리 영화 목록 저장 또는 업데이트
     private void refreshCategoryMovies(MovieCategoryType category, TmdbMovieList responses) {
+        log.info("RefreshCategoryMovies 호출");
         // 기존 카테고리 영화 모두 삭제
         movieCategoryRepository.deleteByCategoryType(category);
 
         // 카테고리별 영화 새로 갱신
-        for (TmdbInitMovie response: responses.results()) {
+        for (TmdbMovie response: responses.results()) {
+            log.info("refreshCategoryMovies 갱신");
             Movie movie = saveOrUpdateMovie(response); // 영화DB에 영화가 존재하면 갱신, 없다면 저장
 
             MovieCategory mc = MovieCategory.builder()
@@ -116,7 +118,7 @@ public class MovieInitService {
     }
 
     // TmdbInitMovie -> Movie 엔티티로 가공
-    private Movie toMovie(TmdbInitMovie response) {
+    private Movie toMovie(TmdbMovie response) {
         return Movie.builder()
                 .movieId(response.movieId())
                 .title(response.title())
@@ -132,29 +134,15 @@ public class MovieInitService {
     }
 
     // Tmdb 영화 -> Movie 엔티티 가공
-    private List<Movie> toMovies(TmdbInitMovieList tmdbMovieList) {
-        // TODO: 백드롭 및 포스터 완전 경로로 변경, 관람 등급 설정, 국가 설정, 글로벌 평점 소숫점 변경, runtime 설정
+    private void toMovies() {
+        // TODO: 백드롭 완전 경로로 변경(DTO에서 가공할 때 진행), 관람 등급 설정, 국가 설정, 글로벌 평점 소숫점 변경, runtime 설정
         // TODO: 국가 및 관람 등급도 별도로 가져와야한다.
-        return tmdbMovieList.results().stream()
-                .map(movie ->
-                        Movie.builder()
-                                .movieId(movie.movieId())
-                                .title(movie.title())
-                                .backdropPath(movie.backdropPath())
-                                .posterPath(movie.posterPath())
-                                .genres(getGenreNames(movie.genres()))
-                                .overview(movie.overview())
-                                .releaseDate(movie.releaseDate())
-                                .country(movie.country())
-                                .runtime(movie.runtime())
-                                .globalRating(movie.globalRating())
-                                .build())
-                .toList();
+
     }
 
     // 영화 저장 또는 갱신
-    private Movie saveOrUpdateMovie(TmdbInitMovie response) {
-        return movieRepository.findByMovieId(response.movieId()) // 영화 id에 해당하는 영화 찾기
+    private Movie saveOrUpdateMovie(TmdbMovie response) {
+        return movieRepository.findByMovieId(response.movieId()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
                     log.info("saveOrUpdateMovie() 영화 정보 갱신 됨");
                     movie.updateFrom(response); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)

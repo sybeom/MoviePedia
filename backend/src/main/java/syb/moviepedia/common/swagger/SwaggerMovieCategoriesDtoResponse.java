@@ -2,7 +2,6 @@ package syb.moviepedia.common.swagger;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import syb.moviepedia.movie.dto.MovieCategoriesDto;
-import syb.moviepedia.movie.dto.TmdbMovieSummaryDto;
 
 import java.util.List;
 

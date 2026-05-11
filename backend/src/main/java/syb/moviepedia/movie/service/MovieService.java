@@ -8,15 +8,17 @@ import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.ReleaseType;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.dto.*;
+import syb.moviepedia.movie.dto.MovieCategoriesDto;
+import syb.moviepedia.movie.dto.MovieDetailDto;
+import syb.moviepedia.movie.dto.MovieSummaryDto;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.*;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieReleaseInfo;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
-import syb.moviepedia.movie.repository.MovieRepository;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,7 +27,6 @@ import java.util.stream.Collectors;
 public class MovieService {
     private final TmdbClient tmdbClient;
     private final MovieCategoryRepository movieCategoryRepository;
-    private final MovieRepository movieRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesDto getCategoryMovies() {
@@ -45,53 +46,6 @@ public class MovieService {
                 .upcoming(upcomingListDto)
                 .nowPlaying(nowPlayingListDto)
                 .build();
-    }
-    /**
-     * 인기 영화 흐름 *
-     * 인기 영화 목록 APi 호출 및 목록(json) 가져옴 -> 장르 API 호출 및 장르 정보 가져옴
-     * -> 얻은 장르 정보 Map에 담기 -> 인기 영화목록의 장르 값과 장르 정보를 맵핑
-     * -> 동시에 응답 객체로 변환
-     */
-    // 인기 영화
-    public List<TmdbMovieSummaryDto> getPopularMovies() {
-        TmdbMovieList movieResponse = tmdbClient.getPopularMovies();
-        TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
-
-        // 장르 정보 Map 저장
-        Map<Integer, String> genreMap = genreListToMap(genreResponse);
-
-        return movieResponse.results().stream()
-                .map(movie ->
-                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.movieId()), true))
-                .toList();
-    }
-
-    // 상영중인 영화
-    public List<TmdbMovieSummaryDto> getNowPlayingMovies() {
-        TmdbMovieList movieResponse = tmdbClient.getNowPlayingMovies();
-        TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
-
-        // 장르 정보 Map 저장
-        Map<Integer, String> genreMap = genreListToMap(genreResponse);
-
-        return movieResponse.results().stream()
-                .map(movie ->
-                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.movieId()), true))
-                .toList();
-    }
-
-    // 개봉 예정작
-    public List<TmdbMovieSummaryDto> getUpcomingMovies() {
-        TmdbMovieList movieResponse = tmdbClient.getUpcomingMovies();
-        TmdbGenreList genreResponse = tmdbClient.getMovieGenres();
-
-        // 장르 정보 Map 저장
-        Map<Integer, String> genreMap = genreListToMap(genreResponse);
-
-        return movieResponse.results().stream()
-                .map(movie ->
-                        toMovieSummaryDto(movie, genreMap, tmdbClient.getMovieCertification(movie.movieId()), false))
-                .toList();
     }
 
     // 영화 상세 (영화 상세는 변환할 데이터가 크게 없기에 Dto 그대로 반환)
@@ -122,37 +76,6 @@ public class MovieService {
                 .build();
     }
 
-    // 프론트 응답 Json -> 영화 요약 dto 변환
-    private TmdbMovieSummaryDto toMovieSummaryDto(
-            TmdbInitMovie movie,
-            Map<Integer, String> genreMap,
-            TmdbMovieCertification movieCertification,
-            boolean includeVoteAverage
-    ) {
-        // 장르 번호에 해당하는 장르를 맵에서 가져옴(장르는 여럿 있을 수 있다)
-        List<String> genreNames = extractGenres(movie, genreMap);
-
-        // 관람 등급 추출
-        String certification= extractCertification(movieCertification);
-
-        return TmdbMovieSummaryDto.builder()
-                .id(movie.movieId())
-                .title(movie.title())
-                .poster(generatePosterURL(movie.posterPath()))
-                .genre(genreNames)
-                .certification(certification)
-                .voteAverage(includeVoteAverage ? movie.globalRating() : null) // 개봉예정에는 평점없도록하기 위해 voteAverage은 null
-                .build();
-    }
-
-    // 장르 번호에 해당하는 장르들 추출
-    private List<String> extractGenres(TmdbInitMovie movie, Map<Integer, String> genreMap) {
-        return movie.genres().stream()
-                .map(genreId -> genreMap.get(genreId))
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
     // 관람 등급 추출
     private String extractCertification(TmdbMovieCertification certification) {
         List<TmdbMovieReleaseInfo> releaseInfoList = certification.results().stream()
@@ -168,14 +91,5 @@ public class MovieService {
                 .map(info -> info.certification())
                 .findFirst()
                 .orElse("등급 미정");
-    }
-
-    // 포스터 완전 URL로 변경(포스터는 파일 경로만 데이터로 오기때문에 완전한 URL로 변경한다)
-    private String generatePosterURL(String path) {
-        if (path == null || path.isBlank()) {
-            return "";
-        }
-        String size = "original";
-        return  "https://image.tmdb.org/t/p/" + size + path; // TODO: 이거 경로 상수화 하기
     }
 }

@@ -2,11 +2,12 @@ package syb.moviepedia.movie.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import syb.moviepedia.common.CountryCode;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreResponse;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenre;
 
 import java.util.List;
 
 /**
+ * 영화 상세 페이지에 출력될 정보 클래스
  * @param id 영화 ID
  * @param title 제목
  * @param backdropPath 상단 배너 (배경)
@@ -18,7 +19,6 @@ import java.util.List;
  * @param runtime 러닝 타임
  * @param globalRating 글로벌 평점
  */
-
 public record MovieDetailDto(
         Long id,
 
@@ -30,7 +30,7 @@ public record MovieDetailDto(
         @JsonProperty("poster_path")
         String posterPath,
 
-        List<TmdbGenreResponse> genres,
+        List<TmdbGenre> genres,
 
         String overview,
 

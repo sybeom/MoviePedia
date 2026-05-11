@@ -7,7 +7,7 @@ import syb.moviepedia.common.MovieCategoryType;
 import java.time.LocalDateTime;
 
 /**
- * 홈화면 인기, 현재 상영, 개봉 예정 영화 목록 엔티티
+ * 홈화면 인기, 현재 상영, 개봉 예정 영화 엔티티
  */
 @Builder
 @Entity
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class MovieCategory {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)

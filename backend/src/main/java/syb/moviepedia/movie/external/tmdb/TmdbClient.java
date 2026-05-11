@@ -6,7 +6,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import syb.moviepedia.common.exception.TmdbApiException;
 import syb.moviepedia.movie.dto.MovieDetailDto;
-import syb.moviepedia.movie.external.tmdb.dto.*;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbCountry;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
 
 import java.util.List;
 
@@ -36,12 +39,12 @@ public class TmdbClient {
         return fetchMovieList("/movie/now_playing");
     }
 
-    // 개봉 예정작 api 호출
+    // 개봉 예정
     public TmdbMovieList getUpcomingMovies() {
         return fetchMovieList("/movie/upcoming");
     }
 
-    // 영화 장르 정보
+    // 장르 정보
     public TmdbGenreList getMovieGenres() {
         return fetchMovieGenres(); // api 호출
     }
@@ -53,7 +56,7 @@ public class TmdbClient {
     }
 
     // 국가 정보
-    public List<TmdbCountryResponse> getCountries() {
+    public List<TmdbCountry> getCountries() {
         return fetchCountries();
     }
 
@@ -80,7 +83,7 @@ public class TmdbClient {
         }
     }
 
-    // 영화 api 호출  // TODO: 주석 고치기 카테고리 API로
+    // 카테고리 영화 목록 api 호출
     private TmdbMovieList fetchMovieList(String path) {
         try {
             return tmdbWebClient.get()
@@ -115,7 +118,7 @@ public class TmdbClient {
     }
 
     // 국가 코드 정보 API 호출
-    private List<TmdbCountryResponse> fetchCountries() {
+    private List<TmdbCountry> fetchCountries() {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -123,7 +126,7 @@ public class TmdbClient {
                             .queryParam("language", "ko-KR")
                             .build())
                     .retrieve()
-                    .bodyToFlux(TmdbCountryResponse.class) // 응답의 최상위 구조가 객체가 아니라 배열이기때문에 List로 곧바로 받아야한다.
+                    .bodyToFlux(TmdbCountry.class) // 응답의 최상위 구조가 객체가 아니라 배열이기때문에 List로 곧바로 받아야한다.
                     .collectList()
                     .block();
         } catch (Exception e) {

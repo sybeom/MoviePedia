@@ -7,6 +7,6 @@ import java.util.List;
  * @param results
  */
 public record TmdbMovieList(
-        List<TmdbInitMovie> results
+        List<TmdbMovie> results
 ) {
 }
