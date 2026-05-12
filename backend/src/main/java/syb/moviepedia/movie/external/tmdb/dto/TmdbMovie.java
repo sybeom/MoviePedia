@@ -2,6 +2,7 @@ package syb.moviepedia.movie.external.tmdb.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ public record TmdbMovie( // TODO: 클래스명 변경 고민 해보기
         String overview,
 
         @JsonProperty("release_date")
-        String releaseDate,
+        LocalDate releaseDate,
 
         @JsonProperty("origin_country")
         List<String> country,

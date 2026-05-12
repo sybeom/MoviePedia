@@ -43,16 +43,6 @@ public class MovieInitService {
         saveMovies(tmdbClient.getInitMovies());
     }
 
-    // 카테고리 별 영화 목록 초기화
-    public void initCategoryMovies() {
-        log.info("initCategoryMovies() 카테고리 영화 초기 데이터 호출");
-        if (movieRepository.count() >0)
-            return;
-        refreshCategoryMovies(MovieCategoryType.POPULAR, tmdbClient.getPopularMovies());
-        refreshCategoryMovies(MovieCategoryType.UPCOMING, tmdbClient.getUpcomingMovies());
-        refreshCategoryMovies(MovieCategoryType.NOW_PLAYING, tmdbClient.getNowPlayingMovies());
-    }
-
     private void saveMovies(TmdbMovieList responses) {
         List<Movie> movies = responses.results().stream()
                 .filter(response -> !movieRepository.existsByMovieId(response.movieId())) // DB에 없는 영화들만
@@ -60,6 +50,17 @@ public class MovieInitService {
                 .toList();
 
         movieRepository.saveAll(movies);
+    }
+
+    // 카테고리 별 영화 목록 초기화
+    public void initCategoryMovies() {
+        log.info("initCategoryMovies() 카테고리 영화 초기 데이터 호출");
+        if (movieCategoryRepository.count() > 0) {
+            return;
+        }
+        refreshCategoryMovies(MovieCategoryType.POPULAR, tmdbClient.getPopularMovies());
+        refreshCategoryMovies(MovieCategoryType.UPCOMING, tmdbClient.getUpcomingMovies());
+        refreshCategoryMovies(MovieCategoryType.NOW_PLAYING, tmdbClient.getNowPlayingMovies());
     }
 
     // 카테고리 영화 목록 저장 또는 업데이트
@@ -133,13 +134,6 @@ public class MovieInitService {
                 .runtime(response.runtime())
                 .globalRating(response.globalRating())
                 .build();
-    }
-
-    // Tmdb 영화 -> Movie 엔티티 가공
-    private void toMovies() {
-        // TODO: 백드롭 완전 경로로 변경(DTO에서 가공할 때 진행), 관람 등급 설정, 국가 설정, 글로벌 평점 소숫점 변경, runtime 설정
-        // TODO: 국가 및 관람 등급도 별도로 가져와야한다.
-
     }
 
     // 영화 저장 또는 갱신
