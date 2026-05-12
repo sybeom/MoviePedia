@@ -30,6 +30,7 @@ public class MovieService {
 
     @Transactional(readOnly = true)
     public MovieCategoriesDto getCategoryMovies() {
+
         // 각 카테고리별 데이터 가져오기
         List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
         List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
@@ -72,6 +73,7 @@ public class MovieService {
                 .movieCode(movie.getMovieId())
                 .title(movie.getTitle())
                 .poster(movie.getPosterPath())
+                .certification(movie.getCertification())
                 .genre(movie.getGenres())
                 .build();
     }

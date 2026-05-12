@@ -2,6 +2,7 @@ package syb.moviepedia.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MovieCategoryType;
@@ -10,14 +11,14 @@ import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
+import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
 import syb.moviepedia.movie.repository.TmdbCountryRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 영화 초기 데이터 설정을 위한 클래스
@@ -45,7 +46,8 @@ public class MovieInitService {
     // 카테고리 별 영화 목록 초기화
     public void initCategoryMovies() {
         log.info("initCategoryMovies() 카테고리 영화 초기 데이터 호출");
-
+        if (movieRepository.count() >0)
+            return;
         refreshCategoryMovies(MovieCategoryType.POPULAR, tmdbClient.getPopularMovies());
         refreshCategoryMovies(MovieCategoryType.UPCOMING, tmdbClient.getUpcomingMovies());
         refreshCategoryMovies(MovieCategoryType.NOW_PLAYING, tmdbClient.getNowPlayingMovies());
@@ -142,10 +144,12 @@ public class MovieInitService {
 
     // 영화 저장 또는 갱신
     private Movie saveOrUpdateMovie(TmdbMovie response) {
+        String certification = extractCertification(response);
+
         return movieRepository.findByMovieId(response.movieId()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
                     log.info("saveOrUpdateMovie() 영화 정보 갱신 됨");
-                    movie.updateFrom(response); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
+                    movie.updateFrom(response, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
                     return movie;
                 })
                 .orElseGet(() -> movieRepository.save(toMovie(response))); // 존재하지 않으면 db 저장
@@ -156,5 +160,18 @@ public class MovieInitService {
         return genres.stream().map(genreId ->
                 tmdbGenreRepository.findNameByGenreId(genreId)
         ).toList();
+    }
+
+    // 관람 등급 추출
+    private String extractCertification(TmdbMovie response) {
+        return tmdbClient.getMovieCertification(response.movieId()).results().stream()
+                .filter(releaseData -> releaseData.iso31661().equals("KR")) // 한국만 추출
+                .filter(releaseData -> releaseData.releaseDates() != null)
+                .flatMap(releaseDates -> releaseDates.releaseDates().stream()) // release_dates[] 평탄화
+                .filter(release -> release.certification() != null && !release.certification().isBlank())
+                .filter(release -> release.type() == 3) // type==3 : 극장 개봉
+                .findFirst()
+                .map(info -> info.certification())
+                .orElse("등급 미정");
     }
 }

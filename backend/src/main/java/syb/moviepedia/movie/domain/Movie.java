@@ -48,12 +48,13 @@ public class Movie {
     @Column(name = "global_rating")
     Double globalRating;
 
-    public void updateFrom(TmdbMovie movie) {
+    public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();
         this.overview = movie.overview();
         this.posterPath = movie.posterPath();
         this.backdropPath = movie.backdropPath();
+        this.certification = certification;
         this.releaseDate = movie.releaseDate();
-        this.globalRating = Math.round(movie.globalRating() * 10) / 10.0;
+        this.globalRating = Math.round(movie.globalRating() * 10) / 10.0; // 소수점 둘째자리에서 반올림
     }
 }
