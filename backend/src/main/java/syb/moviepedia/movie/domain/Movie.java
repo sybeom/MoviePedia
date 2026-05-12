@@ -45,10 +45,13 @@ public class Movie {
 
     List<String> country;
 
-    String runtime;
+    Integer runtime;
 
     @Column(name = "global_rating")
     Double globalRating;
+
+    @Column(name = "detail_fetched")
+    Boolean detailFetched;
 
     public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();
@@ -58,5 +61,12 @@ public class Movie {
         this.certification = certification;
         this.releaseDate = movie.releaseDate();
         this.globalRating = Math.round(movie.globalRating() * 10) / 10.0; // 소수점 둘째자리에서 반올림
+    }
+
+    public void update(String certification, List<String> country, Integer runtime) {
+        this.certification = certification;
+        this.country = country;
+        this.runtime = runtime;
+        detailFetched = true;
     }
 }

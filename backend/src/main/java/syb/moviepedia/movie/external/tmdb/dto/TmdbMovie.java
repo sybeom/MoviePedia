@@ -31,7 +31,7 @@ public record TmdbMovie( // TODO: 클래스명 변경 고민 해보기
         @JsonProperty("origin_country")
         List<String> country,
 
-        String runtime,
+        Integer runtime,
 
         Double popularity,
 

@@ -133,6 +133,7 @@ public class MovieInitService {
                 .country(response.country())
                 .runtime(response.runtime())
                 .globalRating(response.globalRating())
+                .detailFetched(false)
                 .build();
     }
 

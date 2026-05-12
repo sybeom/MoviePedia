@@ -1,4 +1,4 @@
-package syb.moviepedia.movie.dto;
+package syb.moviepedia.movie.external.tmdb.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 영화 상세 페이지에 출력될 정보 클래스. 프론트 응답 DTO
+ * 영화 상세 페이지에 출력될 정보 클래스
  * @param id 영화 ID
  * @param title 제목
  * @param backdropPath 상단 배너 (배경)
@@ -21,14 +21,14 @@ import java.util.List;
  * @param globalRating 글로벌 평점
  */
 @Builder
-public record MovieDetailDto(
+public record TmdbMovieDetail(
         Long id,
         String title,
         @JsonProperty("backdrop_path")
         String backdropPath,
         @JsonProperty("poster_path")
         String posterPath,
-        List<String> genres,
+        List<TmdbGenre> genres,
         String overview,
         @JsonProperty("release_date")
         LocalDate releaseYear,
@@ -80,7 +80,7 @@ public record MovieDetailDto(
 //        );
 //    }
 
-    public MovieDetailDto {
+    public TmdbMovieDetail {
         if (posterPath != null) {
             posterPath = IMAGE_BASE_URL + posterPath;
         }

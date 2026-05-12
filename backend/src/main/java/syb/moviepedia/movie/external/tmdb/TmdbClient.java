@@ -5,11 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import syb.moviepedia.common.exception.TmdbApiException;
-import syb.moviepedia.movie.dto.MovieDetailDto;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbCountry;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
+import syb.moviepedia.movie.external.tmdb.dto.*;
 
 import java.util.List;
 
@@ -61,7 +57,7 @@ public class TmdbClient {
     }
 
     // 영화 상세
-    public MovieDetailDto getMovieDetail(Long movieId) {
+    public TmdbMovieDetail getMovieDetail(Long movieId) {
         return fetchMovieDetail(movieId);
     }
 
@@ -152,7 +148,7 @@ public class TmdbClient {
     }
 
     // 영화 상세 api 호출 (영화 상세는 변환할 데이터가 크게 없기 때문에 Dto 클래스로 받고 그대로 반환)
-    private MovieDetailDto fetchMovieDetail(Long movieId) {
+    private TmdbMovieDetail fetchMovieDetail(Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -161,7 +157,7 @@ public class TmdbClient {
                             .queryParam("region", "KR")
                             .build(movieId))
                     .retrieve()
-                    .bodyToMono(MovieDetailDto.class)
+                    .bodyToMono(TmdbMovieDetail.class)
                     .block();
         } catch (Exception e) {
             log.error("TMDB 개봉 날짜 API 호출 실패. movieId={}", movieId, e);
