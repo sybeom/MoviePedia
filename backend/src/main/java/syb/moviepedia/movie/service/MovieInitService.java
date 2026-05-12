@@ -46,7 +46,10 @@ public class MovieInitService {
     private void saveMovies(TmdbMovieList responses) {
         List<Movie> movies = responses.results().stream()
                 .filter(response -> !movieRepository.existsByMovieId(response.movieId())) // DB에 없는 영화들만
-                .map(response -> toMovie(response))
+                .map(response ->{
+                            String certification = extractCertification(response);
+                            return toMovie(response, certification);
+                })
                 .toList();
 
         movieRepository.saveAll(movies);
@@ -121,13 +124,14 @@ public class MovieInitService {
     }
 
     // TmdbInitMovie -> Movie 엔티티로 가공
-    private Movie toMovie(TmdbMovie response) {
+    private Movie toMovie(TmdbMovie response, String certification) {
         return Movie.builder()
                 .movieId(response.movieId())
                 .title(response.title())
                 .backdropPath(response.backdropPath())
                 .posterPath(response.posterPath())
                 .genres(getGenreNames(response.genres()))
+                .certification(certification)
                 .overview(response.overview())
                 .releaseDate(response.releaseDate())
                 .country(response.country())
@@ -139,7 +143,7 @@ public class MovieInitService {
 
     // 영화 저장 또는 갱신
     private Movie saveOrUpdateMovie(TmdbMovie response) {
-        String certification = extractCertification(response);
+        String certification = extractCertification(response); // 관람 등급
 
         return movieRepository.findByMovieId(response.movieId()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
@@ -147,7 +151,7 @@ public class MovieInitService {
                     movie.updateFrom(response, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
                     return movie;
                 })
-                .orElseGet(() -> movieRepository.save(toMovie(response))); // 존재하지 않으면 db 저장
+                .orElseGet(() -> movieRepository.save(toMovie(response, certification))); // 존재하지 않으면 db 저장
     }
 
     // 장르 id에 대응하는 장르명 가져오기

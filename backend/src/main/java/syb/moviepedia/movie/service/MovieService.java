@@ -96,6 +96,8 @@ public class MovieService {
                 .detailFetched(true)
                 .build();
     }
+
+    // 영화 엔티티 -> 영화 상세 DTO 가공
     private MovieDetailDto toMovieDetailDtoFromMovie(Movie movie) {
         return MovieDetailDto.builder()
                 .id(movie.getMovieId())
@@ -111,6 +113,7 @@ public class MovieService {
                 .build();
     }
 
+    // 영화 추가 정보(등급, 국가, 런타임 등) 업데이트
     private void updateMovie(Movie movie) {
         String certification = extractCertification(tmdbClient.getMovieCertification(movie.getMovieId()));
         TmdbMovieDetail movieDetail = tmdbClient.getMovieDetail(movie.getMovieId());
@@ -120,7 +123,7 @@ public class MovieService {
         movie.update(certification, country, runtime);
     }
 
-    // 상세 영화 정보의 장르 추출
+    // 상세 영화 정보 장르 추출
     private List<String> extractGenresFromDetail(List<TmdbGenre> genres) {
         return genres.stream().map(genre -> genre.name()).toList();
     }
