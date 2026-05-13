@@ -2,7 +2,6 @@ package syb.moviepedia.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MovieCategoryType;
@@ -11,14 +10,14 @@ import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.*;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
+import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
-import syb.moviepedia.movie.repository.TmdbCountryRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 영화 초기 데이터 설정을 위한 클래스
@@ -33,7 +32,7 @@ public class MovieInitService {
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;
     private final GenreRepository tmdbGenreRepository;
-    private final TmdbCountryRepository tmdbCountryRepository;
+    private final CountryRepository countryRepository;
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -57,7 +56,7 @@ public class MovieInitService {
 
     // 국가 데이터 초기화
     public void initCountries() {
-        if (tmdbCountryRepository.count() > 0) {
+        if (countryRepository.count() > 0) {
             return;
         }
         log.info("initCountries() 실행, 국가 데이터 변경 감지");
@@ -68,7 +67,7 @@ public class MovieInitService {
                                 .name(country.name())
                                 .build())
                 .toList();
-        tmdbCountryRepository.saveAll(countries);
+        countryRepository.saveAll(countries);
     }
 
     public void initMovies() {

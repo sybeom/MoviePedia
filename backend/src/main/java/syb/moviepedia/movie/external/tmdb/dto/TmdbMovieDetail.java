@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 영화 상세 페이지에 출력될 정보 클래스
+ * 영화 상세 api 데이터 매핑 클래스
  * @param id 영화 ID
  * @param title 제목
  * @param backdropPath 상단 배너 (배경)
@@ -39,47 +39,6 @@ public record TmdbMovieDetail(
         Double globalRating
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
-//
-//    @JsonCreator
-//    public MovieDetailDto(
-//            Long id,
-//            String title,
-//
-//            @JsonProperty("backdrop_path")
-//            String backdropPath,
-//
-//            @JsonProperty("poster_path")
-//            String posterPath,
-//
-//            List<TmdbGenre> genres,
-//
-//            String overview,
-//
-//            @JsonProperty("release_date")
-//            LocalDate releaseDate,
-//
-//            @JsonProperty("origin_country")
-//            List<String> country,
-//
-//            Integer runtime,
-//
-//            @JsonProperty("vote_average")
-//            Double globalRating
-//    ) {
-//        this(
-//                id,
-//                title,
-//                backdropPath,
-//                posterPath,
-//                genres,
-//                overview,
-//                releaseDate,
-//                country,
-//                runtime,
-//                globalRating
-//        );
-//    }
-
     public TmdbMovieDetail {
         if (posterPath != null) {
             posterPath = IMAGE_BASE_URL + posterPath;
@@ -88,20 +47,5 @@ public record TmdbMovieDetail(
         if (backdropPath != null) {
             backdropPath = IMAGE_BASE_URL + backdropPath;
         }
-
-        country = country == null
-                ? List.of()
-                : country.stream()
-                .map(CountryCode::toKoreanName)
-                .toList();
     }
-//
-//    // 개봉일에서 연도만 추출
-//    private static Integer parseYear(String releaseDate) {
-//        if (releaseDate == null || releaseDate.isBlank()) {
-//            return null;
-//        }
-//
-//        return Integer.parseInt(releaseDate.substring(0, 4));
-//    }
 }

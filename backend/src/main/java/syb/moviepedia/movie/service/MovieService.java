@@ -14,6 +14,7 @@ import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbGenre;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieDetail;
+import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
 
@@ -26,6 +27,7 @@ public class MovieService {
     private final TmdbClient tmdbClient;
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;
+    private final CountryRepository countryRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesDto getCategoryMovies() {
@@ -56,9 +58,18 @@ public class MovieService {
     @Transactional
     public MovieDetailDto getMovieDetail(Long movieId) {
         Movie movie = movieRepository.findByMovieId(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
-                .orElseGet(() -> movieRepository.save(toMovieFromDetailDto(movieId)));
+                .orElseGet(() -> {
+                    TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
+                    log.info(detail.country().get(0));
+                    String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
+                    return movieRepository.save(toMovieFromDetailDto(detail, certification));
+                });
         if(!movie.getDetailFetched()) { // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
-            updateMovie(movie);
+            log.info("영화 상세 업데이트");
+            TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
+            log.info(detail.country().get(0));
+            String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
+            updateMovie(movie, detail, certification);
         }
 
         return toMovieDetailDtoFromMovie(movie);
@@ -79,15 +90,14 @@ public class MovieService {
     }
 
     // 영화 상세 정보 -> 영화 엔티티 가공
-    private Movie toMovieFromDetailDto(Long movieId) {
-        TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
+    private Movie toMovieFromDetailDto(TmdbMovieDetail detail, String certification) {
         return Movie.builder()
-                .movieId(movieId)
+                .movieId(detail.id())
                 .title(detail.title())
                 .posterPath(detail.posterPath())
                 .backdropPath(detail.backdropPath())
                 .genres(extractGenresFromDetail(detail.genres()))
-                .certification(extractCertification(tmdbClient.getMovieCertification(movieId)))
+                .certification(certification)
                 .overview(detail.overview())
                 .releaseDate(detail.releaseYear())
                 .country(detail.country())
@@ -114,13 +124,12 @@ public class MovieService {
     }
 
     // 영화 추가 정보(등급, 국가, 런타임 등) 업데이트
-    private void updateMovie(Movie movie) {
-        String certification = extractCertification(tmdbClient.getMovieCertification(movie.getMovieId()));
-        TmdbMovieDetail movieDetail = tmdbClient.getMovieDetail(movie.getMovieId());
-        List<String> country = movieDetail.country();
-        Integer runtime = movieDetail.runtime();
+    private void updateMovie(Movie movie, TmdbMovieDetail detail, String  certification) {
+        // 상세 api 호출 (국가정보, 런타임)
+        List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가 코드 한국어 매핑
+        Integer runtime = detail.runtime();
 
-        movie.update(certification, country, runtime);
+        movie.update(certification, countries, runtime);
     }
 
     // 상세 영화 정보 장르 추출
@@ -140,4 +149,8 @@ public class MovieService {
                 .map(info -> info.certification())
                 .orElse("등급 미정");
     }
+
+//    private String extractCountry(List<String> countries) {
+//        countries.
+//    }
 }

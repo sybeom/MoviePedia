@@ -32,10 +32,6 @@ public enum CountryCode {
             return null;
         }
 
-        try {
-            return CountryCode.valueOf(code).getName();
-        } catch (IllegalArgumentException e) {
-            return code;
-        }
+        return code;
     }
 }

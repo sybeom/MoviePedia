@@ -2,9 +2,6 @@ package syb.moviepedia.movie.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
-import syb.moviepedia.common.CountryCode;
-
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -30,7 +27,7 @@ public record MovieDetailDto(
         String posterPath,
         List<String> genres,
         String overview,
-        @JsonProperty("release_date") // TODO: 개봉연도 수정하기
+        @JsonProperty("release_date")
         Integer releaseYear,
         @JsonProperty("origin_country")
         List<String> country,
@@ -48,11 +45,5 @@ public record MovieDetailDto(
         if (backdropPath != null) {
             backdropPath = IMAGE_BASE_URL + backdropPath;
         }
-
-        country = country == null
-                ? List.of()
-                : country.stream()
-                .map(CountryCode::toKoreanName)
-                .toList();
     }
 }
