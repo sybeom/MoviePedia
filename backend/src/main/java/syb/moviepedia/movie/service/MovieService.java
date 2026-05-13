@@ -57,7 +57,7 @@ public class MovieService {
      */
     @Transactional
     public MovieDetailDto getMovieDetail(Long movieId) {
-        Movie movie = movieRepository.findByMovieId(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
+        Movie movie = movieRepository.findByCode(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
                 .orElseGet(() -> {
                     TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
                     log.info(detail.country().get(0));
@@ -81,7 +81,7 @@ public class MovieService {
         Movie movie = category.getMovie(); // N+1 문제 발생할 수 있음. 추후 알아보고 수정
 
         return MovieSummaryDto.builder()
-                .movieCode(movie.getMovieId())
+                .code(movie.getCode())
                 .title(movie.getTitle())
                 .poster(movie.getPosterPath())
                 .certification(movie.getCertification())
@@ -92,7 +92,7 @@ public class MovieService {
     // 영화 상세 정보 -> 영화 엔티티 가공
     private Movie toMovieFromDetailDto(TmdbMovieDetail detail, String certification) {
         return Movie.builder()
-                .movieId(detail.id())
+                .code(detail.id())
                 .title(detail.title())
                 .posterPath(detail.posterPath())
                 .backdropPath(detail.backdropPath())
@@ -110,7 +110,7 @@ public class MovieService {
     // 영화 엔티티 -> 영화 상세 DTO 가공
     private MovieDetailDto toMovieDetailDtoFromMovie(Movie movie) {
         return MovieDetailDto.builder()
-                .id(movie.getMovieId())
+                .code(movie.getCode())
                 .title(movie.getTitle())
                 .posterPath(movie.getPosterPath())
                 .backdropPath(movie.getBackdropPath())

@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface MovieRepository extends JpaRepository<Movie, Long> {
 
-    Optional<Movie> findByMovieId(Long movieId);
-    Boolean existsByMovieId(Long movieId);
+    Optional<Movie> findByCode(Long code);
+    Boolean existsByCode(Long code);
 }

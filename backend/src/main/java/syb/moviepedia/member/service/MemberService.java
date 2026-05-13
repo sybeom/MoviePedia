@@ -71,7 +71,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .nickname(member.getNickname())
                 .build();
     }
-    @Transactional(readOnly = true)
+    @Transactional
     // 소셜 회원가입 및 로그인
     @Override // Oath2 관련 빈이 유저 정보를 받으면 loadUser()를 호출해 네이버로부터 받은 유저 정보를 객체를 userRequest에 넣어줌.
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {

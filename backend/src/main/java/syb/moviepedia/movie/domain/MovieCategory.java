@@ -25,7 +25,7 @@ public class MovieCategory {
     private MovieCategoryType categoryType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "movie_id")
+    @JoinColumn(name = "code")
     private Movie movie;
 
     private Double popularity;

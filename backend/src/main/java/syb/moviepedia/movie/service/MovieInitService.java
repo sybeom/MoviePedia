@@ -59,6 +59,7 @@ public class MovieInitService {
         if (countryRepository.count() > 0) {
             return;
         }
+
         log.info("initCountries() 실행, 국가 데이터 변경 감지");
         List<Country> countries = tmdbClient.getCountries().stream()
                 .map(country ->
@@ -80,7 +81,7 @@ public class MovieInitService {
 
     private void saveMovies(TmdbMovieList responses) {
         List<Movie> movies = responses.results().stream()
-                .filter(response -> !movieRepository.existsByMovieId(response.movieId())) // DB에 없는 영화들만
+                .filter(tmdbMv -> !movieRepository.existsByCode(tmdbMv.code())) // DB에 없는 영화들만
                 .map(response ->{
                             String certification = extractCertification(response);
                             return toMovie(response, certification);
@@ -131,34 +132,34 @@ public class MovieInitService {
 
 
     // TmdbMovie -> Movie 엔티티로 가공
-    private Movie toMovie(TmdbMovie response, String certification) {
+    private Movie toMovie(TmdbMovie tmdbMovie, String certification) {
         return Movie.builder()
-                .movieId(response.movieId())
-                .title(response.title())
-                .backdropPath(response.backdropPath())
-                .posterPath(response.posterPath())
-                .genres(getGenreNames(response.genres()))
+                .code(tmdbMovie.code())
+                .title(tmdbMovie.title())
+                .backdropPath(tmdbMovie.backdropPath())
+                .posterPath(tmdbMovie.posterPath())
+                .genres(getGenreNames(tmdbMovie.genres()))
                 .certification(certification)
-                .overview(response.overview())
-                .releaseDate(response.releaseDate())
-                .country(response.country())
-                .runtime(response.runtime())
-                .globalRating(response.globalRating())
+                .overview(tmdbMovie.overview())
+                .releaseDate(tmdbMovie.releaseDate())
+                .country(tmdbMovie.country())
+                .runtime(tmdbMovie.runtime())
+                .globalRating(tmdbMovie.globalRating())
                 .detailFetched(false)
                 .build();
     }
 
     // 영화 저장 또는 갱신
-    private Movie saveOrUpdateMovie(TmdbMovie response) {
-        String certification = extractCertification(response); // 관람 등급
+    private Movie saveOrUpdateMovie(TmdbMovie tmdbMovie) {
+        String certification = extractCertification(tmdbMovie); // 관람 등급
 
-        return movieRepository.findByMovieId(response.movieId()) // 영화 code에 해당하는 영화 찾기
+        return movieRepository.findByCode(tmdbMovie.code()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
                     log.info("saveOrUpdateMovie() 영화 정보 갱신 됨");
-                    movie.updateFrom(response, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
+                    movie.updateFrom(tmdbMovie, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
                     return movie;
                 })
-                .orElseGet(() -> movieRepository.save(toMovie(response, certification))); // 존재하지 않으면 db 저장
+                .orElseGet(() -> movieRepository.save(toMovie(tmdbMovie, certification))); // 존재하지 않으면 db 저장
     }
 
     // 장르 id에 대응하는 장르명 가져오기
@@ -169,8 +170,8 @@ public class MovieInitService {
     }
 
     // 관람 등급 추출
-    private String extractCertification(TmdbMovie response) {
-        return tmdbClient.getMovieCertification(response.movieId()).results().stream()
+    private String extractCertification(TmdbMovie tmdbMovie) {
+        return tmdbClient.getMovieCertification(tmdbMovie.code()).results().stream()
                 .filter(releaseData -> releaseData.iso31661().equals("KR")) // 한국만 추출
                 .filter(releaseData -> releaseData.releaseDates() != null)
                 .flatMap(releaseDates -> releaseDates.releaseDates().stream()) // release_dates[] 평탄화

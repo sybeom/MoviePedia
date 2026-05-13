@@ -20,8 +20,8 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "movie_id", unique = true, nullable = false)
-    Long movieId;
+    @Column(unique = true, nullable = false)
+    Long code;
 
     String title;
 

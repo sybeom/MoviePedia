@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * 영화 상세 페이지에 출력될 정보 클래스. 프론트 응답 DTO
- * @param id 영화 ID
+ * @param code 영화 ID
  * @param title 제목
  * @param backdropPath 상단 배너 (배경)
  * @param posterPath 포스터 경로
@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Builder
 public record MovieDetailDto(
-        Long id,
+        Long code,
         String title,
         @JsonProperty("backdrop_path")
         String backdropPath,

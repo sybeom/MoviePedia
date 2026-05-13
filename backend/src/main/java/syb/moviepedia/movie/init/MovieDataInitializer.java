@@ -21,6 +21,6 @@ public class MovieDataInitializer implements CommandLineRunner {
         movieInitService.initGenres();
         movieInitService.initCountries();
         movieInitService.initMovies();
-//        movieInitService.initCategoryMovies();
+//        movieInitService.initCategoryMovies(); // 스케쥴링에서 대신함
     }
 }
