@@ -106,7 +106,7 @@ public class MovieService {
                 .backdropPath(movie.getBackdropPath())
                 .genres(movie.getGenres())
                 .overview(movie.getOverview())
-                .releaseYear(movie.getReleaseDate())
+                .releaseYear(movie.getReleaseDate().getYear())
                 .country(movie.getCountry())
                 .runtime(movie.getRuntime())
                 .globalRating(movie.getGlobalRating())

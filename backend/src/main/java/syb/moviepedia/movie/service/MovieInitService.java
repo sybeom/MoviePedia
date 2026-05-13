@@ -69,13 +69,13 @@ public class MovieInitService {
     // 카테고리 영화 목록 저장 또는 업데이트
     private void refreshCategoryMovies(MovieCategoryType category, TmdbMovieList responses) {
         log.info("RefreshCategoryMovies 호출");
-        // 기존 카테고리 영화 모두 삭제
+        // 기존 카테고리 영화 모두 삭제 (카테고리 목록들을 모두 삭제하고 다시 저장하는 방식으로 갱신한다)
         movieCategoryRepository.deleteByCategoryType(category);
 
         // 카테고리별 영화 새로 갱신
         for (TmdbMovie response: responses.results()) {
             log.info("refreshCategoryMovies 갱신");
-            Movie movie = saveOrUpdateMovie(response); // 영화DB에 영화가 존재하면 갱신, 없다면 저장
+            Movie movie = saveOrUpdateMovie(response); // 영화 DB에 영화가 존재하면 갱신, 없다면 저장
 
             MovieCategory mc = MovieCategory.builder()
                     .categoryType(category)

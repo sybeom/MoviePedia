@@ -30,8 +30,8 @@ public record MovieDetailDto(
         String posterPath,
         List<String> genres,
         String overview,
-        @JsonProperty("release_date")
-        LocalDate releaseYear,
+        @JsonProperty("release_date") // TODO: 개봉연도 수정하기
+        Integer releaseYear,
         @JsonProperty("origin_country")
         List<String> country,
         Integer runtime,
@@ -39,46 +39,6 @@ public record MovieDetailDto(
         Double globalRating
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
-//
-//    @JsonCreator
-//    public MovieDetailDto(
-//            Long id,
-//            String title,
-//
-//            @JsonProperty("backdrop_path")
-//            String backdropPath,
-//
-//            @JsonProperty("poster_path")
-//            String posterPath,
-//
-//            List<TmdbGenre> genres,
-//
-//            String overview,
-//
-//            @JsonProperty("release_date")
-//            LocalDate releaseDate,
-//
-//            @JsonProperty("origin_country")
-//            List<String> country,
-//
-//            Integer runtime,
-//
-//            @JsonProperty("vote_average")
-//            Double globalRating
-//    ) {
-//        this(
-//                id,
-//                title,
-//                backdropPath,
-//                posterPath,
-//                genres,
-//                overview,
-//                releaseDate,
-//                country,
-//                runtime,
-//                globalRating
-//        );
-//    }
 
     public MovieDetailDto {
         if (posterPath != null) {
@@ -95,13 +55,4 @@ public record MovieDetailDto(
                 .map(CountryCode::toKoreanName)
                 .toList();
     }
-//
-//    // 개봉일에서 연도만 추출
-//    private static Integer parseYear(String releaseDate) {
-//        if (releaseDate == null || releaseDate.isBlank()) {
-//            return null;
-//        }
-//
-//        return Integer.parseInt(releaseDate.substring(0, 4));
-//    }
 }
