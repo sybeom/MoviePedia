@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import syb.moviepedia.movie.service.MovieInitService;
 
 /**
- * 영화 초기 데이터 클래스
+ * 영화 초기 데이터 클래스 (실행시 1회 실행)
  */
 @Slf4j
 @Component
