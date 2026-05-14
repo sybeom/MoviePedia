@@ -17,6 +17,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class TmdbClient {
+    //TODO : 경로 상수화 하기
 
     private final WebClient tmdbWebClient;
 
@@ -59,6 +60,11 @@ public class TmdbClient {
     // 영화 상세
     public TmdbMovieDetail getMovieDetail(Long movieId) {
         return fetchMovieDetail(movieId);
+    }
+
+    // 출연진 정보
+    public List<TmdbCast> getCredit(Long movieId) {
+        return fetchCredit(movieId).cast();
     }
 
     // 초기 영화 호출
@@ -162,6 +168,23 @@ public class TmdbClient {
         } catch (Exception e) {
             log.error("TMDB 개봉 날짜 API 호출 실패. movieId={}", movieId, e);
             throw new TmdbApiException("TMDB 영화 상세 API 호출 실패", e);
+        }
+    }
+
+    // 배우 api
+    private TmdbCastList fetchCredit(Long movieId) {
+        try {
+            // TODO: 영화 아이디가 잘못오고 있다. 기본키인 영화 아이디가 오고 있는 듯
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/movie/{movieId}/credits")
+                            .queryParam("language", "ko-KR")
+                            .build(movieId))
+                    .retrieve()
+                    .bodyToMono(TmdbCastList.class)
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 크레딧 API 호출 실패", e);
         }
     }
 }

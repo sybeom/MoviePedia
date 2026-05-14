@@ -30,7 +30,7 @@ public class ScheduleConfig {
     }
 
     // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
-    @Scheduled(cron = "0 0 3 * * *") // initialDelay는 서버 시작후 해당 시간 뒤에 실행된다는 의미
+    @Scheduled(fixedRate = 1000000, initialDelay = 10000) // initialDelay는 서버 시작후 해당 시간 뒤에 실행된다는 의미
     public void movieCategoryRefreshSchedule() {
         log.info("카테고리 영화 갱신 스케줄 호출");
 

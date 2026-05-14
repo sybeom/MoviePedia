@@ -33,7 +33,8 @@ public record MovieDetailDto(
         List<String> country,
         Integer runtime,
         @JsonProperty("vote_average")
-        Double globalRating
+        Double globalRating,
+        List<MovieCastDto> cast
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 

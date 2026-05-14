@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.movie.domain.Cast;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
+import syb.moviepedia.movie.dto.MovieCastDto;
 import syb.moviepedia.movie.dto.MovieCategoriesDto;
 import syb.moviepedia.movie.dto.MovieDetailDto;
 import syb.moviepedia.movie.dto.MovieSummaryDto;
@@ -15,6 +17,7 @@ import syb.moviepedia.movie.external.tmdb.dto.TmdbGenre;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieDetail;
 import syb.moviepedia.movie.repository.CountryRepository;
+import syb.moviepedia.movie.repository.MovieCastRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
 
@@ -28,6 +31,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;
     private final CountryRepository countryRepository;
+    private final MovieCastRepository movieCastRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesDto getCategoryMovies() {
@@ -57,13 +61,15 @@ public class MovieService {
      */
     @Transactional
     public MovieDetailDto getMovieDetail(Long movieId) {
+        // 영화 상세
         Movie movie = movieRepository.findByCode(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
                 .orElseGet(() -> {
                     TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
                     log.info(detail.country().get(0));
                     String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
-                    return movieRepository.save(toMovieFromDetailDto(detail, certification));
+                    return movieRepository.save(toMovieFromDetail(detail, certification));
                 });
+
         if(!movie.getDetailFetched()) { // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
             log.info("영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
@@ -72,8 +78,35 @@ public class MovieService {
             updateMovie(movie, detail, certification);
         }
 
-        return toMovieDetailDtoFromMovie(movie);
+        // 출연 - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
+        //
+        List<MovieCastDto> castDto = toMovieCastDto(getCast(movie));
+        return toMovieDetailDto(movie, castDto);
     }
+
+    @Transactional
+    public List<Cast> getCast(Movie movie) {
+        Long movieId = movie.getId();
+        List<Cast> cast = movieCastRepository.findByMovieIdOrderByCastOrderAsc(movieId);
+
+        if (!cast.isEmpty()) { // DB에 있으면 반환
+            log.info("getCast(): 캐스트 존재 그대로 반환");
+            return cast;
+        }
+        log.info("getCast(): 영화 캐스트 api 호출");
+        // 없으면 출연 정보 api 호출 후 MovieCast 저장
+        cast =tmdbClient.getCredit(movieId).stream() // 출연 배우 목록 뽑기
+                .map(tmdbCast -> Cast.builder()
+                        .movie(movie)
+                        .actorId(tmdbCast.actorId())
+                        .name(tmdbCast.name())
+                        .profile(tmdbCast.profile())
+                        .castOrder(tmdbCast.castOrder())
+                        .build())
+                .toList();
+        return movieCastRepository.saveAll(cast);
+    }
+
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
     private MovieSummaryDto toMovieSummaryDto(MovieCategory category) {
@@ -90,7 +123,7 @@ public class MovieService {
     }
 
     // 영화 상세 정보 -> 영화 엔티티 가공
-    private Movie toMovieFromDetailDto(TmdbMovieDetail detail, String certification) {
+    private Movie toMovieFromDetail(TmdbMovieDetail detail, String certification) {
         return Movie.builder()
                 .code(detail.id())
                 .title(detail.title())
@@ -107,8 +140,8 @@ public class MovieService {
                 .build();
     }
 
-    // 영화 엔티티 -> 영화 상세 DTO 가공
-    private MovieDetailDto toMovieDetailDtoFromMovie(Movie movie) {
+    // 영화 상세 DTO 가공
+    private MovieDetailDto toMovieDetailDto(Movie movie, List<MovieCastDto> dto) {
         return MovieDetailDto.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
@@ -120,7 +153,18 @@ public class MovieService {
                 .country(movie.getCountry())
                 .runtime(movie.getRuntime())
                 .globalRating(movie.getGlobalRating())
+                .cast(dto)
                 .build();
+    }
+
+    private List<MovieCastDto> toMovieCastDto(List<Cast> list) {
+        return list.stream().map(cast -> MovieCastDto.builder()
+                .actorId(cast.getActorId())
+                .name(cast.getName())
+                .profile(cast.getProfile())
+                .order(cast.getCastOrder())
+                .build())
+                .toList();
     }
 
     // 영화 추가 정보(등급, 국가, 런타임 등) 업데이트
@@ -149,8 +193,4 @@ public class MovieService {
                 .map(info -> info.certification())
                 .orElse("등급 미정");
     }
-
-//    private String extractCountry(List<String> countries) {
-//        countries.
-//    }
 }
