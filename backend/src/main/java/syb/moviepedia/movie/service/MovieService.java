@@ -160,7 +160,6 @@ public class MovieService {
         return list.stream().map(cast -> MovieCastDto.builder()
                 .name(cast.getName())
                 .profile(cast.getProfile())
-                .order(cast.getCastOrder())
                 .build())
                 .toList();
     }
