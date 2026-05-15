@@ -49,6 +49,38 @@ function getStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
+// 영화 식별자 추출 처리
+function getMovieIdentifier(record: Record<string, unknown>) {
+  const directIdentifier = getStringValue(record, ['movieCode', 'movie_code', 'id', 'movieId', 'movieCd', 'code'])
+
+  if (directIdentifier) {
+    return directIdentifier
+  }
+
+  const nestedCandidates = [record.movie, record.content, record.item, record.data]
+
+  for (const candidate of nestedCandidates) {
+    if (!isRecord(candidate)) {
+      continue
+    }
+
+    const nestedIdentifier = getStringValue(candidate, [
+      'movieCode',
+      'movie_code',
+      'id',
+      'movieId',
+      'movieCd',
+      'code',
+    ])
+
+    if (nestedIdentifier) {
+      return nestedIdentifier
+    }
+  }
+
+  return ''
+}
+
 // 문자열 배열 결합 처리
 function getJoinedStringArrayValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -102,7 +134,7 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     return null
   }
 
-  const id = getStringValue(data, ['id', 'movieId', 'movieCd'])
+  const id = getMovieIdentifier(data)
   const title = getStringValue(data, ['title', 'movieNm', 'name', 'movieTitle'])
   const poster = getPrimaryImageUrl(
     getStringValue(data, ['poster_path', 'poster', 'posterUrl', 'imageUrl', 'posterPath']),
@@ -112,7 +144,7 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   )
   const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
   const overview = getStringValue(data, ['overview', 'plot'])
-  const releaseDate = getStringValue(data, ['release_date', 'releaseDate', 'openDt'])
+  const releaseDate = getStringValue(data, ['releaseYear', 'release_date', 'releaseDate', 'openDt'])
   const originCountry = getJoinedStringArrayValue(data, ['origin_country'])
   const runtime = getStringValue(data, ['runtime'])
   const voteAverage = getStringValue(data, ['vote_average', 'voteAverage', 'vote', 'rating'])
@@ -177,6 +209,15 @@ function MovieDetailPage() {
   const hasLoadedDetailRef = useRef(false)
 
   useEffect(() => {
+    // 상세 페이지 진입 시 최상단 이동 처리
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    })
+  }, [resolvedMovieId])
+
+  useEffect(() => {
     if (hasLoadedDetailRef.current) {
       return
     }
@@ -224,7 +265,7 @@ function MovieDetailPage() {
 
   return (
     <div className="app">
-      <Header showAuthActions />
+      <Header showAuthActions transparentOnTop textOnlyAuthAction />
 
       <main className="movie-detail-page">
         <section className="movie-detail-hero" aria-labelledby="movie-detail-title">

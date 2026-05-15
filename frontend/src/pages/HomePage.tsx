@@ -95,6 +95,45 @@ function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
+// 영화 식별자 추출 처리
+function getMovieIdentifier(record: Record<string, unknown>) {
+  const directIdentifier = getScalarStringValue(record, [
+    'movieCode',
+    'movie_code',
+    'id',
+    'movieId',
+    'movieCd',
+    'code',
+  ])
+
+  if (directIdentifier) {
+    return directIdentifier
+  }
+
+  const nestedCandidates = [record.movie, record.content, record.item, record.data]
+
+  for (const candidate of nestedCandidates) {
+    if (!isRecord(candidate)) {
+      continue
+    }
+
+    const nestedIdentifier = getScalarStringValue(candidate, [
+      'movieCode',
+      'movie_code',
+      'id',
+      'movieId',
+      'movieCd',
+      'code',
+    ])
+
+    if (nestedIdentifier) {
+      return nestedIdentifier
+    }
+  }
+
+  return ''
+}
+
 // 장르 문자열 변환 처리
 function getGenreValue(record: Record<string, unknown>) {
   const genreValue = record.genre
@@ -166,7 +205,7 @@ function normalizeMovies(data: unknown): MovieCard[] {
     const certification = getCertificationValue(movie)
 
     return {
-      id: getScalarStringValue(movie, ['id', 'movieId', 'movieCd']) || `${title}-${rank}-${index}`,
+      id: getMovieIdentifier(movie) || `${title}-${rank}-${index}`,
       rank,
       title,
       poster,

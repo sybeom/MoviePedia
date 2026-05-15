@@ -9,6 +9,28 @@
   padding: 0 48px;
   background: #ffffff;
   border-bottom: 1px solid #e6e8ee;
+  transition:
+    background-color 180ms ease,
+    border-bottom-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.site-header-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+}
+
+.site-header-overlay .brand,
+.site-header-overlay .login-button,
+.site-header-overlay .logout-button {
+  color: #aaaaaa;
+}
+
+.site-header-transparent {
+  background: transparent;
+  border-bottom-color: transparent;
 }
 
 .brand {
@@ -16,6 +38,7 @@
   font-size: 24px;
   font-weight: 800;
   text-decoration: none;
+  transition: color 180ms ease, opacity 180ms ease;
 }
 
 .login-button,
@@ -28,15 +51,39 @@
   border: 0;
   border-radius: 8px;
   cursor: pointer;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    opacity 180ms ease,
+    filter 180ms ease;
 }
 
 .logout-button {
   background: #111827;
 }
 
+.site-header-text-auth .login-button,
+.site-header-text-auth .logout-button {
+  padding: 0;
+  color: #111827;
+  background: transparent;
+  border-radius: 0;
+}
+
+.site-header-overlay.site-header-text-auth .login-button,
+.site-header-overlay.site-header-text-auth .logout-button {
+  color: #aaaaaa;
+}
+
 .login-button:hover,
 .logout-button:hover {
   filter: brightness(0.95);
+}
+
+.site-header-text-auth .login-button:hover,
+.site-header-text-auth .logout-button:hover {
+  filter: none;
+  opacity: 0.82;
 }
 
 .login-button:focus-visible,
