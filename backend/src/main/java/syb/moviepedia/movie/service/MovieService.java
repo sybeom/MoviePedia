@@ -64,8 +64,8 @@ public class MovieService {
         // 영화 상세
         Movie movie = movieRepository.findByCode(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
                 .orElseGet(() -> {
+                    log.info("DB 영화 존재 X, DB 저장 시작");
                     TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
-                    log.info(detail.country().get(0));
                     String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
                     return movieRepository.save(toMovieFromDetail(detail, certification));
                 });
@@ -73,17 +73,16 @@ public class MovieService {
         if(!movie.getDetailFetched()) { // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
             log.info("영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
-            log.info(detail.country().get(0));
             String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
             updateMovie(movie, detail, certification);
         }
 
         // 출연 - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
-        //
         List<MovieCastDto> castDto = toMovieCastDto(getCast(movie));
         return toMovieDetailDto(movie, castDto);
     }
 
+    // 출연 배우
     @Transactional
     public List<Cast> getCast(Movie movie) {
         Long movieId = movie.getId();
@@ -95,14 +94,14 @@ public class MovieService {
         }
         log.info("getCast(): 영화 캐스트 api 호출");
         // 없으면 출연 정보 api 호출 후 MovieCast 저장
-        cast =tmdbClient.getCredit(movieId).stream() // 출연 배우 목록 뽑기
+        cast =tmdbClient.getCredit(movie.getCode()).stream() // 출연 배우 목록 뽑기
                 .map(tmdbCast -> Cast.builder()
                         .movie(movie)
-                        .actorId(tmdbCast.actorId())
                         .name(tmdbCast.name())
                         .profile(tmdbCast.profile())
                         .castOrder(tmdbCast.castOrder())
                         .build())
+                .limit(10) // 10명만
                 .toList();
         return movieCastRepository.saveAll(cast);
     }
@@ -159,7 +158,6 @@ public class MovieService {
 
     private List<MovieCastDto> toMovieCastDto(List<Cast> list) {
         return list.stream().map(cast -> MovieCastDto.builder()
-                .actorId(cast.getActorId())
                 .name(cast.getName())
                 .profile(cast.getProfile())
                 .order(cast.getCastOrder())

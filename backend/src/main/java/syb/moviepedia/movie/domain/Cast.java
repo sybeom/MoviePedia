@@ -21,8 +21,6 @@ public class Cast {
     @JoinColumn(name = "movie_id", nullable = false)
     Movie movie;
 
-    Long actorId;
-
     String name;
 
     String profile;
