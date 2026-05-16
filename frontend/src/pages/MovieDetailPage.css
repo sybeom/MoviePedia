@@ -1,4 +1,4 @@
-.movie-detail-page {
+﻿.movie-detail-page {
   width: 100%;
   background: #ffffff;
 }
@@ -152,9 +152,10 @@
 
 .movie-detail-comment-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 840px) auto;
   gap: 12px;
   margin-top: 18px;
+  align-items: center;
 }
 
 .movie-detail-comment-input {
@@ -179,11 +180,11 @@
 }
 
 .movie-detail-comment-submit {
-  min-width: 88px;
+  min-width: 64px;
   min-height: 52px;
-  padding: 0 18px;
+  padding: 0 12px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1;
   background: #0f172a;
@@ -233,12 +234,98 @@
   line-height: 1.4;
 }
 
+.movie-detail-rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.movie-detail-rating-star-shell {
+  position: relative;
+  width: 34px;
+  height: 34px;
+}
+
+.movie-detail-rating-star-base {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d1d5db;
+  line-height: 1;
+  user-select: none;
+}
+
+.movie-detail-rating-star-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  color: #f59e0b;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.movie-detail-rating-star-base svg,
+.movie-detail-rating-star-fill svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.movie-detail-rating-star-hit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.movie-detail-rating-star-hit-left {
+  left: 0;
+}
+
+.movie-detail-rating-star-hit-right {
+  right: 0;
+}
+
+.movie-detail-comment-rating-shell {
+  display: grid;
+  gap: 0;
+  margin: 18px 0 0;
+}
+
+.movie-detail-comment-rating-label {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.62);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .movie-detail-rating-value {
   margin: 0;
   color: #0f172a;
   font-size: 30px;
   font-weight: 700;
   line-height: 1.1;
+}
+
+.movie-detail-rating-value-inline {
+  margin-left: 10px;
+  font-size: 28px;
+  line-height: 1;
+  align-self: center;
 }
 
 .movie-detail-poster-shell {
@@ -512,3 +599,4 @@
     gap: 10px;
   }
 }
+
