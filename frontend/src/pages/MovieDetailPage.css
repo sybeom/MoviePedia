@@ -77,11 +77,10 @@
 .movie-detail-ratings {
   display: grid;
   width: 100%;
-  max-width: 1320px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  margin: 0 auto;
-  padding: 0 24px 48px;
+  margin: 0;
+  padding: 0 0 48px;
 }
 
 .movie-detail-ratings-shell {
@@ -89,6 +88,20 @@
   z-index: 1;
   margin-top: 0;
   padding-top: 28px;
+}
+
+.movie-detail-ratings-section {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.movie-detail-ratings-title {
+  margin: 0 0 14px;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1.3;
 }
 
 .movie-detail-cast-shell {
@@ -135,6 +148,64 @@
   color: #0f172a;
   font-size: 28px;
   line-height: 1.3;
+}
+
+.movie-detail-comment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.movie-detail-comment-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  color: #0f172a;
+  font-size: 15px;
+  line-height: 1.5;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  outline: none;
+}
+
+.movie-detail-comment-input::placeholder {
+  color: rgba(15, 23, 42, 0.42);
+}
+
+.movie-detail-comment-input:focus {
+  border-color: rgba(15, 23, 42, 0.32);
+}
+
+.movie-detail-comment-submit {
+  min-width: 88px;
+  min-height: 52px;
+  padding: 0 18px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  background: #0f172a;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.movie-detail-comment-submit:hover {
+  background: #1e293b;
+}
+
+.movie-detail-comment-submit:disabled {
+  background: #cbd5e1;
+  cursor: default;
+}
+
+.movie-detail-comment-message {
+  margin: 10px 0 0;
+  color: rgba(15, 23, 42, 0.56);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .movie-detail-recommendations h2 {
@@ -401,11 +472,23 @@
 
   .movie-detail-ratings {
     grid-template-columns: 1fr;
-    padding: 0 16px 36px;
+    padding: 0 0 36px;
+  }
+
+  .movie-detail-ratings-section {
+    padding: 0 16px;
   }
 
   .movie-detail-comments {
     padding: 0 16px;
+  }
+
+  .movie-detail-comment-form {
+    grid-template-columns: 1fr;
+  }
+
+  .movie-detail-comment-submit {
+    width: 100%;
   }
 
   .movie-detail-recommendations {

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
-import { request } from '../api/client'
+import { ApiError, request } from '../api/client'
 import Header from '../components/Header'
+import { getAuthSession } from '../utils/authStorage'
 import './MovieDetailPage.css'
 
 // 영화 상세 이동 상태 타입 정의
@@ -42,6 +43,12 @@ type HorizontalScrollState = {
   thumbOffset: number
 }
 
+// 로그인 확인 응답 타입 정의
+type AuthMeResponse = {
+  loginId?: string
+  nickname?: string
+}
+
 const MIN_THUMB_WIDTH = 72
 
 // 객체 데이터 여부 확인
@@ -68,7 +75,7 @@ function getStringValue(record: Record<string, unknown>, keys: string[]) {
 
 // 영화 식별자 추출 처리
 function getMovieIdentifier(record: Record<string, unknown>) {
-  const directIdentifier = getStringValue(record, ['movieCode', 'movie_code', 'id', 'movieId', 'movieCd', 'code'])
+  const directIdentifier = getStringValue(record, ['movieCode', 'id', 'movieId', 'code'])
 
   if (directIdentifier) {
     return directIdentifier
@@ -83,10 +90,8 @@ function getMovieIdentifier(record: Record<string, unknown>) {
 
     const nestedIdentifier = getStringValue(candidate, [
       'movieCode',
-      'movie_code',
       'id',
       'movieId',
-      'movieCd',
       'code',
     ])
 
@@ -214,17 +219,17 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const id = getMovieIdentifier(data)
   const title = getStringValue(data, ['title', 'movieNm', 'name', 'movieTitle'])
   const poster = getPrimaryImageUrl(
-    getStringValue(data, ['poster_path', 'poster', 'posterUrl', 'imageUrl', 'posterPath']),
+    getStringValue(data, ['poster', 'posterUrl', 'imageUrl', 'posterPath']),
   )
   const backdrop = getPrimaryImageUrl(
-    getStringValue(data, ['backdrop_path', 'backdrop', 'backdropUrl', 'backdropPath']),
+    getStringValue(data, ['backdrop', 'backdropUrl', 'backdropPath']),
   )
   const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
   const overview = getStringValue(data, ['overview', 'plot'])
-  const releaseDate = getStringValue(data, ['releaseYear', 'release_date', 'releaseDate', 'openDt'])
-  const originCountry = getJoinedStringArrayValue(data, ['origin_country'])
+  const releaseDate = getStringValue(data, ['releaseYear', 'releaseDate'])
+  const originCountry = getJoinedStringArrayValue(data, ['country'])
   const runtime = getStringValue(data, ['runtime'])
-  const voteAverage = getStringValue(data, ['vote_average', 'voteAverage', 'vote', 'rating'])
+  const voteAverage = getStringValue(data, ['globalRating', 'voteAverage', 'vote', 'rating'])
   const cast = getCastValue(data)
 
   if (!id && !title && !poster && !overview) {
@@ -285,6 +290,18 @@ function MovieDetailPage() {
   // 영화 상세 메시지 상태 관리
   const [message, setMessage] = useState(resolvedMovieId ? '' : '영화 정보를 찾을 수 없습니다.')
 
+  // 한줄 코멘트 입력값 상태 관리
+  const [commentDraft, setCommentDraft] = useState('')
+
+  // 한줄 코멘트 작성 가능 상태 관리
+  const [canWriteComment, setCanWriteComment] = useState(false)
+
+  // 한줄 코멘트 로그인 확인 상태 관리
+  const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
+
+  // 한줄 코멘트 안내 메시지 상태 관리
+  const [commentAuthMessage, setCommentAuthMessage] = useState('')
+
   // 출연 가로 커스텀 스크롤 상태 관리
   const [castScrollState, setCastScrollState] = useState<HorizontalScrollState>({
     isScrollable: false,
@@ -297,6 +314,9 @@ function MovieDetailPage() {
 
   // 출연 가로 스크롤 영역 참조 준비
   const castListRef = useRef<HTMLDivElement | null>(null)
+
+  // 한줄 코멘트 입력창 참조 준비
+  const commentInputRef = useRef<HTMLInputElement | null>(null)
 
   // 가로 스크롤 드래그 상태 참조 준비
   const dragStartXRef = useRef(0)
@@ -425,6 +445,45 @@ function MovieDetailPage() {
     window.addEventListener('mouseup', handleMouseUp)
   }
 
+  // 한줄 코멘트 제출 기본 동작 방지 처리
+  function handleCommentSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+  }
+
+  // 한줄 코멘트 로그인 확인 요청 처리
+  async function handleCommentInputFocus() {
+    if (isCheckingCommentAuth) {
+      return
+    }
+
+    const session = getAuthSession()
+
+    setIsCheckingCommentAuth(true)
+
+    try {
+      await request<AuthMeResponse>('/auth/me', {
+        method: 'GET',
+        headers: session?.accessToken
+          ? {
+              Authorization: `Bearer ${session.accessToken}`,
+            }
+          : undefined,
+      })
+
+      setCanWriteComment(true)
+      setCommentAuthMessage('')
+    } catch (error) {
+      setCanWriteComment(false)
+      setCommentAuthMessage('로그인 후 작성할 수 있습니다.')
+
+      if (error instanceof ApiError && error.status === 401) {
+        commentInputRef.current?.blur()
+      }
+    } finally {
+      setIsCheckingCommentAuth(false)
+    }
+  }
+
   return (
     <div className="app">
       <Header showAuthActions transparentOnTop textOnlyAuthAction />
@@ -523,22 +582,48 @@ function MovieDetailPage() {
         ) : null}
 
         <section className="movie-detail-ratings-shell" aria-label="영화 평점">
-          <div className="movie-detail-ratings">
-            <article className="movie-detail-rating-card">
-              <p className="movie-detail-rating-label">피디아 평점</p>
-              <p className="movie-detail-rating-value">-</p>
-            </article>
+          <div className="movie-detail-ratings-section">
+            <h2 className="movie-detail-ratings-title">평점</h2>
+            <div className="movie-detail-ratings">
+              <article className="movie-detail-rating-card">
+                <p className="movie-detail-rating-label">피디아</p>
+                <p className="movie-detail-rating-value">-</p>
+              </article>
 
-            <article className="movie-detail-rating-card">
-              <p className="movie-detail-rating-label">글로벌 평점</p>
-              <p className="movie-detail-rating-value">{getDisplayRating(movieDetail.voteAverage)}</p>
-            </article>
+              <article className="movie-detail-rating-card">
+                <p className="movie-detail-rating-label">글로벌</p>
+                <p className="movie-detail-rating-value">{getDisplayRating(movieDetail.voteAverage)}</p>
+              </article>
+            </div>
           </div>
         </section>
 
         <section className="movie-detail-comments-shell" aria-labelledby="movie-detail-comments-title">
           <div className="movie-detail-comments">
             <h2 id="movie-detail-comments-title">한줄 코멘트</h2>
+            <form className="movie-detail-comment-form" onSubmit={handleCommentSubmit}>
+              <label className="sr-only" htmlFor="movie-detail-comment-input">
+                한줄 코멘트 입력
+              </label>
+              <input
+                ref={commentInputRef}
+                id="movie-detail-comment-input"
+                className="movie-detail-comment-input"
+                type="text"
+                maxLength={200}
+                readOnly={!canWriteComment}
+                value={commentDraft}
+                onChange={(event) => setCommentDraft(event.target.value)}
+                onFocus={() => {
+                  void handleCommentInputFocus()
+                }}
+                placeholder="이 영화에 대한 한줄 코멘트를 남겨보세요."
+              />
+              <button className="movie-detail-comment-submit" type="submit" disabled={!canWriteComment}>
+                작성
+              </button>
+            </form>
+            {commentAuthMessage ? <p className="movie-detail-comment-message">{commentAuthMessage}</p> : null}
           </div>
         </section>
 

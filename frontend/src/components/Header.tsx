@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../api/auth'
-import { clearAuthSession, getAuthSession } from '../utils/authStorage'
+import { clearAuthSession, getAuthSession, subscribeAuthSessionChange, type AuthSession } from '../utils/authStorage'
 import './Header.css'
 
 // Header 컴포넌트 props 타입 정의
@@ -18,7 +18,7 @@ function Header({
   textOnlyAuthAction = false,
 }: HeaderProps) {
   // 현재 로그인 세션 조회
-  const authSession = getAuthSession()
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
 
   // 로그아웃 진행 상태 관리
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -28,6 +28,15 @@ function Header({
 
   // 로그아웃 후 화면 이동 준비
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // 로그인 세션 변경 반영 처리
+    function handleAuthSessionChange() {
+      setAuthSession(getAuthSession())
+    }
+
+    return subscribeAuthSessionChange(handleAuthSessionChange)
+  }, [])
 
   useEffect(() => {
     if (!transparentOnTop) {

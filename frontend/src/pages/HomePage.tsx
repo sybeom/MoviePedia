@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { request } from '../api/client'
 import rating12Icon from '../assets/ratings/12.svg'
@@ -6,15 +6,7 @@ import rating15Icon from '../assets/ratings/15.svg'
 import rating19Icon from '../assets/ratings/19.svg'
 import ratingAllIcon from '../assets/ratings/all.svg'
 import Header from '../components/Header'
-import { clearAuthSession, getAuthSession } from '../utils/authStorage'
-import { authRequest, isAuthSessionError } from '../utils/fetchUtil'
 import './HomePage.css'
-
-// 로그인 상태 확인 응답 타입 정의
-type AuthMeResponse = {
-  loginId?: string
-  nickname?: string
-}
 
 // 영화 묶음 응답 타입 정의
 type MovieCollectionResponse = {
@@ -254,13 +246,15 @@ function MovieTitleRow({ movie }: { movie: MovieCard }) {
 
   return (
     <div className="movie-title-row">
-      {movie.certification ? (
-        certificationIcon ? (
-          <img className="movie-certification-icon" src={certificationIcon} alt={`${movie.certification} 등급`} />
-        ) : (
-          <span className="movie-certification-fallback">{movie.certification}</span>
-        )
-      ) : null}
+      {movie.certification
+        ? certificationIcon
+          ? (
+            <img className="movie-certification-icon" src={certificationIcon} alt={`${movie.certification} 등급`} />
+            )
+          : (
+            <span className="movie-certification-fallback">{movie.certification}</span>
+            )
+        : null}
       <h3>
         <span className="movie-title-text">{movie.title || ' '}</span>
       </h3>
@@ -427,12 +421,6 @@ function HomePage() {
   // 개봉 예정작 페이지 상태 관리
   const [upcomingPage, setUpcomingPage] = useState(0)
 
-  // 인증 상태 반영 갱신 상태 관리
-  const [, setAuthStateVersion] = useState(0)
-
-  // 인증 확인 중복 방지 참조 준비
-  const hasCheckedAuthRef = useRef(false)
-
   // 영화 목록 요청 중복 방지 참조 준비
   const hasLoadedMoviesRef = useRef(false)
 
@@ -452,41 +440,6 @@ function HomePage() {
   const visibleNowPlayingMovies = getVisibleMovies(nowPlayingCarouselMovies, nowPlayingPage)
   const visibleUpcomingMovies = getVisibleMovies(upcomingCarouselMovies, upcomingPage)
 
-  // 로그아웃 상태 반영 처리
-  function applyLoggedOutState() {
-    clearAuthSession()
-    setAuthStateVersion((previousVersion) => previousVersion + 1)
-  }
-
-  useEffect(() => {
-    if (hasCheckedAuthRef.current) {
-      return
-    }
-
-    hasCheckedAuthRef.current = true
-
-    const session = getAuthSession()
-
-    if (!session?.accessToken) {
-      return
-    }
-
-    // 홈 진입 시 인증 상태 검증 처리
-    async function validateAuthSession() {
-      try {
-        await authRequest<AuthMeResponse>('/auth/me', {
-          method: 'GET',
-        })
-      } catch (error) {
-        if (isAuthSessionError(error)) {
-          applyLoggedOutState()
-        }
-      }
-    }
-
-    void validateAuthSession()
-  }, [])
-
   useEffect(() => {
     if (hasLoadedMoviesRef.current) {
       return
@@ -494,7 +447,7 @@ function HomePage() {
 
     hasLoadedMoviesRef.current = true
 
-    // 홈 영화 목록 통합 조회 처리
+    // 영화 목록 통합 조회 처리
     async function fetchMovies() {
       try {
         const response = await request<MovieCollectionResponse>('/movies', {
@@ -591,7 +544,7 @@ function HomePage() {
 
       <main className="main-container">
         <section className="search-section" aria-labelledby="search-title">
-          <h1 id="search-title">보고 싶은 영화를 찾아보세요</h1>
+          <h1 id="search-title">보고 싶은 영화를 찾아보세요.</h1>
           <form className="search-form" onSubmit={handleSearch}>
             <label className="sr-only" htmlFor="movie-search">
               영화 검색
@@ -600,7 +553,7 @@ function HomePage() {
               id="movie-search"
               className="search-input"
               type="search"
-              placeholder="영화 제목, 배우, 감독을 검색해보세요"
+              placeholder="영화 제목, 배우, 감독을 검색해보세요."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -644,7 +597,7 @@ function HomePage() {
 
         <MovieSection
           title="개봉 예정작"
-          description="곧 만나볼 수 있는 영화들을 같은 형식으로 이어서 보여드리고 있습니다."
+          description="곧 만나보게 될 영화들을 같은 형식으로 이어서 보여드리고 있습니다."
           titleId="upcoming-movie-title"
           movies={upcomingMovies}
           placeholderMovies={upcomingPlaceholderMovies}
