@@ -13,6 +13,12 @@ type MovieDetailState = {
   }
 }
 
+// 출연 배우 데이터 타입 정의
+type CastMember = {
+  name: string
+  profile: string
+}
+
 // 영화 상세 화면 데이터 타입 정의
 type MovieDetailView = {
   id: string
@@ -25,7 +31,17 @@ type MovieDetailView = {
   originCountry: string
   runtime: string
   voteAverage: string
+  cast: CastMember[]
 }
+
+// 가로 스크롤 상태 타입 정의
+type HorizontalScrollState = {
+  isScrollable: boolean
+  thumbWidth: number
+  thumbOffset: number
+}
+
+const MIN_THUMB_WIDTH = 72
 
 // 객체 데이터 여부 확인
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -123,9 +139,59 @@ function getPrimaryImageUrl(imageUrl: string) {
   )
 }
 
+// 출연 배우 목록 정규화 처리
+function getCastValue(record: Record<string, unknown>) {
+  const castValue = record.cast
+
+  if (!Array.isArray(castValue)) {
+    return []
+  }
+
+  return castValue
+    .filter(isRecord)
+    .map((member) => ({
+      name: getStringValue(member, ['name']),
+      profile: getPrimaryImageUrl(getStringValue(member, ['profile', 'profile_path', 'profileUrl'])),
+    }))
+    .filter((member) => member.name || member.profile)
+}
+
 // 평점 표시 문자열 반환 처리
 function getDisplayRating(value: string) {
-  return value.trim() || '-'
+  const normalizedValue = value.trim()
+
+  if (!normalizedValue || normalizedValue.toLowerCase() === 'null') {
+    return '-'
+  }
+
+  return normalizedValue
+}
+
+// 가로 스크롤 상태 계산 처리
+function calculateHorizontalScrollState(element: HTMLDivElement): HorizontalScrollState {
+  const viewportWidth = element.clientWidth
+  const contentWidth = element.scrollWidth
+  const scrollLeft = element.scrollLeft
+
+  if (contentWidth <= viewportWidth || viewportWidth === 0) {
+    return {
+      isScrollable: false,
+      thumbWidth: 0,
+      thumbOffset: 0,
+    }
+  }
+
+  const trackWidth = viewportWidth
+  const thumbWidth = Math.max(MIN_THUMB_WIDTH, (viewportWidth / contentWidth) * trackWidth)
+  const movableDistance = trackWidth - thumbWidth
+  const maxScrollLeft = contentWidth - viewportWidth
+  const thumbOffset = maxScrollLeft > 0 ? (scrollLeft / maxScrollLeft) * movableDistance : 0
+
+  return {
+    isScrollable: true,
+    thumbWidth,
+    thumbOffset,
+  }
 }
 
 // 영화 상세 응답 정규화 처리
@@ -148,6 +214,7 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const originCountry = getJoinedStringArrayValue(data, ['origin_country'])
   const runtime = getStringValue(data, ['runtime'])
   const voteAverage = getStringValue(data, ['vote_average', 'voteAverage', 'vote', 'rating'])
+  const cast = getCastValue(data)
 
   if (!id && !title && !poster && !overview) {
     return null
@@ -164,6 +231,7 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     originCountry,
     runtime,
     voteAverage,
+    cast,
   }
 }
 
@@ -180,6 +248,7 @@ function createInitialMovieDetail(movieId: string, movie?: MovieDetailState['mov
     originCountry: '',
     runtime: '',
     voteAverage: '',
+    cast: [],
   }
 }
 
@@ -205,17 +274,58 @@ function MovieDetailPage() {
   // 영화 상세 메시지 상태 관리
   const [message, setMessage] = useState(resolvedMovieId ? '' : '영화 정보를 찾을 수 없습니다.')
 
+  // 출연 가로 커스텀 스크롤 상태 관리
+  const [castScrollState, setCastScrollState] = useState<HorizontalScrollState>({
+    isScrollable: false,
+    thumbWidth: 0,
+    thumbOffset: 0,
+  })
+
   // 상세 요청 중복 방지 참조 준비
   const hasLoadedDetailRef = useRef(false)
 
+  // 출연 가로 스크롤 영역 참조 준비
+  const castListRef = useRef<HTMLDivElement | null>(null)
+
+  // 가로 스크롤 드래그 상태 참조 준비
+  const dragStartXRef = useRef(0)
+  const dragStartScrollLeftRef = useRef(0)
+
+  const isCustomCastScrollbarVisible = castScrollState.isScrollable
+
+  // 상세 페이지 진입 시 최상단 이동 처리
   useEffect(() => {
-    // 상세 페이지 진입 시 최상단 이동 처리
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: 'auto',
     })
   }, [resolvedMovieId])
+
+  // 출연 가로 스크롤 상태 반영 처리
+  useEffect(() => {
+    const element = castListRef.current
+
+    if (!element) {
+      return
+    }
+
+    const scrollElement = element
+
+    // 가로 스크롤 상태 갱신 처리
+    function updateCastScrollState() {
+      setCastScrollState(calculateHorizontalScrollState(scrollElement))
+    }
+
+    updateCastScrollState()
+    scrollElement.addEventListener('scroll', updateCastScrollState, { passive: true })
+    window.addEventListener('resize', updateCastScrollState)
+
+    return () => {
+      scrollElement.removeEventListener('scroll', updateCastScrollState)
+      window.removeEventListener('resize', updateCastScrollState)
+    }
+  }, [movieDetail])
 
   useEffect(() => {
     if (hasLoadedDetailRef.current) {
@@ -249,6 +359,7 @@ function MovieDetailPage() {
             originCountry: normalizedDetail.originCountry,
             runtime: normalizedDetail.runtime,
             voteAverage: normalizedDetail.voteAverage,
+            cast: normalizedDetail.cast,
           })
         } else {
           setMessage('영화 정보를 불러오지 못했습니다.')
@@ -262,6 +373,46 @@ function MovieDetailPage() {
 
     void fetchMovieDetail()
   }, [initialMovie?.poster, initialMovie?.title, resolvedMovieId])
+
+  // 출연 가로 스크롤 드래그 시작 처리
+  function handleCastScrollbarThumbMouseDown(event: React.MouseEvent<HTMLButtonElement>) {
+    const element = castListRef.current
+
+    if (!element || !castScrollState.isScrollable) {
+      return
+    }
+
+    const scrollElement = element
+
+    event.preventDefault()
+    dragStartXRef.current = event.clientX
+    dragStartScrollLeftRef.current = scrollElement.scrollLeft
+
+    const viewportWidth = scrollElement.clientWidth
+    const contentWidth = scrollElement.scrollWidth
+    const maxScrollLeft = contentWidth - viewportWidth
+    const movableDistance = viewportWidth - castScrollState.thumbWidth
+
+    // 드래그 중 가로 스크롤 위치 반영 처리
+    function handleMouseMove(moveEvent: MouseEvent) {
+      if (movableDistance <= 0 || maxScrollLeft <= 0) {
+        return
+      }
+
+      const deltaX = moveEvent.clientX - dragStartXRef.current
+      const scrollRatio = maxScrollLeft / movableDistance
+      scrollElement.scrollLeft = dragStartScrollLeftRef.current + deltaX * scrollRatio
+    }
+
+    // 가로 스크롤 드래그 종료 처리
+    function handleMouseUp() {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }
 
   return (
     <div className="app">
@@ -285,39 +436,79 @@ function MovieDetailPage() {
                   ) : null}
                 </div>
 
-                <div className="movie-detail-copy">
-                  <h1 id="movie-detail-title">{movieDetail.title}</h1>
+                <div className="movie-detail-copy-shell">
+                  <div className="movie-detail-copy">
+                    <h1 id="movie-detail-title">{movieDetail.title}</h1>
 
-                  <dl className="movie-detail-meta">
-                    <div className="movie-detail-meta-row">
-                      <dt>장르</dt>
-                      <dd>{movieDetail.genres || '-'}</dd>
-                    </div>
-                    <div className="movie-detail-meta-row">
-                      <dt>개봉일</dt>
-                      <dd>{movieDetail.releaseDate || '-'}</dd>
-                    </div>
-                    <div className="movie-detail-meta-row">
-                      <dt>국가</dt>
-                      <dd>{movieDetail.originCountry || '-'}</dd>
-                    </div>
-                    <div className="movie-detail-meta-row">
-                      <dt>상영시간</dt>
-                      <dd>{movieDetail.runtime ? `${movieDetail.runtime}분` : '-'}</dd>
-                    </div>
-                  </dl>
+                    <dl className="movie-detail-meta">
+                      <div className="movie-detail-meta-row">
+                        <dt>장르</dt>
+                        <dd>{movieDetail.genres || '-'}</dd>
+                      </div>
+                      <div className="movie-detail-meta-row">
+                        <dt>개봉일</dt>
+                        <dd>{movieDetail.releaseDate || '-'}</dd>
+                      </div>
+                      <div className="movie-detail-meta-row">
+                        <dt>국가</dt>
+                        <dd>{movieDetail.originCountry || '-'}</dd>
+                      </div>
+                      <div className="movie-detail-meta-row">
+                        <dt>상영시간</dt>
+                        <dd>{movieDetail.runtime ? `${movieDetail.runtime}분` : '-'}</dd>
+                      </div>
+                    </dl>
 
-                  <section className="movie-detail-overview-section">
-                    <p className="movie-detail-overview">{movieDetail.overview || '줄거리 정보가 아직 없습니다.'}</p>
-                  </section>
+                    <section className="movie-detail-overview-section">
+                      <h2>줄거리</h2>
+                      <p className="movie-detail-overview">{movieDetail.overview || '-'}</p>
+                    </section>
 
-                  {isLoading ? <p className="movie-detail-message">영화 정보를 불러오는 중입니다...</p> : null}
-                  {!isLoading && message ? <p className="movie-detail-message">{message}</p> : null}
+                    {isLoading ? <p className="movie-detail-message">영화 정보를 불러오는 중입니다...</p> : null}
+                    {!isLoading && message ? <p className="movie-detail-message">{message}</p> : null}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
+
+        {movieDetail.cast.length > 0 ? (
+          <section className="movie-detail-cast-shell" aria-label="출연 배우">
+            <div className="movie-detail-cast-section">
+              <h2>출연</h2>
+              <div className="movie-detail-cast-list-shell">
+                <div className="movie-detail-cast-list" ref={castListRef}>
+                  {movieDetail.cast.map((member, index) => (
+                    <article className="movie-detail-cast-card" key={`${member.name}-${index}`}>
+                      <div className="movie-detail-cast-profile-shell">
+                        {member.profile ? (
+                          <img className="movie-detail-cast-profile" src={member.profile} alt={member.name} />
+                        ) : null}
+                      </div>
+                      <p className="movie-detail-cast-name">{member.name || '-'}</p>
+                    </article>
+                  ))}
+                </div>
+
+                {isCustomCastScrollbarVisible ? (
+                  <div className="movie-detail-cast-custom-scrollbar" aria-hidden="true">
+                    <button
+                      className="movie-detail-cast-custom-scrollbar-thumb"
+                      type="button"
+                      style={{
+                        width: `${castScrollState.thumbWidth}px`,
+                        transform: `translateX(${castScrollState.thumbOffset}px)`,
+                      }}
+                      onMouseDown={handleCastScrollbarThumbMouseDown}
+                      tabIndex={-1}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="movie-detail-ratings-shell" aria-label="영화 평점">
           <div className="movie-detail-ratings">
