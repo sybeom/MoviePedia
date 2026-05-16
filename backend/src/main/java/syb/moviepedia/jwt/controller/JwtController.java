@@ -101,7 +101,7 @@ public class JwtController {
     public ResponseEntity<ApiResult<JwtResponseDto>> jwtRefreshApi(
             @Validated @RequestBody JwtRefreshRequestDto dto
     ) {
-        log.info("JwtController 호출됨. uri: /jwt/refresh");
+        log.info("JwtController 토큰 재발급 요청 호출. uri: /jwt/refresh");
         return ResponseEntity.ok().body(ApiResult.success("액세스 토큰 재발급 성공", jwtService.refreshRotate(dto)));
     }
 }

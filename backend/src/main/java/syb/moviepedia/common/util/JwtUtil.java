@@ -18,8 +18,8 @@ public class JwtUtil {
         String secretKeyString = "dkssudgktpdywjsmstjddbsqjadlqslek";
         secretKey = new SecretKeySpec(secretKeyString.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
 
-        accessTokenExpiresIn = 300L * 1000; // 1시간, 기존3600
-        refreshTokenExpiresIn = 604800L * 1000; // 7일
+        accessTokenExpiresIn = 3600L * 1000; // 1시간, 기존3600
+        refreshTokenExpiresIn = 604800L * 1000; // 604800L * 1000 == 7일
     }
 
     // JWT(Access/Refresh) 생성

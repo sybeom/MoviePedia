@@ -93,14 +93,19 @@ public class JwtService {
         // Refresh 토큰 검증
         Boolean isValid = JwtUtil.validateToken(refreshToken, false);
         if (!isValid) {
+            log.info("refreshRotate(): refreshToken 검증 실패");
             throw new InvalidRefreshTokenException("유효하지 않은 refreshToken입니다.");
         }
 
-        // RefreshEntity 존재 확인 (화이트리스트)
+        // RefreshEntity DB 존재 확인 (화이트리스트)
         if (!existsRefresh(refreshToken)) {
+            log.info("refreshRotate(): refreshToken DB 존재하지 않음");
             throw new InvalidRefreshTokenException("유효하지 않은 refreshToken입니다.");
         }
 
+        /**
+         * 리프레쉬 토큰이 만료되지 않았다면, 리프레쉬 토큰을 사용해 액세스 토큰을 재발급한다.
+         */
         // 정보 추출
         String loginId = JwtUtil.getLoginId(refreshToken);
         String role = JwtUtil.getRole(refreshToken);

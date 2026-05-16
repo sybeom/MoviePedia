@@ -10,7 +10,7 @@ spring:
   # JPA
   jpa:
     hibernate:
-      ddl-auto: create # create : 재시작시 테이블 매번 생성 , update
+      ddl-auto: update # create : 재시작시 테이블 매번 생성 , update
     properties:
       hibernate:
         format_sql: true # 콘솔창의 sql을 보기 좋은 방식으로 변경 해줌

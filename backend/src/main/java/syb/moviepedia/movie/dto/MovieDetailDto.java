@@ -1,7 +1,7 @@
 package syb.moviepedia.movie.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
+
 import java.util.List;
 
 /**
@@ -21,18 +21,13 @@ import java.util.List;
 public record MovieDetailDto(
         Long code,
         String title,
-        @JsonProperty("backdrop_path")
         String backdropPath,
-        @JsonProperty("poster_path")
         String posterPath,
         List<String> genres,
         String overview,
-        @JsonProperty("release_date")
         Integer releaseYear,
-        @JsonProperty("origin_country")
         List<String> country,
         Integer runtime,
-        @JsonProperty("vote_average")
         Double globalRating,
         List<MovieCreditDto> credit
 ) {
