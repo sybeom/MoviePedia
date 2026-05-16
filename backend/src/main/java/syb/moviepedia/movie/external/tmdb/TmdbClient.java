@@ -61,7 +61,7 @@ public class TmdbClient {
         return fetchMovieDetail(movieId);
     }
 
-    // 출연진 정보
+    // 크레딧 (감독, 출연) 정보
     public List<TmdbCast> getCredit(Long movieId) {
         return fetchCredit(movieId).cast();
     }
@@ -171,7 +171,7 @@ public class TmdbClient {
     }
 
     // 배우 api
-    private TmdbCastList fetchCredit(Long movieId) {
+    private TmdbCredit fetchCredit(Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -179,7 +179,7 @@ public class TmdbClient {
                             .queryParam("language", "ko-KR")
                             .build(movieId))
                     .retrieve()
-                    .bodyToMono(TmdbCastList.class)
+                    .bodyToMono(TmdbCredit.class)
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 크레딧 API 호출 실패", e);
