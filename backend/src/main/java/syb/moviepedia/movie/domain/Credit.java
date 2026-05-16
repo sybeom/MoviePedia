@@ -11,7 +11,7 @@ import syb.moviepedia.common.CreditRole;
  * 영화와 크레딧을 연결하기 위한 중간 엔티티(테이블) 역할
  * 정확히는 약식으로 N:M관계를 표현하는 엔티티
  */
-@Table(name = "movie_cast")
+@Table(name = "movie_credit")
 @Entity
 @Getter
 @Builder

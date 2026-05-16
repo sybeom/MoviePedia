@@ -34,7 +34,7 @@ public record MovieDetailDto(
         Integer runtime,
         @JsonProperty("vote_average")
         Double globalRating,
-        List<MovieCastDto> cast
+        List<MovieCreditDto> credit
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 

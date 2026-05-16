@@ -62,8 +62,8 @@ public class TmdbClient {
     }
 
     // 크레딧 (감독, 출연) 정보
-    public List<TmdbCast> getCredit(Long movieId) {
-        return fetchCredit(movieId).cast();
+    public TmdbCredit getCredit(Long movieId) {
+        return fetchCredit(movieId);
     }
 
     // 초기 영화 호출
@@ -170,7 +170,7 @@ public class TmdbClient {
         }
     }
 
-    // 배우 api
+    // 크레딧(감독 및 출연진) api
     private TmdbCredit fetchCredit(Long movieId) {
         try {
             return tmdbWebClient.get()

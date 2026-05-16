@@ -7,8 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * 배열의 각 원소를 매핑.
  */
 public record TmdbCast(
-        @JsonProperty("id")
-        Long actorId,
         String name,
         @JsonProperty("original_name")
         String originalName,

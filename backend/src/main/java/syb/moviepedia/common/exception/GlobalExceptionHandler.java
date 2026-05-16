@@ -66,6 +66,7 @@ public class GlobalExceptionHandler {
     // TMDB API 호출 실패 에러 (API 실패 에러는 서버 문제보다는 API 문제이기에 502 상태코드를 전송한다.)
     @ExceptionHandler(TmdbApiException.class)
     public ResponseEntity<ApiResult<Void>> handleTmdbApiException(TmdbApiException e) {
+        log.error("TMDB API 호출 실패", e);
         return fail(ErrorCode.TMDB_API_FAILED, HttpStatus.BAD_GATEWAY, e);
     }
 

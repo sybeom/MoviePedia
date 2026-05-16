@@ -4,23 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
-import syb.moviepedia.movie.domain.Cast;
+import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.dto.MovieCastDto;
-import syb.moviepedia.movie.dto.MovieCategoriesDto;
-import syb.moviepedia.movie.dto.MovieDetailDto;
-import syb.moviepedia.movie.dto.MovieSummaryDto;
+import syb.moviepedia.movie.dto.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenre;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieCertification;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieDetail;
+import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.CountryRepository;
-import syb.moviepedia.movie.repository.MovieCastRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
+import syb.moviepedia.movie.repository.MovieCreditRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -31,7 +28,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;
     private final CountryRepository countryRepository;
-    private final MovieCastRepository movieCastRepository;
+    private final MovieCreditRepository movieCreditRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesDto getCategoryMovies() {
@@ -71,39 +68,61 @@ public class MovieService {
                 });
 
         if(!movie.getDetailFetched()) { // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
-            log.info("영화 상세 업데이트");
+            log.info("getMovieDetail(): 영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
             String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
             updateMovie(movie, detail, certification);
         }
 
         // 출연 - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
-        List<MovieCastDto> castDto = toMovieCastDto(getCast(movie));
-        return toMovieDetailDto(movie, castDto);
+        List<MovieCreditDto> creditDto = toMovieCreditDto(getCredit(movie));
+        return toMovieDetailDto(movie, creditDto);
     }
 
     // 출연 배우
     @Transactional
-    public List<Cast> getCast(Movie movie) {
+    public List<Credit> getCredit(Movie movie) {
         Long movieId = movie.getId();
-        List<Cast> cast = movieCastRepository.findByMovieIdOrderByCastOrderAsc(movieId);
+        List<Credit> credits = movieCreditRepository.findByMovieId(movieId);
 
-        if (!cast.isEmpty()) { // DB에 있으면 반환
-            log.info("getCast(): 캐스트 존재 그대로 반환");
-            return cast;
+        if (!credits.isEmpty()) {
+            log.info("getCast(): 크레딧 정보 존재. 그대로 반환");
+            return credits;
         }
+
+        // 없으면 크레딧 api 호출 후 MovieCredit 저장, 가져옴
+        TmdbCredit tmdbCredit = tmdbClient.getCredit(movie.getCode());
+        List<TmdbCrew> crews = tmdbCredit.crew();
+        List<TmdbCast> casts = tmdbCredit.cast();
+
+        credits = new ArrayList<>();
+
+        // 감독 정보 Credit에 넣기
+        credits.addAll(crews.stream()
+                .filter(crew -> crew.job().equals(CreditRole.DIRECTOR.getRole()))
+                .map(crew -> Credit.builder()
+                        .role(CreditRole.DIRECTOR)
+                        .movie(movie)
+                        .name(crew.name())
+                        .profile(crew.profile())
+                        .castOrder(null).build())
+                .toList());
+
+        // 출연 배우 정보 Credit에 넣기
+        credits.addAll(casts.stream()
+                .map(cast -> Credit.builder()
+                        .role(CreditRole.ACTOR)
+                        .movie(movie)
+                        .name(cast.name())
+                        .profile(cast.profile())
+                        .castOrder(cast.castOrder())
+                        .build())
+                .limit(10)
+                .toList());
+
         log.info("getCast(): 영화 캐스트 api 호출");
         // 없으면 출연 정보 api 호출 후 MovieCast 저장
-        cast =tmdbClient.getCredit(movie.getCode()).stream() // 출연 배우 목록 뽑기
-                .map(tmdbCast -> Cast.builder()
-                        .movie(movie)
-                        .name(tmdbCast.name())
-                        .profile(tmdbCast.profile())
-                        .castOrder(tmdbCast.castOrder())
-                        .build())
-                .limit(10) // 10명만
-                .toList();
-        return movieCastRepository.saveAll(cast);
+        return movieCreditRepository.saveAll(credits);
     }
 
 
@@ -140,7 +159,7 @@ public class MovieService {
     }
 
     // 영화 상세 DTO 가공
-    private MovieDetailDto toMovieDetailDto(Movie movie, List<MovieCastDto> dto) {
+    private MovieDetailDto toMovieDetailDto(Movie movie, List<MovieCreditDto> dto) {
         return MovieDetailDto.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
@@ -152,15 +171,17 @@ public class MovieService {
                 .country(movie.getCountry())
                 .runtime(movie.getRuntime())
                 .globalRating(movie.getGlobalRating())
-                .cast(dto)
+                .credit(dto)
                 .build();
     }
 
-    private List<MovieCastDto> toMovieCastDto(List<Cast> list) {
-        return list.stream().map(cast -> MovieCastDto.builder()
-                .name(cast.getName())
-                .profile(cast.getProfile())
-                .build())
+    // Credit 엔티티 영화 크레딧 DTO로 가공
+    private List<MovieCreditDto> toMovieCreditDto(List<Credit> list) {
+        return list.stream().map(credit -> MovieCreditDto.builder()
+                        .role(credit.getRole())
+                        .name(credit.getName())
+                        .profile(credit.getProfile())
+                        .build())
                 .toList();
     }
 
