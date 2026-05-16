@@ -11,6 +11,6 @@ public record MovieCastDto(
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 
     public MovieCastDto {
-        profile = profile != null ? IMAGE_BASE_URL + profile() : "";
+        profile = profile != null ? IMAGE_BASE_URL + profile : "";
     }
 }

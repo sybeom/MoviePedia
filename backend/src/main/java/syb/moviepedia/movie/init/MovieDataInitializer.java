@@ -20,7 +20,7 @@ public class MovieDataInitializer implements CommandLineRunner {
     public void run(String... args) {
         movieInitService.initGenres();
         movieInitService.initCountries();
-        movieInitService.initMovies();
+//        movieInitService.initMovies();
 //        movieInitService.initCategoryMovies(); // 스케쥴링에서 대신함
     }
 }

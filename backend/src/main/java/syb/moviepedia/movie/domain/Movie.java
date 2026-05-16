@@ -59,9 +59,10 @@ public class Movie {
         this.backdropPath = movie.backdropPath();
         this.certification = certification;
         this.releaseDate = movie.releaseDate();
-        this.globalRating = Math.round(movie.globalRating() * 10) / 10.0; // 소수점 둘째자리에서 반올림
+        this.globalRating = movie.globalRating();
     }
 
+    // 상세 정보 업데이트
     public void update(String certification, List<String> country, Integer runtime) {
         this.certification = certification;
         this.country = country;

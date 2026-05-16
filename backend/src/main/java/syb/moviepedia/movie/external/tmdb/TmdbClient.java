@@ -18,7 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TmdbClient {
     //TODO : 경로 상수화 하기
-
     private final WebClient tmdbWebClient;
 
     // 전체 영화
@@ -174,7 +173,6 @@ public class TmdbClient {
     // 배우 api
     private TmdbCastList fetchCredit(Long movieId) {
         try {
-            // TODO: 영화 아이디가 잘못오고 있다. 기본키인 영화 아이디가 오고 있는 듯
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/movie/{movieId}/credits")
