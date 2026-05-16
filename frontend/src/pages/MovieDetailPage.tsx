@@ -17,6 +17,7 @@ type MovieDetailState = {
 type CastMember = {
   name: string
   profile: string
+  roleLabel: string
 }
 
 // 영화 상세 화면 데이터 타입 정의
@@ -141,7 +142,7 @@ function getPrimaryImageUrl(imageUrl: string) {
 
 // 출연 배우 목록 정규화 처리
 function getCastValue(record: Record<string, unknown>) {
-  const castValue = record.cast
+  const castValue = record.credit
 
   if (!Array.isArray(castValue)) {
     return []
@@ -149,10 +150,20 @@ function getCastValue(record: Record<string, unknown>) {
 
   return castValue
     .filter(isRecord)
-    .map((member) => ({
-      name: getStringValue(member, ['name']),
-      profile: getPrimaryImageUrl(getStringValue(member, ['profile', 'profile_path', 'profileUrl'])),
-    }))
+    .map((member) => {
+      const role = getStringValue(member, ['role']).toUpperCase()
+
+      if (role !== 'DIRECTOR' && role !== 'ACTOR') {
+        return null
+      }
+
+      return {
+        name: getStringValue(member, ['name']),
+        profile: getPrimaryImageUrl(getStringValue(member, ['profile', 'profile_path', 'profileUrl'])),
+        roleLabel: role === 'DIRECTOR' ? '감독' : '',
+      }
+    })
+    .filter((member): member is CastMember => member !== null)
     .filter((member) => member.name || member.profile)
 }
 
@@ -474,9 +485,9 @@ function MovieDetailPage() {
         </section>
 
         {movieDetail.cast.length > 0 ? (
-          <section className="movie-detail-cast-shell" aria-label="출연 배우">
+          <section className="movie-detail-cast-shell" aria-label="제작 및 출연">
             <div className="movie-detail-cast-section">
-              <h2>출연</h2>
+              <h2>제작/출연</h2>
               <div className="movie-detail-cast-list-shell">
                 <div className="movie-detail-cast-list" ref={castListRef}>
                   {movieDetail.cast.map((member, index) => (
@@ -487,6 +498,7 @@ function MovieDetailPage() {
                         ) : null}
                       </div>
                       <p className="movie-detail-cast-name">{member.name || '-'}</p>
+                      {member.roleLabel ? <p className="movie-detail-cast-role">{member.roleLabel}</p> : null}
                     </article>
                   ))}
                 </div>
