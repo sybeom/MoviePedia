@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.NonNullApi;
+import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.movie.domain.Movie;
 
 // TODO: 모든 엔티티 접근자 private으로 변경하기
@@ -26,8 +27,11 @@ public class Comment {
     @Nullable
     Double rating;
 
-    @Nullable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id")
     Movie movie;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    Member member;
 }
