@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * 권한이 요구되는 API에 접근하게 된다면 로그인 후 발급한 JWT를 헤더에 지참해야한다.
- * 그 헤더에 실려온 Jwt 검증하는 필터
+ * 헤더에 실려온 Jwt 검증하는 필터
  * JWT(Access)를 검증하여 쓰레드에 배정되는 SecurityContext에 username과 role을 부여하면 된다.
  * 항상 실행된다. Jwt 유효성 검증 결과에 차이가 있을 뿐.
  */

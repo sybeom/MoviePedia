@@ -21,6 +21,7 @@ public class CommentService {
                 () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
 
         Comment comment = Comment.builder()
+                .nickname(dto.nickname())
                 .content(dto.content())
                 .rating(dto.rating())
                 .movie(movie)

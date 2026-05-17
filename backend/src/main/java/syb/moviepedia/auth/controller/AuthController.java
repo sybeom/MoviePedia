@@ -14,6 +14,7 @@ public class AuthController {
 
     @GetMapping("/me") // 홈 화면 진입시 로그인 상태 판별을 위해 토큰 검증을 하는 요청
     public ResponseEntity<ApiResult<Void>> checkMe() {
+        log.info("AuthController: /auth/me 요청 도달");
         return ResponseEntity.ok().body(ApiResult.success("토큰 인증에 성공하였습니다"));
     }
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.NonNullApi;
 import syb.moviepedia.movie.domain.Movie;
 
 // TODO: 모든 엔티티 접근자 private으로 변경하기
@@ -16,6 +17,8 @@ public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
+
+    String nickname;
 
     @Nullable
     String content;
