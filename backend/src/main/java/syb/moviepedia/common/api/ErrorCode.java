@@ -1,7 +1,6 @@
 package syb.moviepedia.common.api;
 
 import lombok.Getter;
-import syb.moviepedia.common.exception.DuplicateCommentException;
 
 @Getter
 public enum ErrorCode {
@@ -15,7 +14,7 @@ public enum ErrorCode {
     TMDB_API_FAILED("TMDB_API_FAILED"),
     MOVIE_NOT_FOUND("MOVIE_NOT_FOUND"),
     MEMBER_NOT_FOUND("MEMBER_NOT_FOUND"),
-    DUPLICATE_COMMENT("DUPLICATE_COMMENT");
+    ALREADY_EXISTS_COMMENT("ALREADY_EXISTS_COMMENT");
 
     private final String code;
 

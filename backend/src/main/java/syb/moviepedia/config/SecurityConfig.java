@@ -102,7 +102,7 @@ public class SecurityConfig {
         // 인가 설정
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/auth/me").authenticated() // 로그인 여부 확인
                         .requestMatchers(HttpMethod.POST, "/movies/{movieId}/comments").authenticated() // 코멘트 작성
                         .anyRequest().permitAll());
 

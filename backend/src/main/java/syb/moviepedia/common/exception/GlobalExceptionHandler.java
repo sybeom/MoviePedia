@@ -84,9 +84,9 @@ public class GlobalExceptionHandler {
     }
 
     // 코멘트 재작성 시도
-    @ExceptionHandler(DuplicateCommentException.class)
-    public ResponseEntity<ApiResult<Void>> handleDuplicateCommentException(DuplicateCommentException e) {
-        return fail(ErrorCode.DUPLICATE_COMMENT, HttpStatus.BAD_REQUEST, e);
+    @ExceptionHandler(CommentAlreadyExistsException.class)
+    public ResponseEntity<ApiResult<Void>> handleCommentAlreadyExistsException(CommentAlreadyExistsException e) {
+        return fail(ErrorCode.ALREADY_EXISTS_COMMENT, HttpStatus.CONFLICT, e);
     }
 
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)

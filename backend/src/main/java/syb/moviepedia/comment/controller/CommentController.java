@@ -7,7 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.comment.dto.CommentDto;
+import syb.moviepedia.comment.dto.CommentResponseDto;
 import syb.moviepedia.comment.service.CommentService;
+import syb.moviepedia.common.api.ApiResult;
+
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -16,6 +20,11 @@ import syb.moviepedia.comment.service.CommentService;
 public class CommentController {
 
     private final CommentService commentService;
+
+    @GetMapping("/comments")
+    public ResponseEntity<ApiResult<List<CommentResponseDto>>> getComments(@PathVariable Long movieId) {
+        return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieId)));
+    }
 
     @PostMapping("/comments")
     public ResponseEntity<FieldError> saveComment(
