@@ -1,20 +1,24 @@
 package syb.moviepedia.comment.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.comment.dto.CommentDto;
+import syb.moviepedia.comment.service.CommentService;
 
 @Slf4j
-@RestController("/movie/{movieId}")
+@RequiredArgsConstructor
+@RestController
+@RequestMapping("/movies/{movieId}")
 public class CommentController {
 
+    private final CommentService commentService;
+
     @PostMapping("/comments")
-    public void saveComment(@PathVariable String movieId,
+    public void saveComment(@PathVariable Long movieId,
                             @RequestBody CommentDto dto) {
         log.info("saveComment 요청 도착");
 
+        commentService.saveComment(movieId, dto);
     }
 }

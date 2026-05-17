@@ -52,6 +52,7 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.INVALID_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED, e);
     }
 
+    // 로그아웃 실패
     @ExceptionHandler(LogoutFailedException.class)
     public ResponseEntity<ApiResult<Void>> handleLogoutFailedException(LogoutFailedException e) {
         return fail(ErrorCode.LOGOUT_FAILED, HttpStatus.BAD_REQUEST, e);
@@ -68,6 +69,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleTmdbApiException(TmdbApiException e) {
         log.error("TMDB API 호출 실패", e);
         return fail(ErrorCode.TMDB_API_FAILED, HttpStatus.BAD_GATEWAY, e);
+    }
+
+    // 영화 코드 조회 실패
+    @ExceptionHandler(MovieNotFoundException.class)
+    public ResponseEntity<ApiResult<Void>> handleMovieNotFoundException(MovieNotFoundException e) {
+        return fail(ErrorCode.MOVIE_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
