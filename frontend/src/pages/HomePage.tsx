@@ -29,7 +29,6 @@ type MovieCard = {
 // 영화 섹션 속성 타입 정의
 type MovieSectionProps = {
   title: string
-  description: string
   titleId: string
   movies: MovieCard[]
   placeholderMovies: MovieCard[]
@@ -270,7 +269,6 @@ function getMovieDetailPath(movie: MovieCard) {
 // 영화 섹션 공통 화면 구성
 function MovieSection({
   title,
-  description,
   titleId,
   movies,
   placeholderMovies,
@@ -288,7 +286,6 @@ function MovieSection({
       <div className="movie-section-header">
         <div className="movie-section-copy">
           <h2 id={titleId}>{title}</h2>
-          <p>{description}</p>
         </div>
       </div>
 
@@ -566,7 +563,6 @@ function HomePage() {
 
         <MovieSection
           title="인기 영화"
-          description="지금 가장 많이 찾는 영화들을 순위로 보여드리고 있습니다."
           titleId="popular-movie-title"
           movies={popularMovies}
           placeholderMovies={popularPlaceholderMovies}
@@ -582,7 +578,6 @@ function HomePage() {
 
         <MovieSection
           title="현재 상영중"
-          description="지금 극장에서 만날 수 있는 영화들을 같은 형식으로 이어서 보여드리고 있습니다."
           titleId="now-playing-movie-title"
           movies={nowPlayingMovies}
           placeholderMovies={nowPlayingPlaceholderMovies}
@@ -597,7 +592,6 @@ function HomePage() {
 
         <MovieSection
           title="개봉 예정작"
-          description="곧 만나보게 될 영화들을 같은 형식으로 이어서 보여드리고 있습니다."
           titleId="upcoming-movie-title"
           movies={upcomingMovies}
           placeholderMovies={upcomingPlaceholderMovies}

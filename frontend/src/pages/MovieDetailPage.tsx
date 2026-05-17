@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { ApiError, request } from '../api/client'
 import Header from '../components/Header'
@@ -37,13 +37,6 @@ type MovieDetailView = {
   credits: CreditMember[]
 }
 
-// 가로 스크롤 상태 타입 정의
-type HorizontalScrollState = {
-  isScrollable: boolean
-  thumbWidth: number
-  thumbOffset: number
-}
-
 // 로그인 확인 응답 타입 정의
 type AuthMeResponse = {
   loginId?: string
@@ -57,11 +50,19 @@ type CreateCommentRequest = {
   rating: number
 }
 
-const MIN_THUMB_WIDTH = 72
+// 코멘트 목록 데이터 타입 정의
+type MovieComment = {
+  id: string
+  nickname: string
+  content: string
+  rating: string
+}
+
 const STAR_COUNT = 5
 const MAX_COMMENT_LENGTH = 100
 const STAR_ICON_PATH =
   'M12 2.8c.38 0 .73.21.9.55l2.37 4.8 5.3.77c.75.11 1.05 1.03.5 1.56l-3.83 3.73.9 5.27c.13.74-.65 1.31-1.32.96L12 17.96l-4.82 2.53c-.67.35-1.45-.22-1.32-.96l.9-5.27-3.83-3.73c-.55-.53-.25-1.45.5-1.56l5.3-.77 2.37-4.8c.17-.34.52-.55.9-.55Z'
+const commentRequestMap = new Map<string, Promise<MovieComment[]>>()
 
 // 객체 데이터 여부 확인
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -152,6 +153,29 @@ function getPrimaryImageUrl(imageUrl: string) {
   )
 }
 
+// 코멘트 목록 추출 처리
+function getCommentListValue(data: unknown) {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (!isRecord(data)) {
+    return []
+  }
+
+  const candidateKeys = ['comments', 'commentList', 'items', 'content', 'data']
+
+  for (const key of candidateKeys) {
+    const value = data[key]
+
+    if (Array.isArray(value)) {
+      return value
+    }
+  }
+
+  return []
+}
+
 // 제작 및 출연 목록 정리 처리
 function getCreditValue(record: Record<string, unknown>) {
   const creditValue = record.credit
@@ -179,15 +203,15 @@ function getCreditValue(record: Record<string, unknown>) {
     .filter((member) => member.name || member.profile)
 }
 
-// 평점 표시 문자열 반환 처리
-function getDisplayRating(value: string) {
+// 만점 포함 평점 표시 문자열 반환 처리
+function getDisplayRatingWithScale(value: string, maxScore: number) {
   const normalizedValue = value.trim()
 
   if (!normalizedValue || normalizedValue.toLowerCase() === 'null') {
-    return '-'
+    return `- / ${maxScore}`
   }
 
-  return normalizedValue
+  return `${normalizedValue} / ${maxScore}`
 }
 
 // 선택 평점 표시 문자열 반환 처리
@@ -209,33 +233,6 @@ function getStarFillPercent(starIndex: number, rating: number) {
   }
 
   return Math.max(0, Math.min(100, (rating - starStart) * 100))
-}
-
-// 가로 스크롤 상태 계산 처리
-function calculateHorizontalScrollState(element: HTMLDivElement): HorizontalScrollState {
-  const viewportWidth = element.clientWidth
-  const contentWidth = element.scrollWidth
-  const scrollLeft = element.scrollLeft
-
-  if (contentWidth <= viewportWidth || viewportWidth === 0) {
-    return {
-      isScrollable: false,
-      thumbWidth: 0,
-      thumbOffset: 0,
-    }
-  }
-
-  const trackWidth = viewportWidth
-  const thumbWidth = Math.max(MIN_THUMB_WIDTH, (viewportWidth / contentWidth) * trackWidth)
-  const movableDistance = trackWidth - thumbWidth
-  const maxScrollLeft = contentWidth - viewportWidth
-  const thumbOffset = maxScrollLeft > 0 ? (scrollLeft / maxScrollLeft) * movableDistance : 0
-
-  return {
-    isScrollable: true,
-    thumbWidth,
-    thumbOffset,
-  }
 }
 
 // 상세 응답 정규화 처리
@@ -273,6 +270,39 @@ function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     globalRating,
     credits,
   }
+}
+
+// 코멘트 목록 정규화 처리
+function normalizeMovieComments(data: unknown): MovieComment[] {
+  return getCommentListValue(data)
+    .filter(isRecord)
+    .map((comment, index) => ({
+      id: getStringValue(comment, ['id', 'commentId', 'code']) || `comment-${index}`,
+      nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '익명',
+      content: getStringValue(comment, ['content', 'comment']) || '-',
+      rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
+    }))
+}
+
+// 코멘트 목록 요청 중복 방지 처리
+function fetchMovieCommentsRequest(movieId: string) {
+  const existingRequest = commentRequestMap.get(movieId)
+
+  if (existingRequest) {
+    return existingRequest
+  }
+
+  const requestPromise = request<unknown>(`/movies/${movieId}/comments`, {
+    method: 'GET',
+  })
+    .then((response) => normalizeMovieComments(response))
+    .finally(() => {
+      commentRequestMap.delete(movieId)
+    })
+
+  commentRequestMap.set(movieId, requestPromise)
+
+  return requestPromise
 }
 
 // 초기 상세 데이터 생성 처리
@@ -317,6 +347,12 @@ function MovieDetailPage() {
   // 코멘트 입력값 상태 관리
   const [commentDraft, setCommentDraft] = useState('')
 
+  // 코멘트 목록 상태 관리
+  const [comments, setComments] = useState<MovieComment[]>([])
+
+  // 코멘트 목록 로딩 상태 관리
+  const [isCommentsLoading, setIsCommentsLoading] = useState(Boolean(resolvedMovieId))
+
   // 사용자 별점 상태 관리
   const [selectedRating, setSelectedRating] = useState(0)
 
@@ -335,31 +371,19 @@ function MovieDetailPage() {
   // 코멘트 전송 메시지 상태 관리
   const [commentSubmitMessage, setCommentSubmitMessage] = useState('')
 
-  // 출연진 스크롤 상태 관리
-  const [creditScrollState, setCreditScrollState] = useState<HorizontalScrollState>({
-    isScrollable: false,
-    thumbWidth: 0,
-    thumbOffset: 0,
-  })
-
   // 상세 요청 중복 방지 참조 준비
   const hasLoadedDetailRef = useRef(false)
 
-  // 출연진 스크롤 영역 참조 준비
-  const creditListRef = useRef<HTMLDivElement | null>(null)
-
   // 코멘트 입력창 참조 준비
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
-
-  // 스크롤 드래그 시작 좌표 참조 준비
-  const dragStartXRef = useRef(0)
-  const dragStartScrollLeftRef = useRef(0)
 
   const displayedRating = hoverRating || selectedRating
   const trimmedCommentDraft = commentDraft.trim()
   const isCommentLengthValid =
     trimmedCommentDraft.length >= 1 && trimmedCommentDraft.length <= MAX_COMMENT_LENGTH
   const canClickCommentSubmit = canWriteComment && !isSubmittingComment
+  const directorCredits = movieDetail.credits.filter((member) => member.roleLabel === '감독')
+  const actorCredits = movieDetail.credits.filter((member) => member.roleLabel !== '감독')
 
   // 상세 페이지 최상단 이동 처리
   useEffect(() => {
@@ -369,31 +393,6 @@ function MovieDetailPage() {
       behavior: 'auto',
     })
   }, [resolvedMovieId])
-
-  // 출연진 스크롤 상태 반영 처리
-  useEffect(() => {
-    const element = creditListRef.current
-
-    if (!element) {
-      return
-    }
-
-    const scrollElement = element
-
-    // 출연진 스크롤 상태 갱신 처리
-    function updateCreditScrollState() {
-      setCreditScrollState(calculateHorizontalScrollState(scrollElement))
-    }
-
-    updateCreditScrollState()
-    scrollElement.addEventListener('scroll', updateCreditScrollState, { passive: true })
-    window.addEventListener('resize', updateCreditScrollState)
-
-    return () => {
-      scrollElement.removeEventListener('scroll', updateCreditScrollState)
-      window.removeEventListener('resize', updateCreditScrollState)
-    }
-  }, [movieDetail.credits])
 
   // 상세 정보 조회 처리
   useEffect(() => {
@@ -444,45 +443,45 @@ function MovieDetailPage() {
     void fetchMovieDetail()
   }, [initialMovie?.poster, initialMovie?.title, resolvedMovieId])
 
-  // 출연진 스크롤바 드래그 시작 처리
-  function handleCreditScrollbarThumbMouseDown(event: MouseEvent<HTMLButtonElement>) {
-    const element = creditListRef.current
+  // 코멘트 목록 조회 처리
+  useEffect(() => {
+    let isMounted = true
 
-    if (!element || !creditScrollState.isScrollable) {
-      return
-    }
-
-    const scrollElement = element
-
-    event.preventDefault()
-    dragStartXRef.current = event.clientX
-    dragStartScrollLeftRef.current = scrollElement.scrollLeft
-
-    const viewportWidth = scrollElement.clientWidth
-    const contentWidth = scrollElement.scrollWidth
-    const maxScrollLeft = contentWidth - viewportWidth
-    const movableDistance = viewportWidth - creditScrollState.thumbWidth
-
-    // 출연진 스크롤 드래그 이동 처리
-    function handleMouseMove(moveEvent: globalThis.MouseEvent) {
-      if (movableDistance <= 0 || maxScrollLeft <= 0) {
-        return
+    if (!resolvedMovieId) {
+      return () => {
+        isMounted = false
       }
-
-      const deltaX = moveEvent.clientX - dragStartXRef.current
-      const scrollRatio = maxScrollLeft / movableDistance
-      scrollElement.scrollLeft = dragStartScrollLeftRef.current + deltaX * scrollRatio
     }
 
-    // 출연진 스크롤 드래그 종료 처리
-    function handleMouseUp() {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+    // 코멘트 목록 조회 실행 처리
+    async function fetchComments() {
+      try {
+        const response = await fetchMovieCommentsRequest(resolvedMovieId)
+
+        if (!isMounted) {
+          return
+        }
+
+        setComments(response)
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setComments([])
+      } finally {
+        if (isMounted) {
+          setIsCommentsLoading(false)
+        }
+      }
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-  }
+    void fetchComments()
+
+    return () => {
+      isMounted = false
+    }
+  }, [resolvedMovieId])
 
   // 코멘트 제출 기본 동작 방지 처리
   async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
@@ -523,8 +522,22 @@ function MovieDetailPage() {
       setCommentDraft('')
       setSelectedRating(0)
       setHoverRating(0)
-    } catch {
-      setCommentSubmitMessage('코멘트를 등록하지 못했습니다.')
+
+      setIsCommentsLoading(true)
+
+      try {
+        const commentsResponse = await fetchMovieCommentsRequest(resolvedMovieId)
+        setComments(commentsResponse)
+      } finally {
+        setIsCommentsLoading(false)
+      }
+    } catch (error) {
+      // 중복 코멘트 작성 응답 분기 처리
+      if (error instanceof ApiError && error.status === 409) {
+        alert('이미 이 영화에 코멘트를 작성했습니다.')
+      }
+
+      setCommentSubmitMessage('')
     } finally {
       setIsSubmittingComment(false)
     }
@@ -629,32 +642,35 @@ function MovieDetailPage() {
             <div className="movie-detail-cast-section">
               <h2>제작/출연</h2>
               <div className="movie-detail-cast-list-shell">
-                <div className="movie-detail-cast-list" ref={creditListRef}>
-                  {movieDetail.credits.map((member, index) => (
-                    <article className="movie-detail-cast-card" key={`${member.name}-${index}`}>
-                      <div className="movie-detail-cast-profile-shell">
-                        {member.profile ? (
-                          <img className="movie-detail-cast-profile" src={member.profile} alt={member.name} />
-                        ) : null}
-                      </div>
-                      <p className="movie-detail-cast-name">{member.name || '-'}</p>
-                      <p className="movie-detail-cast-role">{member.roleLabel || ' '}</p>
-                    </article>
-                  ))}
-                </div>
+                {directorCredits.length > 0 ? (
+                  <div className="movie-detail-cast-director-row">
+                    {directorCredits.map((member, index) => (
+                      <article className="movie-detail-cast-card movie-detail-cast-card-director" key={`director-${member.name}-${index}`}>
+                        <div className="movie-detail-cast-profile-shell">
+                          {member.profile ? (
+                            <img className="movie-detail-cast-profile" src={member.profile} alt={member.name} />
+                          ) : null}
+                        </div>
+                        <p className="movie-detail-cast-name">{member.name || '-'}</p>
+                        <p className="movie-detail-cast-role">{member.roleLabel || ' '}</p>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
 
-                {creditScrollState.isScrollable ? (
-                  <div className="movie-detail-cast-custom-scrollbar" aria-hidden="true">
-                    <button
-                      className="movie-detail-cast-custom-scrollbar-thumb"
-                      type="button"
-                      style={{
-                        width: `${creditScrollState.thumbWidth}px`,
-                        transform: `translateX(${creditScrollState.thumbOffset}px)`,
-                      }}
-                      onMouseDown={handleCreditScrollbarThumbMouseDown}
-                      tabIndex={-1}
-                    />
+                {actorCredits.length > 0 ? (
+                  <div className="movie-detail-cast-grid">
+                    {actorCredits.map((member, index) => (
+                      <article className="movie-detail-cast-card" key={`actor-${member.name}-${index}`}>
+                        <div className="movie-detail-cast-profile-shell">
+                          {member.profile ? (
+                            <img className="movie-detail-cast-profile" src={member.profile} alt={member.name} />
+                          ) : null}
+                        </div>
+                        <p className="movie-detail-cast-name">{member.name || '-'}</p>
+                        <p className="movie-detail-cast-role">{member.roleLabel || ' '}</p>
+                      </article>
+                    ))}
                   </div>
                 ) : null}
               </div>
@@ -668,12 +684,26 @@ function MovieDetailPage() {
             <div className="movie-detail-ratings">
               <article className="movie-detail-rating-card">
                 <p className="movie-detail-rating-label">피디아</p>
-                <p className="movie-detail-rating-value">-</p>
+                <div className="movie-detail-rating-display">
+                  <span className="movie-detail-rating-star-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                      <path d={STAR_ICON_PATH} />
+                    </svg>
+                  </span>
+                  <p className="movie-detail-rating-value">{getDisplayRatingWithScale('', 5)}</p>
+                </div>
               </article>
 
               <article className="movie-detail-rating-card">
                 <p className="movie-detail-rating-label">글로벌</p>
-                <p className="movie-detail-rating-value">{getDisplayRating(movieDetail.globalRating)}</p>
+                <div className="movie-detail-rating-display">
+                  <span className="movie-detail-rating-star-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                      <path d={STAR_ICON_PATH} />
+                    </svg>
+                  </span>
+                  <p className="movie-detail-rating-value">{getDisplayRatingWithScale(movieDetail.globalRating, 10)}</p>
+                </div>
               </article>
             </div>
           </div>
@@ -751,7 +781,7 @@ function MovieDetailPage() {
                   onFocus={() => {
                     void handleCommentInputFocus()
                   }}
-                  placeholder="이 영화에 대한 생각을 남겨보세요."
+                  placeholder="영화에 대한 솔직한 평가를 남겨보세요!"
                 />
               </div>
               <div className="movie-detail-comment-footer">
@@ -762,12 +792,37 @@ function MovieDetailPage() {
               </div>
             </form>
             {commentSubmitMessage ? <p className="movie-detail-comment-message">{commentSubmitMessage}</p> : null}
-          </div>
-        </section>
 
-        <section className="movie-detail-recommendations-shell" aria-labelledby="movie-detail-recommendations-title">
-          <div className="movie-detail-recommendations">
-            <h2 id="movie-detail-recommendations-title">관련 추천 영화</h2>
+            <div className="movie-detail-comment-list">
+              {isCommentsLoading ? (
+                <p className="movie-detail-comment-list-message">코멘트를 불러오는 중입니다...</p>
+              ) : comments.length > 0 ? (
+                comments.map((comment) => (
+                  <article className="movie-detail-comment-card" key={comment.id}>
+                    <div className="movie-detail-comment-card-header">
+                      <div className="movie-detail-comment-card-profile">
+                        <span className="movie-detail-comment-card-avatar" aria-hidden="true">
+                          {comment.nickname.slice(0, 1) || '?'}
+                        </span>
+                        <p className="movie-detail-comment-card-nickname">{comment.nickname}</p>
+                      </div>
+                      <div className="movie-detail-comment-card-rating">
+                        <span className="movie-detail-comment-card-rating-star" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <path d={STAR_ICON_PATH} />
+                          </svg>
+                        </span>
+                        <span>{comment.rating || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="movie-detail-comment-card-divider" aria-hidden="true" />
+                    <p className="movie-detail-comment-card-content">{comment.content}</p>
+                  </article>
+                ))
+              ) : (
+                <p className="movie-detail-comment-list-message">아직 등록된 코멘트가 없습니다.</p>
+              )}
+            </div>
           </div>
         </section>
       </main>
