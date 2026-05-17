@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
+﻿import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { ApiError, request } from '../api/client'
 import Header from '../components/Header'
@@ -50,8 +50,18 @@ type AuthMeResponse = {
   nickname?: string
 }
 
+// 코멘트 작성 요청 타입 정의
+type CreateCommentRequest = {
+  nickname: string
+  content: string
+  rating: number
+}
+
 const MIN_THUMB_WIDTH = 72
 const STAR_COUNT = 5
+const MAX_COMMENT_LENGTH = 100
+const STAR_ICON_PATH =
+  'M12 2.8c.38 0 .73.21.9.55l2.37 4.8 5.3.77c.75.11 1.05 1.03.5 1.56l-3.83 3.73.9 5.27c.13.74-.65 1.31-1.32.96L12 17.96l-4.82 2.53c-.67.35-1.45-.22-1.32-.96l.9-5.27-3.83-3.73c-.55-.53-.25-1.45.5-1.56l5.3-.77 2.37-4.8c.17-.34.52-.55.9-.55Z'
 
 // 객체 데이터 여부 확인
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -201,10 +211,6 @@ function getStarFillPercent(starIndex: number, rating: number) {
   return Math.max(0, Math.min(100, (rating - starStart) * 100))
 }
 
-// 별 아이콘 경로 상수 정의
-const STAR_ICON_PATH =
-  'M12 2.8c.38 0 .73.21.9.55l2.37 4.8 5.3.77c.75.11 1.05 1.03.5 1.56l-3.83 3.73.9 5.27c.13.74-.65 1.31-1.32.96L12 17.96l-4.82 2.53c-.67.35-1.45-.22-1.32-.96l.9-5.27-3.83-3.73c-.55-.53-.25-1.45.5-1.56l5.3-.77 2.37-4.8c.17-.34.52-.55.9-.55Z'
-
 // 가로 스크롤 상태 계산 처리
 function calculateHorizontalScrollState(element: HTMLDivElement): HorizontalScrollState {
   const viewportWidth = element.clientWidth
@@ -323,8 +329,11 @@ function MovieDetailPage() {
   // 코멘트 로그인 확인 상태 관리
   const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
 
-  // 코멘트 안내 메시지 상태 관리
-  const [commentAuthMessage, setCommentAuthMessage] = useState('')
+  // 코멘트 전송 상태 관리
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+
+  // 코멘트 전송 메시지 상태 관리
+  const [commentSubmitMessage, setCommentSubmitMessage] = useState('')
 
   // 출연진 스크롤 상태 관리
   const [creditScrollState, setCreditScrollState] = useState<HorizontalScrollState>({
@@ -340,13 +349,17 @@ function MovieDetailPage() {
   const creditListRef = useRef<HTMLDivElement | null>(null)
 
   // 코멘트 입력창 참조 준비
-  const commentInputRef = useRef<HTMLInputElement | null>(null)
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
 
   // 스크롤 드래그 시작 좌표 참조 준비
   const dragStartXRef = useRef(0)
   const dragStartScrollLeftRef = useRef(0)
 
   const displayedRating = hoverRating || selectedRating
+  const trimmedCommentDraft = commentDraft.trim()
+  const isCommentLengthValid =
+    trimmedCommentDraft.length >= 1 && trimmedCommentDraft.length <= MAX_COMMENT_LENGTH
+  const canClickCommentSubmit = canWriteComment && !isSubmittingComment
 
   // 상세 페이지 최상단 이동 처리
   useEffect(() => {
@@ -472,8 +485,49 @@ function MovieDetailPage() {
   }
 
   // 코멘트 제출 기본 동작 방지 처리
-  function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    const session = getAuthSession()
+
+    // 로그인 세션 존재 여부 확인 처리
+    if (!canClickCommentSubmit || !session?.nickname) {
+      return
+    }
+
+    // 평점 선택 여부 확인 처리
+    if (displayedRating <= 0) {
+      alert('평점을 선택해주세요.')
+      return
+    }
+
+    // 코멘트 글자 수 조건 확인 처리
+    if (!isCommentLengthValid) {
+      alert('코멘트는 1자 이상 100자 이하로 작성해주세요.')
+      return
+    }
+
+    setIsSubmittingComment(true)
+    setCommentSubmitMessage('')
+
+    try {
+      await authRequest<CreateCommentRequest>(`/movies/${resolvedMovieId}/comments`, {
+        method: 'POST',
+        body: {
+          nickname: session.nickname,
+          content: trimmedCommentDraft,
+          rating: displayedRating,
+        },
+      })
+
+      setCommentDraft('')
+      setSelectedRating(0)
+      setHoverRating(0)
+    } catch {
+      setCommentSubmitMessage('코멘트를 등록하지 못했습니다.')
+    } finally {
+      setIsSubmittingComment(false)
+    }
   }
 
   // 코멘트 작성 로그인 확인 처리
@@ -486,7 +540,7 @@ function MovieDetailPage() {
 
     if (!session?.accessToken) {
       setCanWriteComment(false)
-      setCommentAuthMessage('로그인 후 작성할 수 있습니다.')
+      alert('로그인이 필요한 서비스입니다.')
       commentInputRef.current?.blur()
       return
     }
@@ -499,10 +553,9 @@ function MovieDetailPage() {
       })
 
       setCanWriteComment(true)
-      setCommentAuthMessage('')
     } catch (error) {
       setCanWriteComment(false)
-      setCommentAuthMessage('로그인 후 작성할 수 있습니다.')
+      alert('로그인이 필요한 서비스입니다.')
 
       if (isAuthSessionError(error) || (error instanceof ApiError && error.status === 401)) {
         commentInputRef.current?.blur()
@@ -674,9 +727,11 @@ function MovieDetailPage() {
                     </div>
                   )
                 })}
-                <span className="movie-detail-rating-value movie-detail-rating-value-inline">
-                  {getSelectedRatingLabel(displayedRating)}
-                </span>
+                {displayedRating > 0 ? (
+                  <span className="movie-detail-rating-value movie-detail-rating-value-inline">
+                    {getSelectedRatingLabel(displayedRating)}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -684,26 +739,29 @@ function MovieDetailPage() {
               <label className="sr-only" htmlFor="movie-detail-comment-input">
                 한줄 코멘트 입력
               </label>
-              <input
-                ref={commentInputRef}
-                id="movie-detail-comment-input"
-                className="movie-detail-comment-input"
-                type="text"
-                maxLength={200}
-                readOnly={!canWriteComment}
-                value={commentDraft}
-                onChange={(event) => setCommentDraft(event.target.value)}
-                onFocus={() => {
-                  void handleCommentInputFocus()
-                }}
-                placeholder="영화에 대한 평가를 남겨보세요!"
-              />
-              <button className="movie-detail-comment-submit" type="submit" disabled={!canWriteComment}>
-                작성
-              </button>
+              <div className="movie-detail-comment-input-shell">
+                <textarea
+                  ref={commentInputRef}
+                  id="movie-detail-comment-input"
+                  className="movie-detail-comment-input"
+                  maxLength={MAX_COMMENT_LENGTH}
+                  readOnly={!canWriteComment}
+                  value={commentDraft}
+                  onChange={(event) => setCommentDraft(event.target.value)}
+                  onFocus={() => {
+                    void handleCommentInputFocus()
+                  }}
+                  placeholder="이 영화에 대한 생각을 남겨보세요."
+                />
+              </div>
+              <div className="movie-detail-comment-footer">
+                <p className="movie-detail-comment-count">{`${commentDraft.length}/${MAX_COMMENT_LENGTH}`}</p>
+                <button className="movie-detail-comment-submit" type="submit" disabled={!canClickCommentSubmit}>
+                  {isSubmittingComment ? '등록 중' : '작성'}
+                </button>
+              </div>
             </form>
-
-            {commentAuthMessage ? <p className="movie-detail-comment-message">{commentAuthMessage}</p> : null}
+            {commentSubmitMessage ? <p className="movie-detail-comment-message">{commentSubmitMessage}</p> : null}
           </div>
         </section>
 
