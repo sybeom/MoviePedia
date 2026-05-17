@@ -4,4 +4,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import syb.moviepedia.comment.domain.Comment;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
+    Boolean existsByMovieIdAndMemberId(Long  movieId, Long memberId);
 }

@@ -1,6 +1,7 @@
 package syb.moviepedia.common.api;
 
 import lombok.Getter;
+import syb.moviepedia.common.exception.DuplicateCommentException;
 
 @Getter
 public enum ErrorCode {
@@ -13,7 +14,8 @@ public enum ErrorCode {
     JSON_PARSING_FAILED("JSON_PARSING_FAILED"),
     TMDB_API_FAILED("TMDB_API_FAILED"),
     MOVIE_NOT_FOUND("MOVIE_NOT_FOUND"),
-    MEMBER_NOT_FOUND("MEMBER_NOT_FOUND");
+    MEMBER_NOT_FOUND("MEMBER_NOT_FOUND"),
+    DUPLICATE_COMMENT("DUPLICATE_COMMENT");
 
     private final String code;
 

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.dto.CommentDto;
 import syb.moviepedia.comment.repository.CommentRepository;
+import syb.moviepedia.common.exception.DuplicateCommentException;
 import syb.moviepedia.common.exception.MemberNotFoundException;
 import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.member.domain.Member;
@@ -26,6 +27,11 @@ public class CommentService {
 
         Member member = memberRepository.findByNickname(dto.nickname()).orElseThrow(
                 () -> new MemberNotFoundException("멤버를 찾을 수 없습니다. 닉네임:" + dto.nickname()));
+
+        // 영화당 1코멘트만 가능하도록 하기 위함
+        if (commentRepository.existsByMovieIdAndMemberId(movie.getId(), member.getId())) {
+            throw new DuplicateCommentException("이미 해당 영화에 코멘트를 작성하였습니다.");
+        }
 
         Comment comment = Comment.builder()
                 .nickname(dto.nickname())

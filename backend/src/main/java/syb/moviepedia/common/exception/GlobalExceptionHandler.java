@@ -83,6 +83,12 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.MEMBER_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
+    // 코멘트 재작성 시도
+    @ExceptionHandler(DuplicateCommentException.class)
+    public ResponseEntity<ApiResult<Void>> handleDuplicateCommentException(DuplicateCommentException e) {
+        return fail(ErrorCode.DUPLICATE_COMMENT, HttpStatus.BAD_REQUEST, e);
+    }
+
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
     private ResponseEntity<ApiResult<Void>> fail(
             ErrorCode errorCode,
