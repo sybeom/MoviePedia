@@ -58,7 +58,7 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
         }
 
         Map<String, String> loginMap;
-        try { // 메시지 바디 json 변환 및 json 데이터를 객체 형태로 변환
+        try { // 메시지 바디 json 변환 및 데이터를 객체 형태로 변환
             ObjectMapper objectMapper = new ObjectMapper(); // json <-> 자바 객체 변환기
             ServletInputStream inputStream = request.getInputStream(); // 메시지 바디를 바이트 코드 형태로 얻는다.
             String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8); // 바이트 코드를 String 형태로 변환 -> json 형태이다

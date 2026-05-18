@@ -152,7 +152,7 @@ public class TmdbClient {
                             .path(path)
                             .queryParam("language", "ko-KR")
                             .queryParam("region", "KR")
-                            .build())
+                            .build(movieId))
                     .retrieve()
                     .bodyToMono(TmdbMovieCertification.class)
                     .block();

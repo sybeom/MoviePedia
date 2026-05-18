@@ -1,6 +1,7 @@
 package syb.moviepedia.comment.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.dto.CommentDto;
@@ -17,6 +18,7 @@ import syb.moviepedia.movie.repository.MovieRepository;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CommentService {
     private final MovieRepository movieRepository;
@@ -24,11 +26,11 @@ public class CommentService {
     private final CommentRepository commentRepository;
 
     // 모든 코멘트 목록
-    public List<CommentResponseDto> getAllComments(Long movieCode) {
-        Movie movie = movieRepository.findByCode(movieCode)
-                .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. code: " + movieCode));
+    public List<CommentResponseDto> getAllComments(Long code, String loinId) {
+        Movie movie = movieRepository.findByCode(code)
+                .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
 
-        List<Comment> comments = commentRepository.findAllByMovieId(movie.getId());
+        List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loinId);
 
         return toCommentsDto(comments);
     }
@@ -46,12 +48,14 @@ public class CommentService {
             throw new CommentAlreadyExistsException("이미 해당 영화에 코멘트를 작성하였습니다.");
         }
 
+        // 코멘트 엔티티 생성
         Comment comment = Comment.builder()
                 .nickname(dto.nickname())
                 .content(dto.content())
                 .rating(dto.rating())
                 .movie(movie)
                 .member(member)
+                .like(0)
                 .build();
 
         commentRepository.save(comment);

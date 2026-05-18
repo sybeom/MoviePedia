@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 회원 가입에 필요한 MemberDto
+ * 이 클래스는 소셜에서 쓰인다.
  */
 // TODO: 추후 요청,응답 Dto 별도로 분리하도록 한다.
 @AllArgsConstructor

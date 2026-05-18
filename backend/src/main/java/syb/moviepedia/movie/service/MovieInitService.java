@@ -38,7 +38,7 @@ public class MovieInitService {
     public void initGenres() {
         // tmdb 장르 데이터는 총 19개
         if (tmdbGenreRepository.count() > 0) {
-            log.info("initGenres(): 장르 데이터 DB존재, 초기 데이터 실행 X");
+            log.info("initGenres(): 장르 데이터 DB존재");
             return;
         }
 
@@ -58,7 +58,7 @@ public class MovieInitService {
     // 국가 데이터 초기화
     public void initCountries() {
         if (countryRepository.count() > 0) {
-            log.info("initCountries(): 국가 데이터 DB존재, 초기 데이터 실행 X");
+            log.info("initCountries(): 국가 데이터 DB존재");
             return;
         }
 

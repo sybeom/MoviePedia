@@ -33,8 +33,6 @@ public class MovieService {
     @Transactional(readOnly = true)
     public MovieCategoriesDto getCategoryMovies() {
 
-        //TODO: 예외처리하는게 좋을듯.. 아니 별 상관 있나? 어차피 Empty면 처리안해도 알아서 아무것도 안보여주는데
-        // 각 카테고리별 데이터 가져오기
         List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
         List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
         List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.NOW_PLAYING);

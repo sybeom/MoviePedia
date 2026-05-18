@@ -35,4 +35,8 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @Builder.Default // Builder로 객체 생성시 like 값을 지정하지 않아도 기본값이 들어간다.
+    @Column(name = "like_count", nullable = false)
+    Integer like = 0;// 시작값 0 고정
 }

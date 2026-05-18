@@ -55,6 +55,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
             List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
 
+//            LoginMemberPrincipal.builder()
+//                    .memberId()
+
             /**
              * UsernamePasswordAuthenticationToken의 파라미터들
              * Principal : 유저에 대한 정보

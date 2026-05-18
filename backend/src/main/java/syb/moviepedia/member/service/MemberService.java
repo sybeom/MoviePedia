@@ -36,7 +36,6 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         this.passwordEncoder = passwordEncoder;
     }
 
-    // TODO: 회원가입시 중복 닉네임의 경우 프론트에서 알림창 또는 메시지를 띄우지 않음.
     @Transactional
     public Long signup(MemberSignupRequestDto memberDto) {
 
@@ -61,20 +60,23 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .build();
         return memberRepository.save(member).getId();
     }
+
     @Transactional(readOnly = true)
     @Override
     public CustomUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
         return CustomUserDetails.builder()
+                .id(member.getId())
                 .loginId(username)
                 .password(member.getPassword())
                 .nickname(member.getNickname())
                 .build();
     }
-    @Transactional
+
     // 소셜 회원가입 및 로그인
-    @Override // Oath2 관련 빈이 유저 정보를 받으면 loadUser()를 호출해 네이버로부터 받은 유저 정보를 객체를 userRequest에 넣어줌.
+    @Transactional
+    @Override // Oauth2 관련 빈이 유저 정보를 받으면 loadUser()를 호출해 네이버로부터 받은 유저 정보를 객체를 userRequest에 넣어줌.
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         log.info("loadUser 호출 확인");
         // 부모 메소드 호출. 받은 유저 정보 (userRequest를 파싱한다.)

@@ -4,12 +4,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.comment.dto.CommentDto;
 import syb.moviepedia.comment.dto.CommentResponseDto;
 import syb.moviepedia.comment.service.CommentService;
 import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.member.domain.CustomUserDetails;
 
 import java.util.List;
 
@@ -22,8 +25,13 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping("/comments")
-    public ResponseEntity<ApiResult<List<CommentResponseDto>>> getComments(@PathVariable Long movieId) {
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieId)));
+    public ResponseEntity<ApiResult<List<CommentResponseDto>>> getComments(
+            @PathVariable Long movieId,
+            Authentication authentication) {
+
+        String loinId = authentication != null ? authentication.getName() : null;
+
+        return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieId, loinId)));
     }
 
     @PostMapping("/comments")
