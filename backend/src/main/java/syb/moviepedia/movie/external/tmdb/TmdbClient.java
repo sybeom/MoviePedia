@@ -17,53 +17,62 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class TmdbClient {
-    //TODO : 경로 상수화 하기
+
     private final WebClient tmdbWebClient;
+    private static final String DISCOVER_MOVIE_PATH = "/discover/movie";
+    private static final String POPULAR_PATH = "/movie/popular";
+    private static final String NOW_PLAYING = "/movie/now_playing";
+    private static final String UPCOMING_PATH = "/movie/upcoming";
+    private static final String GENRE_PATH = "/genre/movie/list";
+    private static final String COUNTRY_PATH = "/configuration/countries";
+    private static final String RELEASE_DATE_PATH = "/movie/{movieId}/release_dates";
+    private static final String DETAIL_PATH = "/movie/{movieId}";
+    private static final String CREDIT_PATH = "/movie/{movieId}/credits";
 
     // 전체 영화
     public TmdbMovieList getInitMovies() {
-        return fetchInitMovies("/discover/movie");
+        return fetchInitMovies(DISCOVER_MOVIE_PATH);
     }
 
     // 인기 영화
     public TmdbMovieList getPopularMovies() {
-        return fetchMovieList("/movie/popular");
+        return fetchMovieList(POPULAR_PATH);
     }
 
     // 현재 상영 영화
     public TmdbMovieList getNowPlayingMovies() {
-        return fetchMovieList("/movie/now_playing");
+        return fetchMovieList(NOW_PLAYING);
     }
 
     // 개봉 예정
     public TmdbMovieList getUpcomingMovies() {
-        return fetchMovieList("/movie/upcoming");
+        return fetchMovieList(UPCOMING_PATH);
     }
 
     // 장르 정보
     public TmdbGenreList getMovieGenres() {
-        return fetchMovieGenres(); // api 호출
+        return fetchMovieGenres(GENRE_PATH); // api 호출
     }
 
     // 관람 등급
     public TmdbMovieCertification getMovieCertification(Long movieId) {
         // 개봉일 api로 관람등급을 얻는다.
-        return fetchMovieReleaseDate(movieId);
+        return fetchMovieReleaseDate(RELEASE_DATE_PATH, movieId);
     }
 
     // 국가 정보
     public List<TmdbCountry> getCountries() {
-        return fetchCountries();
+        return fetchCountries(COUNTRY_PATH);
     }
 
     // 영화 상세
     public TmdbMovieDetail getMovieDetail(Long movieId) {
-        return fetchMovieDetail(movieId);
+        return fetchMovieDetail(DETAIL_PATH, movieId);
     }
 
     // 크레딧 (감독, 출연) 정보
     public TmdbCredit getCredit(Long movieId) {
-        return fetchCredit(movieId);
+        return fetchCredit(CREDIT_PATH, movieId);
     }
 
     // 초기 영화 호출
@@ -103,11 +112,11 @@ public class TmdbClient {
     }
 
     // 장르 api 호출
-    private TmdbGenreList fetchMovieGenres() {
+    private TmdbGenreList fetchMovieGenres(String path) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/genre/movie/list")
+                            .path(path)
                             .queryParam("language", "ko-KR")
                             .build())
                     .retrieve()
@@ -119,11 +128,11 @@ public class TmdbClient {
     }
 
     // 국가 코드 정보 API 호출
-    private List<TmdbCountry> fetchCountries() {
+    private List<TmdbCountry> fetchCountries(String path) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/configuration/countries")
+                            .path(path)
                             .queryParam("language", "ko-KR")
                             .build())
                     .retrieve()
@@ -136,11 +145,11 @@ public class TmdbClient {
     }
 
     // 개봉일 api 호출 - 연령 등급 얻기(개봉일 api에서 영화 연령 등급을 얻을 수 있기때문)
-    private TmdbMovieCertification fetchMovieReleaseDate(Long movieId) {
+    private TmdbMovieCertification fetchMovieReleaseDate(String path, Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/movie/" + movieId + "/release_dates")
+                            .path(path)
                             .queryParam("language", "ko-KR")
                             .queryParam("region", "KR")
                             .build())
@@ -153,11 +162,11 @@ public class TmdbClient {
     }
 
     // 영화 상세 api 호출 (영화 상세는 변환할 데이터가 크게 없기 때문에 Dto 클래스로 받고 그대로 반환)
-    private TmdbMovieDetail fetchMovieDetail(Long movieId) {
+    private TmdbMovieDetail fetchMovieDetail(String path, Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/movie/{movieId}")
+                            .path(path)
                             .queryParam("language", "ko-KR")
                             .queryParam("region", "KR")
                             .build(movieId))
@@ -171,11 +180,11 @@ public class TmdbClient {
     }
 
     // 크레딧(감독 및 출연진) api
-    private TmdbCredit fetchCredit(Long movieId) {
+    private TmdbCredit fetchCredit(String path, Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/movie/{movieId}/credits")
+                            .path(path)
                             .queryParam("language", "ko-KR")
                             .build(movieId))
                     .retrieve()

@@ -118,7 +118,7 @@ public class MovieService {
                         .profile(cast.profile())
                         .castOrder(cast.castOrder())
                         .build())
-                .limit(10)
+                .limit(10) // 출연 배우는 10명만
                 .toList());
 
         log.info("getCast(): 영화 캐스트 api 호출");

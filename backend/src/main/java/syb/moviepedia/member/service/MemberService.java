@@ -36,6 +36,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
         this.passwordEncoder = passwordEncoder;
     }
 
+    // TODO: 회원가입시 중복 닉네임의 경우 프론트에서 알림창 또는 메시지를 띄우지 않음.
     @Transactional
     public Long signup(MemberSignupRequestDto memberDto) {
 
