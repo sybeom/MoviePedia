@@ -115,6 +115,14 @@ function SignupPage() {
         return
       }
 
+      // 닉네임 중복 응답 분기 처리
+      if (isApiError(error) && error.status === 409) {
+        setValidationErrors({
+          nickname: '사용중인 닉네임입니다.',
+        })
+        return
+      }
+
       // 일반 실패 메시지 반영
       setMessage('회원가입 요청에 실패했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
@@ -137,7 +145,7 @@ function SignupPage() {
               <input
                 id="signup-id"
                 type="text"
-                placeholder="사용할 아이디를 입력하세요"
+                placeholder="사용할 아이디를 입력하세요."
                 autoComplete="username"
                 value={loginId}
                 onChange={(event) => setLoginId(event.target.value)}
@@ -158,7 +166,7 @@ function SignupPage() {
               <input
                 id="signup-password"
                 type="password"
-                placeholder="비밀번호를 입력하세요"
+                placeholder="비밀번호를 입력하세요."
                 autoComplete="new-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -179,7 +187,7 @@ function SignupPage() {
               <input
                 id="nickname"
                 type="text"
-                placeholder="닉네임을 입력하세요"
+                placeholder="닉네임을 입력하세요."
                 autoComplete="nickname"
                 value={nickname}
                 onChange={(event) => setNickname(event.target.value)}
