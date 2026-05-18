@@ -10,7 +10,6 @@ import org.springframework.lang.NonNullApi;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.movie.domain.Movie;
 
-// TODO: 모든 엔티티 접근자 private으로 변경하기
 @Entity
 @Builder
 @Getter
@@ -19,21 +18,21 @@ import syb.moviepedia.movie.domain.Movie;
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
 
-    String nickname;
-
-    @Nullable
-    String content;
+    private String nickname;
 
     @Nullable
-    Double rating;
+    private String content;
+
+    @Nullable
+    private Double rating;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id")
-    Movie movie;
+    private Movie movie;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
-    Member member;
+    private Member member;
 }

@@ -23,20 +23,20 @@ public class Member {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    String loginId;
+    private String loginId;
 
     @Column(unique = true, nullable = false)
-    String password;
+    private String password;
 
     @Column(unique = true, nullable = false)
-    String nickname;
+    private String nickname;
 
     @Column(unique = true)
-    String email;
+    private String email;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING) // 해당 설정 값이 없으면 Enum 값이 0,1 이렇게 순서대로 들어감. 이것은 문자 그대로 들어감
-    RoleType role;
+    private RoleType role;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider_type", nullable = false)

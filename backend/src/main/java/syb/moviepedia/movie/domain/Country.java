@@ -8,10 +8,10 @@ import lombok.Builder;
 public class Country {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
 
     @Column(unique = true)
-    String code;
+    private String code;
     @Column(unique = true)
-    String name;
+    private String name;
 }

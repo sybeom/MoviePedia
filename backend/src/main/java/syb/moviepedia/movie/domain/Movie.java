@@ -21,36 +21,36 @@ public class Movie {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    Long code;
+    private Long code;
 
-    String title;
+    private String title;
 
     @Column(name = "backdrop_path")
-    String backdropPath;
+    private String backdropPath;
 
     @Column(name = "poster_path")
-    String posterPath;
+    private String posterPath;
 
     @Column(columnDefinition = "json")
-    List<String> genres;
+    private List<String> genres;
 
-    String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
+    private String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
 
     @Column(columnDefinition = "TEXT")
-    String overview;
+    private String overview;
 
     @Column(name = "release_date")
-    LocalDate releaseDate;
+    private LocalDate releaseDate;
 
-    List<String> country;
+    private List<String> country;
 
-    Integer runtime;
+    private Integer runtime;
 
     @Column(name = "global_rating")
-    Double globalRating;
+    private Double globalRating;
 
     @Column(name = "detail_fetched")
-    Boolean detailFetched;
+    private Boolean detailFetched;
 
     public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();
