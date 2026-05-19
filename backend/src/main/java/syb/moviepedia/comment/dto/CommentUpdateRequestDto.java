@@ -4,13 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
-/**
- * 코멘트 요청 DTO
- */
-// TODO: 작성날짜 추가
 @Builder
-public record CommentDto(
-        @NotBlank String nickname,
+public record CommentUpdateRequestDto(
+        @NotNull Long id,
         @NotNull String content,
         @NotNull Double rating,
         @NotNull Integer like

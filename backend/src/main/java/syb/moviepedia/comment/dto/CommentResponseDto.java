@@ -7,6 +7,8 @@ import lombok.Builder;
  */
 @Builder
 public record CommentResponseDto(
+        Long commentId,
+        Long movieId,
         String nickname,
         String content,
         double rating,

@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.dto.CommentDto;
 import syb.moviepedia.comment.dto.CommentResponseDto;
+import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.exception.CommentAlreadyExistsException;
+import syb.moviepedia.common.exception.CommentNotFoundException;
 import syb.moviepedia.common.exception.MemberNotFoundException;
 import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.member.domain.Member;
@@ -25,6 +27,12 @@ public class CommentService {
     private final MemberRepository memberRepository;
     private final CommentRepository commentRepository;
 
+    // 코멘트 단일 조회 (코멘트 수정시 사용)
+    public CommentDto getComment(Long id) {
+        Comment comment = commentRepository.findById(id).orElseThrow(
+                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
+        return toCommentDto(comment);
+    }
     // 모든 코멘트 목록
     public List<CommentResponseDto> getAllComments(Long code, String loinId) {
         Movie movie = movieRepository.findByCode(code)
@@ -33,7 +41,7 @@ public class CommentService {
         // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
         List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loinId);
 
-        return toCommentsDto(comments, loinId);
+        return toCommentsResponseDto(movie.getId(), comments, loinId);
     }
 
     // 코멘트 저장
@@ -62,10 +70,43 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    private List<CommentResponseDto> toCommentsDto(
-            List<Comment> comments, String loinId) {
+    // 코멘트 수정
+    public void updateContent(Long code, CommentUpdateRequestDto dto) {
+        // TODO: 영화를 매번 찾아와야한다. 즉 쿼리가 한번씩 실행된다는 말이다.
+        //  차라리 코멘트 작성할 때, 영화 아이디를 보내면 어떨까?
+        Movie movie = movieRepository.findByCode(code).orElseThrow(
+                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
+        Comment comment = commentRepository.findByMovieId(movie.getId()).orElseThrow(
+                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 코드: " + code));
+
+        comment.updateContent(dto.content());
+    }
+
+    // 평점 업데이트
+    public void updateRating(Long code, CommentUpdateRequestDto dto) {
+        Movie movie = movieRepository.findByCode(code).orElseThrow(
+                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
+        commentRepository.findByMovieId(movie.getId()).orElseThrow(
+                ()-> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 코드: " + code));
+    }
+
+    // 엔티티 -> Comment Dto로 가공
+    private CommentDto toCommentDto(Comment comment) {
+        return CommentDto.builder()
+                .content(comment.getContent())
+                .rating(comment.getRating())
+                .build();
+    }
+
+    // 엔티티 -> CommentResponseDTO로 가공 (리스트)
+    private List<CommentResponseDto> toCommentsResponseDto(
+            Long movieId,
+            List<Comment> comments,
+            String loinId) {
         return comments.stream().map(comment ->
                 CommentResponseDto.builder()
+                        .commentId(comment.getId())
+                        .movieId(movieId)
                         .nickname(comment.getNickname())
                         .content(comment.getContent())
                         .rating(comment.getRating())

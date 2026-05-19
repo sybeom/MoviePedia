@@ -6,9 +6,12 @@ import org.springframework.data.repository.query.Param;
 import syb.moviepedia.comment.domain.Comment;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
+
+    Optional<Comment> findByMovieId(Long movieId);
     List<Comment> findAllByMovieId(Long movieId);
     Boolean existsByMovieIdAndMemberId(Long  movieId, Long memberId);
 
