@@ -30,9 +30,10 @@ public class CommentService {
         Movie movie = movieRepository.findByCode(code)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
 
+        // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
         List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loinId);
 
-        return toCommentsDto(comments);
+        return toCommentsDto(comments, loinId);
     }
 
     // 코멘트 저장
@@ -61,12 +62,14 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    private List<CommentResponseDto> toCommentsDto(List<Comment> comments) {
+    private List<CommentResponseDto> toCommentsDto(
+            List<Comment> comments, String loinId) {
         return comments.stream().map(comment ->
                 CommentResponseDto.builder()
                         .nickname(comment.getNickname())
                         .content(comment.getContent())
                         .rating(comment.getRating())
+                        .isMine(comment.getMember().getLoginId().equals(loinId)) // 로그인 유저가 코멘트 작성자면 true
                         .build())
                 .toList();
     }

@@ -9,6 +9,7 @@ import lombok.Builder;
 public record CommentResponseDto(
         String nickname,
         String content,
-        double rating
+        double rating,
+        boolean isMine
 ) {
 }
