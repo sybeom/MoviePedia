@@ -222,6 +222,7 @@ export function normalizeMovieComments(data: unknown): MovieComment[] {
       nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '익명',
       content: getStringValue(comment, ['content', 'comment']) || '-',
       rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
+      isMine: comment.isMine === true,
     }))
 }
 

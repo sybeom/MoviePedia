@@ -9,7 +9,7 @@ export type SignupFormValues = {
 export type SignupFormErrors = Partial<Record<keyof SignupFormValues, string>>
 
 // 아이디 검증 정규식 정의
-const LOGIN_ID_PATTERN = /^[A-Za-z0-9]{6,10}$/
+const LOGIN_ID_PATTERN = /^[A-Za-z0-9]{5,10}$/
 
 // 비밀번호 검증 정규식 정의
 const PASSWORD_PATTERN = /^[A-Za-z0-9!@#$]{2,10}$/
@@ -19,7 +19,7 @@ const NICKNAME_PATTERN = /^[A-Za-z0-9가-힣]{2,6}$/
 
 // 회원가입 에러 문구 정의
 const SIGNUP_ERROR_MESSAGES: Required<SignupFormErrors> = {
-  loginId: '아이디는 6~10자의 영어, 숫자 조합이어야 합니다.',
+  loginId: '아이디는 5~10자의 영어, 숫자 조합이어야 합니다.',
   password: '비밀번호는 2~10자의 영어, 숫자, 특수문자(!@#$) 조합이어야 합니다.',
   nickname: '닉네임은 특수문자를 제외한 2~6자여야 합니다.',
 }

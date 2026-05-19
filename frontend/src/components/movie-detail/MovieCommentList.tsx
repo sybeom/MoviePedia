@@ -33,6 +33,21 @@ function MovieCommentList({ comments, isLoading }: MovieCommentListProps) {
             </div>
             <div className="movie-detail-comment-card-divider" aria-hidden="true" />
             <p className="movie-detail-comment-card-content">{comment.content}</p>
+            <div className="movie-detail-comment-card-footer">
+              <button className="movie-detail-comment-like-button" type="button">
+                좋아요
+              </button>
+              {comment.isMine ? (
+                <div className="movie-detail-comment-card-owner-actions">
+                  <button className="movie-detail-comment-owner-button" type="button">
+                    수정
+                  </button>
+                  <button className="movie-detail-comment-owner-button" type="button">
+                    삭제
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </article>
         ))
       ) : (

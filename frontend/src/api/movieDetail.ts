@@ -1,4 +1,5 @@
 import { request } from './client'
+import { getAuthSession } from '../utils/authStorage'
 import { authRequest } from '../utils/fetchUtil'
 import type { AuthMeResponse, CreateCommentRequest, MovieComment } from '../types/movieDetail'
 import { normalizeMovieComments, normalizeMovieDetail } from '../utils/movieDetail'
@@ -22,8 +23,16 @@ export function fetchMovieComments(movieId: string) {
     return existingRequest
   }
 
+  // 로그인 세션 조회 처리
+  const session = getAuthSession()
+
   const requestPromise = request<unknown>(`/movies/${movieId}/comments`, {
     method: 'GET',
+    headers: session?.accessToken
+      ? {
+          Authorization: `Bearer ${session.accessToken}`,
+        }
+      : undefined,
   })
     .then((response) => normalizeMovieComments(response))
     .finally(() => {
