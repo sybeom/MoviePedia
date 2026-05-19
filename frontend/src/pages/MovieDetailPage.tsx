@@ -3,8 +3,8 @@ import { useLocation, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { createMovieComment, fetchMovieComments, fetchMovieDetail, verifyCommentAuth } from '../api/movieDetail'
 import Header from '../components/Header'
-import MovieCommentForm from '../components/movie-detail/MovieCommentForm'
 import MovieCommentList from '../components/movie-detail/MovieCommentList'
+import MovieCommentModal from '../components/movie-detail/MovieCommentModal'
 import MovieDetailCredits from '../components/movie-detail/MovieDetailCredits'
 import MovieDetailHero from '../components/movie-detail/MovieDetailHero'
 import MovieDetailRatings from '../components/movie-detail/MovieDetailRatings'
@@ -59,6 +59,9 @@ function MovieDetailPage() {
 
   // 코멘트 전송 상태 관리
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+
+  // 코멘트 작성 모달 노출 상태 관리
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
 
   // 상세 요청 중복 방지 참조 준비
   const hasLoadedDetailRef = useRef(false)
@@ -197,6 +200,16 @@ function MovieDetailPage() {
     }
   }
 
+  // 코멘트 작성 모달 열기 처리
+  function handleOpenCommentModal() {
+    setIsCommentModalOpen(true)
+  }
+
+  // 코멘트 작성 모달 닫기 처리
+  function handleCloseCommentModal() {
+    setIsCommentModalOpen(false)
+  }
+
   // 코멘트 제출 기본 동작 방지 처리
   async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -232,6 +245,7 @@ function MovieDetailPage() {
       setCommentDraft('')
       setSelectedRating(0)
       setHoverRating(0)
+      setIsCommentModalOpen(false)
       setIsCommentsLoading(true)
 
       try {
@@ -265,24 +279,36 @@ function MovieDetailPage() {
           <div className="movie-detail-comments">
             <h2 id="movie-detail-comments-title">한줄 코멘트</h2>
 
-            <MovieCommentForm
-              commentDraft={commentDraft}
-              selectedRating={selectedRating}
-              hoverRating={hoverRating}
-              canWriteComment={canWriteComment}
-              isSubmittingComment={isSubmittingComment}
-              isCheckingCommentAuth={isCheckingCommentAuth}
-              commentInputRef={commentInputRef}
-              onCommentDraftChange={setCommentDraft}
-              onSelectedRatingChange={setSelectedRating}
-              onHoverRatingChange={setHoverRating}
-              onSubmit={handleCommentSubmit}
-              onCommentFocus={handleCommentInputFocus}
-            />
+            <button
+              className="movie-detail-comment-open-button"
+              type="button"
+              onClick={handleOpenCommentModal}
+            >
+              코멘트 남기기
+            </button>
 
             <MovieCommentList comments={comments} isLoading={isCommentsLoading} />
           </div>
         </section>
+
+        {isCommentModalOpen ? (
+          <MovieCommentModal
+            title={movieDetail.title}
+            commentDraft={commentDraft}
+            selectedRating={selectedRating}
+            hoverRating={hoverRating}
+            canWriteComment={canWriteComment}
+            isSubmittingComment={isSubmittingComment}
+            isCheckingCommentAuth={isCheckingCommentAuth}
+            commentInputRef={commentInputRef}
+            onClose={handleCloseCommentModal}
+            onCommentDraftChange={setCommentDraft}
+            onSelectedRatingChange={setSelectedRating}
+            onHoverRatingChange={setHoverRating}
+            onSubmit={handleCommentSubmit}
+            onCommentFocus={handleCommentInputFocus}
+          />
+        ) : null}
       </main>
     </div>
   )

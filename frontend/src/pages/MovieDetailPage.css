@@ -159,7 +159,7 @@
   gap: 12px;
   width: 100%;
   max-width: 1320px;
-  margin-top: 88px;
+  margin-top: 32px;
 }
 
 .movie-detail-comment-list-message {
@@ -267,9 +267,9 @@
 }
 
 .movie-detail-comment-card-footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   margin-top: auto;
   padding-top: 14px;
@@ -284,6 +284,7 @@
 }
 
 .movie-detail-comment-like-button {
+  justify-self: start;
   padding: 0;
   color: #7e7e7e;
   font-size: 14px;
@@ -302,8 +303,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  justify-content: flex-end;
-  margin-left: auto;
+  justify-self: end;
 }
 
 .movie-detail-comment-owner-button {
@@ -327,6 +327,126 @@
   margin-top: 18px;
   display: grid;
   gap: 10px;
+}
+
+.movie-detail-comment-open-button {
+  min-width: 220px;
+  min-height: 52px;
+  margin-top: 20px;
+  padding: 0 20px;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.movie-detail-comment-open-button:hover {
+  background: #f3f4f6;
+}
+
+.movie-detail-comment-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.movie-detail-comment-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.movie-detail-comment-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 41;
+  width: min(calc(100% - 48px), 820px);
+  max-height: min(86vh, 760px);
+  padding: 28px 28px 24px;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+.movie-detail-comment-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.movie-detail-comment-modal-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.movie-detail-comment-modal-copy h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.movie-detail-comment-modal-copy p {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.movie-detail-comment-modal-close {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+  color: #374151;
+  font-size: 30px;
+  line-height: 1;
+  background: #f3f4f6;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.movie-detail-comment-modal-close:hover {
+  background: #e5e7eb;
+}
+
+.movie-detail-comment-modal .movie-detail-comment-rating-shell {
+  margin-top: 20px;
+}
+
+.movie-detail-comment-modal .movie-detail-comment-form {
+  max-width: none;
+  margin-top: 16px;
+}
+
+.movie-detail-comment-modal .movie-detail-comment-input {
+  min-height: 340px;
+  padding: 16px;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.movie-detail-comment-modal .movie-detail-comment-footer {
+  padding: 0;
+}
+
+.movie-detail-comment-modal .movie-detail-comment-submit {
+  min-width: 112px;
+  min-height: 46px;
+  font-size: 16px;
+  border-radius: 8px;
 }
 
 .movie-detail-comment-footer {

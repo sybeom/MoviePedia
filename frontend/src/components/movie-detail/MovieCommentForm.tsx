@@ -18,7 +18,7 @@ type MovieCommentFormProps = {
   onCommentFocus: () => Promise<AuthMeResponse | void>
 }
 
-// 코멘트 작성 영역 구성
+// 코멘트 작성 폼 구성
 function MovieCommentForm({
   commentDraft,
   selectedRating,
@@ -60,13 +60,17 @@ function MovieCommentForm({
             onFocus={() => {
               void onCommentFocus()
             }}
-            placeholder="영화에 대한 솔직한 평가를 남겨보세요!"
+            placeholder="이 작품에 대한 생각을 자유롭게 표현해주세요."
           />
         </div>
         <div className="movie-detail-comment-footer">
           <p className="movie-detail-comment-count">{`${commentDraft.length}/${MAX_COMMENT_LENGTH}`}</p>
-          <button className="movie-detail-comment-submit" type="submit" disabled={!canClickCommentSubmit || isCheckingCommentAuth}>
-            {isSubmittingComment ? '등록 중' : '작성'}
+          <button
+            className="movie-detail-comment-submit"
+            type="submit"
+            disabled={!canClickCommentSubmit || isCheckingCommentAuth}
+          >
+            {isSubmittingComment ? '등록 중' : '저장'}
           </button>
         </div>
       </form>
