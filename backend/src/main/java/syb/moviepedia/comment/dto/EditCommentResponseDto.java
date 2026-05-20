@@ -7,7 +7,7 @@ import lombok.Builder;
  * 수정 코멘트 응답 Dto
  */
 @Builder
-public record EditCommentDto(
+public record EditCommentResponseDto(
         @NotNull String content,
         @NotNull Double rating
 ) {

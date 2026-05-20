@@ -93,6 +93,11 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.COMMENT_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
+    @ExceptionHandler(CommentMemberNotFound.class)
+    public ResponseEntity<ApiResult<Void>> handleCommentMemberNotFound(CommentMemberNotFound e) {
+        return fail(ErrorCode.COMMENT_MEMBER_NOT_FOUND, HttpStatus.NOT_FOUND, e);
+    }
+
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
     private ResponseEntity<ApiResult<Void>> fail(
             ErrorCode errorCode,

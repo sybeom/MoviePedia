@@ -5,11 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.comment.dto.CommentDto;
 import syb.moviepedia.comment.dto.CommentResponseDto;
 import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
+import syb.moviepedia.comment.dto.EditCommentResponseDto;
 import syb.moviepedia.comment.service.CommentService;
 import syb.moviepedia.common.api.ApiResult;
 
@@ -27,12 +27,11 @@ public class CommentController {
     public ResponseEntity<ApiResult<CommentDto>> getComment(
             @PathVariable Long commentId
     ) {
-        // TODO: null처리 어떻게?
         return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getComment(commentId)));
     }
 
     @GetMapping("/comments")
-    public ResponseEntity<ApiResult<List<CommentResponseDto>>> getComments(
+    public ResponseEntity<ApiResult<List<CommentResponseDto>>> getCommentList(
             @PathVariable Long movieId,
             Authentication authentication) {
 
@@ -50,6 +49,16 @@ public class CommentController {
 
         commentService.saveComment(movieId, dto);
         return ResponseEntity.ok().body(ApiResult.success("코멘트 저장 성공"));
+    }
+
+    // 수정 화면 데이터 조회
+    @GetMapping("/comments/{commentId}/edit")
+    public ResponseEntity<ApiResult<EditCommentResponseDto>> getEditComment(
+            @PathVariable Long commentId,
+            Authentication authentication
+    ) {
+        String loginId = authentication == null ? "" : authentication.getName();
+        return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getEditComment(commentId, loginId)));
     }
 
     @PatchMapping("/comments")

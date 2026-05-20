@@ -7,11 +7,9 @@ import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.dto.CommentDto;
 import syb.moviepedia.comment.dto.CommentResponseDto;
 import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
+import syb.moviepedia.comment.dto.EditCommentResponseDto;
 import syb.moviepedia.comment.repository.CommentRepository;
-import syb.moviepedia.common.exception.CommentAlreadyExistsException;
-import syb.moviepedia.common.exception.CommentNotFoundException;
-import syb.moviepedia.common.exception.MemberNotFoundException;
-import syb.moviepedia.common.exception.MovieNotFoundException;
+import syb.moviepedia.common.exception.*;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.Movie;
@@ -27,12 +25,28 @@ public class CommentService {
     private final MemberRepository memberRepository;
     private final CommentRepository commentRepository;
 
-    // 코멘트 단일 조회 (코멘트 수정시 사용)
+    // 상세 보기
     public CommentDto getComment(Long id) {
         Comment comment = commentRepository.findById(id).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
+
         return toCommentDto(comment);
     }
+
+    // 수정 코멘트 조회
+    public EditCommentResponseDto getEditComment(Long id, String loginId) {
+        Member member = commentRepository.findByCommentId(id).orElseThrow(
+                () -> new CommentMemberNotFound("코멘트 작성자를 찾지 못하였습니다. 코멘트 Id : " + id));
+
+        // 액세스 토큰 파싱의 로그인 아이디와 코멘트 작성 로그인 아이디가 동일하면 수정 가능
+        boolean editable = loginId != null && loginId.equals(member.getLoginId());
+
+        Comment comment = commentRepository.findById(id).orElseThrow(
+                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
+
+        return toEditCommentDto(comment);
+    }
+
     // 모든 코멘트 목록
     public List<CommentResponseDto> getAllComments(Long code, String loinId) {
         Movie movie = movieRepository.findByCode(code)
@@ -41,10 +55,10 @@ public class CommentService {
         // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
         List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loinId);
 
-        return toCommentsResponseDto(movie.getId(), comments, loinId);
+        return toCommentListResponseDto(movie.getId(), comments, loinId);
     }
 
-    // 코멘트 저장
+    // 저장
     public void saveComment(Long code, CommentDto dto) {
         Movie movie = movieRepository.findByCode(code).orElseThrow(
                 () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
@@ -70,7 +84,7 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    // 코멘트 수정
+    // 수정
     public void updateContent(Long code, CommentUpdateRequestDto dto) {
         // TODO: 영화를 매번 찾아와야한다. 즉 쿼리가 한번씩 실행된다는 말이다.
         //  차라리 코멘트 작성할 때, 영화 아이디를 보내면 어떨까?
@@ -93,13 +107,23 @@ public class CommentService {
     // 엔티티 -> Comment Dto로 가공
     private CommentDto toCommentDto(Comment comment) {
         return CommentDto.builder()
+                .nickname(comment.getNickname())
+                .content(comment.getContent())
+                .rating(comment.getRating())
+                .like(comment.getLike())
+                .build();
+    }
+
+    // 엔티티 -> 수정 Comment Dto로 가공
+    private EditCommentResponseDto toEditCommentDto(Comment comment) {
+        return EditCommentResponseDto.builder()
                 .content(comment.getContent())
                 .rating(comment.getRating())
                 .build();
     }
 
     // 엔티티 -> CommentResponseDTO로 가공 (리스트)
-    private List<CommentResponseDto> toCommentsResponseDto(
+    private List<CommentResponseDto> toCommentListResponseDto(
             Long movieId,
             List<Comment> comments,
             String loinId) {
