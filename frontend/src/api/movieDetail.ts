@@ -1,8 +1,17 @@
 import { request } from './client'
 import { getAuthSession } from '../utils/authStorage'
 import { authRequest } from '../utils/fetchUtil'
-import type { AuthMeResponse, CreateCommentRequest, MovieComment } from '../types/movieDetail'
-import { normalizeMovieComments, normalizeMovieDetail } from '../utils/movieDetail'
+import type {
+  AuthMeResponse,
+  CreateCommentRequest,
+  EditableMovieComment,
+  MovieComment,
+} from '../types/movieDetail'
+import {
+  normalizeEditableMovieComment,
+  normalizeMovieComments,
+  normalizeMovieDetail,
+} from '../utils/movieDetail'
 
 const commentRequestMap = new Map<string, Promise<MovieComment[]>>()
 
@@ -50,6 +59,13 @@ export function createMovieComment(movieId: string, body: CreateCommentRequest) 
     method: 'POST',
     body,
   })
+}
+
+// 단일 코멘트 수정 데이터 조회 처리
+export function fetchMovieCommentForEdit(movieId: string, commentId: string) {
+  return authRequest<unknown>(`/movies/${movieId}/comments/${commentId}`, {
+    method: 'GET',
+  }).then((response) => normalizeEditableMovieComment(response))
 }
 
 // 코멘트 작성 로그인 확인 처리

@@ -1,4 +1,10 @@
-import type { CreditMember, MovieComment, MovieDetailState, MovieDetailView } from '../types/movieDetail'
+import type {
+  CreditMember,
+  EditableMovieComment,
+  MovieComment,
+  MovieDetailState,
+  MovieDetailView,
+} from '../types/movieDetail'
 
 export const STAR_COUNT = 5
 export const MAX_COMMENT_LENGTH = 100
@@ -217,13 +223,36 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
 export function normalizeMovieComments(data: unknown): MovieComment[] {
   return getCommentListValue(data)
     .filter(isRecord)
-    .map((comment, index) => ({
-      id: getStringValue(comment, ['id', 'commentId', 'code']) || `comment-${index}`,
-      nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '익명',
-      content: getStringValue(comment, ['content', 'comment']) || '-',
-      rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
-      isMine: comment.isMine === true,
-    }))
+    .map((comment, index) => {
+      const commentId =
+        getStringValue(comment, ['commentId', 'id', 'code']) || `comment-${index}`
+
+      return {
+        id: getStringValue(comment, ['id', 'commentId', 'code']) || commentId,
+        commentId,
+        movieId: getStringValue(comment, ['movieId']),
+        nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '익명',
+        content: getStringValue(comment, ['content', 'comment']) || '-',
+        rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
+        isMine: comment.isMine === true,
+      }
+    })
+}
+
+// 코멘트 수정 조회 응답 정규화 처리
+export function normalizeEditableMovieComment(data: unknown): EditableMovieComment | null {
+  if (!isRecord(data)) {
+    return null
+  }
+
+  const content = getStringValue(data, ['content', 'comment'])
+  const ratingValue = getStringValue(data, ['rating', 'score', 'voteAverage'])
+  const rating = Number(ratingValue)
+
+  return {
+    content,
+    rating: Number.isFinite(rating) ? rating : 0,
+  }
 }
 
 // 초기 상세 데이터 생성 처리

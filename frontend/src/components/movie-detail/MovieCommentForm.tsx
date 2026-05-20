@@ -10,6 +10,7 @@ type MovieCommentFormProps = {
   canWriteComment: boolean
   isSubmittingComment: boolean
   isCheckingCommentAuth: boolean
+  submitLabel: string
   commentInputRef: RefObject<HTMLTextAreaElement | null>
   onCommentDraftChange: (value: string) => void
   onSelectedRatingChange: (rating: number) => void
@@ -26,6 +27,7 @@ function MovieCommentForm({
   canWriteComment,
   isSubmittingComment,
   isCheckingCommentAuth,
+  submitLabel,
   commentInputRef,
   onCommentDraftChange,
   onSelectedRatingChange,
@@ -60,7 +62,7 @@ function MovieCommentForm({
             onFocus={() => {
               void onCommentFocus()
             }}
-            placeholder="이 작품에 대한 생각을 자유롭게 표현해주세요."
+            placeholder="감상한 영화에 대해 자유롭게 평가해보세요!"
           />
         </div>
         <div className="movie-detail-comment-footer">
@@ -70,7 +72,7 @@ function MovieCommentForm({
             type="submit"
             disabled={!canClickCommentSubmit || isCheckingCommentAuth}
           >
-            {isSubmittingComment ? '등록 중' : '저장'}
+            {isSubmittingComment ? `${submitLabel} 중` : submitLabel}
           </button>
         </div>
       </form>

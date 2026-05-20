@@ -4,10 +4,11 @@ import type { MovieComment } from '../../types/movieDetail'
 type MovieCommentListProps = {
   comments: MovieComment[]
   isLoading: boolean
+  onEditClick: (comment: MovieComment) => void
 }
 
 // 코멘트 목록 영역 구성
-function MovieCommentList({ comments, isLoading }: MovieCommentListProps) {
+function MovieCommentList({ comments, isLoading, onEditClick }: MovieCommentListProps) {
   return (
     <div className="movie-detail-comment-list">
       {isLoading ? (
@@ -39,7 +40,11 @@ function MovieCommentList({ comments, isLoading }: MovieCommentListProps) {
               </button>
               {comment.isMine ? (
                 <div className="movie-detail-comment-card-owner-actions">
-                  <button className="movie-detail-comment-owner-button" type="button">
+                  <button
+                    className="movie-detail-comment-owner-button"
+                    type="button"
+                    onClick={() => onEditClick(comment)}
+                  >
                     수정
                   </button>
                   <button className="movie-detail-comment-owner-button" type="button">

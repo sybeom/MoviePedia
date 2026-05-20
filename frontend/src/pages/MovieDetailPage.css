@@ -367,9 +367,9 @@
   top: 50%;
   left: 50%;
   z-index: 41;
-  width: min(calc(100% - 48px), 820px);
-  max-height: min(86vh, 760px);
-  padding: 28px 28px 24px;
+  width: min(calc(100% - 48px), 680px);
+  max-height: min(82vh, 620px);
+  padding: 24px 24px 20px;
   overflow-y: auto;
   background: #ffffff;
   border-radius: 16px;
@@ -393,15 +393,15 @@
 .movie-detail-comment-modal-copy h3 {
   margin: 0;
   color: #111827;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1.3;
 }
 
 .movie-detail-comment-modal-copy p {
   margin: 0;
   color: #9ca3af;
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .movie-detail-comment-modal-close {
@@ -423,19 +423,19 @@
 }
 
 .movie-detail-comment-modal .movie-detail-comment-rating-shell {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .movie-detail-comment-modal .movie-detail-comment-form {
   max-width: none;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .movie-detail-comment-modal .movie-detail-comment-input {
-  min-height: 340px;
-  padding: 16px;
-  font-size: 18px;
-  line-height: 1.7;
+  min-height: 220px;
+  padding: 14px;
+  font-size: 17px;
+  line-height: 1.65;
 }
 
 .movie-detail-comment-modal .movie-detail-comment-footer {

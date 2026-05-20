@@ -10,6 +10,7 @@ type MovieCommentModalProps = {
   canWriteComment: boolean
   isSubmittingComment: boolean
   isCheckingCommentAuth: boolean
+  submitLabel: string
   commentInputRef: RefObject<HTMLTextAreaElement | null>
   onClose: () => void
   onCommentDraftChange: (value: string) => void
@@ -28,6 +29,7 @@ function MovieCommentModal({
   canWriteComment,
   isSubmittingComment,
   isCheckingCommentAuth,
+  submitLabel,
   commentInputRef,
   onClose,
   onCommentDraftChange,
@@ -36,7 +38,7 @@ function MovieCommentModal({
   onSubmit,
   onCommentFocus,
 }: MovieCommentModalProps) {
-  // 모달 외부 클릭 감지용 참조 준비
+  // 모달 내부 클릭 감지용 참조 준비
   const modalRef = useRef<HTMLDivElement | null>(null)
 
   // 모달 외부 클릭 시 닫기 처리
@@ -96,6 +98,7 @@ function MovieCommentModal({
           canWriteComment={canWriteComment}
           isSubmittingComment={isSubmittingComment}
           isCheckingCommentAuth={isCheckingCommentAuth}
+          submitLabel={submitLabel}
           commentInputRef={commentInputRef}
           onCommentDraftChange={onCommentDraftChange}
           onSelectedRatingChange={onSelectedRatingChange}
