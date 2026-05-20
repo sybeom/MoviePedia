@@ -1,7 +1,7 @@
 import type {
   CreditMember,
-  EditableMovieComment,
   MovieComment,
+  MovieCommentDetail,
   MovieDetailState,
   MovieDetailView,
 } from '../types/movieDetail'
@@ -31,6 +31,40 @@ export function getStringValue(record: Record<string, unknown>, keys: string[]) 
   }
 
   return ''
+}
+
+// 불리언 값 추출 처리
+export function getBooleanValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (typeof value === 'boolean') {
+      return value
+    }
+  }
+
+  return false
+}
+
+// 숫자 값 추출 처리
+export function getNumberValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value
+    }
+
+    if (typeof value === 'string') {
+      const parsedValue = Number(value)
+
+      if (Number.isFinite(parsedValue)) {
+        return parsedValue
+      }
+    }
+  }
+
+  return 0
 }
 
 // 영화 식별자 추출 처리
@@ -234,24 +268,33 @@ export function normalizeMovieComments(data: unknown): MovieComment[] {
         nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '익명',
         content: getStringValue(comment, ['content', 'comment']) || '-',
         rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
-        isMine: comment.isMine === true,
+        isMine: getBooleanValue(comment, ['isMine']),
       }
     })
 }
 
-// 코멘트 수정 조회 응답 정규화 처리
-export function normalizeEditableMovieComment(data: unknown): EditableMovieComment | null {
+// 단일 코멘트 상세 정규화 처리
+export function normalizeMovieCommentDetail(data: unknown): MovieCommentDetail | null {
   if (!isRecord(data)) {
     return null
   }
 
+  const commentId = getStringValue(data, ['commentId', 'id', 'code'])
+  const movieId = getStringValue(data, ['movieId'])
   const content = getStringValue(data, ['content', 'comment'])
-  const ratingValue = getStringValue(data, ['rating', 'score', 'voteAverage'])
-  const rating = Number(ratingValue)
+  const nickname = getStringValue(data, ['nickname', 'writerNickname', 'author', 'writer']) || '익명'
+
+  if (!commentId && !content) {
+    return null
+  }
 
   return {
+    movieId,
+    commentId,
+    nickname,
     content,
-    rating: Number.isFinite(rating) ? rating : 0,
+    rating: getNumberValue(data, ['rating', 'score', 'voteAverage']),
+    likeCount: getStringValue(data, ['likeCount', 'likes', 'likeCnt']),
   }
 }
 

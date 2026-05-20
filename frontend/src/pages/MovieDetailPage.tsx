@@ -4,19 +4,21 @@ import { ApiError } from '../api/client'
 import {
   createMovieComment,
   fetchMovieCommentForEdit,
+  fetchMovieCommentDetail,
   fetchMovieComments,
   fetchMovieDetail,
   verifyCommentAuth,
 } from '../api/movieDetail'
 import Header from '../components/Header'
+import MovieCommentDetailModal from '../components/movie-detail/MovieCommentDetailModal'
 import MovieCommentList from '../components/movie-detail/MovieCommentList'
 import MovieCommentModal from '../components/movie-detail/MovieCommentModal'
 import MovieDetailCredits from '../components/movie-detail/MovieDetailCredits'
 import MovieDetailHero from '../components/movie-detail/MovieDetailHero'
 import MovieDetailRatings from '../components/movie-detail/MovieDetailRatings'
 import type {
-  EditableMovieComment,
   MovieComment,
+  MovieCommentDetail,
   MovieDetailState,
   MovieDetailView,
 } from '../types/movieDetail'
@@ -24,6 +26,8 @@ import { getAuthSession } from '../utils/authStorage'
 import { isAuthSessionError } from '../utils/fetchUtil'
 import { MAX_COMMENT_LENGTH, createInitialMovieDetail } from '../utils/movieDetail'
 import './MovieDetailPage.css'
+
+type CommentModalMode = 'create' | 'edit' | 'view' | null
 
 // 영화 상세 화면 구성
 function MovieDetailPage() {
@@ -73,11 +77,12 @@ function MovieDetailPage() {
   // 코멘트 전송 상태 관리
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
 
-  // 코멘트 작성 모달 노출 상태 관리
-  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
+  // 코멘트 모달 종류 상태 관리
+  const [commentModalMode, setCommentModalMode] = useState<CommentModalMode>(null)
 
-  // 코멘트 수정 대상 상태 관리
-  const [editingCommentId, setEditingCommentId] = useState('')
+  // 선택 코멘트 상세 상태 관리
+  const [selectedCommentDetail, setSelectedCommentDetail] =
+    useState<MovieCommentDetail | null>(null)
 
   // 상세 요청 중복 방지 참조 준비
   const hasLoadedDetailRef = useRef(false)
@@ -88,7 +93,10 @@ function MovieDetailPage() {
   const trimmedCommentDraft = commentDraft.trim()
   const isCommentLengthValid =
     trimmedCommentDraft.length >= 1 && trimmedCommentDraft.length <= MAX_COMMENT_LENGTH
-  const isEditMode = Boolean(editingCommentId)
+  const isEditMode = commentModalMode === 'edit'
+  const isCreateMode = commentModalMode === 'create'
+  const isViewMode = commentModalMode === 'view'
+  const isCommentModalOpen = isCreateMode || isEditMode
   const commentModalSubmitLabel = isEditMode ? '수정' : '저장'
 
   // 상세 페이지 최상단 이동 처리
@@ -220,46 +228,80 @@ function MovieDetailPage() {
 
   // 코멘트 작성 모달 열기 처리
   function handleOpenCommentModal() {
-    setEditingCommentId('')
+    setSelectedCommentDetail(null)
     setCommentDraft('')
     setSelectedRating(0)
     setHoverRating(0)
-    setIsCommentModalOpen(true)
+    setCommentModalMode('create')
   }
 
-  // 코멘트 작성 모달 닫기 처리
+  // 코멘트 모달 닫기 처리
   function handleCloseCommentModal() {
-    setIsCommentModalOpen(false)
-    setEditingCommentId('')
+    setCommentModalMode(null)
+    setSelectedCommentDetail(null)
   }
 
   // 코멘트 수정 대상 데이터 반영 처리
-  function applyEditableComment(comment: EditableMovieComment) {
+  function applyEditableComment(comment: MovieCommentDetail) {
     setCommentDraft(comment.content)
     setSelectedRating(comment.rating)
     setHoverRating(0)
   }
 
-  // 코멘트 수정 대상 조회 요청 처리
-  async function handleCommentEditClick(comment: MovieComment) {
+  // 코멘트 상세 조회 요청 처리
+  async function fetchTargetComment(comment: MovieComment) {
     const targetMovieId = comment.movieId || resolvedMovieId
     const targetCommentId = comment.commentId || comment.id
 
     if (!targetMovieId || !targetCommentId) {
-      return
+      return null
     }
 
-    try {
-      const editableComment = await fetchMovieCommentForEdit(targetMovieId, targetCommentId)
+    return fetchMovieCommentDetail(targetMovieId, targetCommentId)
+  }
 
-      if (!editableComment) {
+  // 코멘트 카드 클릭 처리
+  async function handleCommentClick(comment: MovieComment) {
+    try {
+      const detail = await fetchTargetComment(comment)
+
+      if (!detail) {
         return
       }
 
-      setEditingCommentId(targetCommentId)
-      setCanWriteComment(true)
-      applyEditableComment(editableComment)
-      setIsCommentModalOpen(true)
+        setSelectedCommentDetail({
+          ...detail,
+          isMine: comment.isMine,
+        })
+        setCommentModalMode('view')
+    } catch {
+      // 코멘트 상세 조회 실패 무시 처리
+    }
+  }
+
+  // 코멘트 수정 대상 조회 요청 처리
+  async function handleCommentEditClick(comment: MovieComment) {
+    try {
+      const targetMovieId = comment.movieId || resolvedMovieId
+      const targetCommentId = comment.commentId || comment.id
+
+      if (!targetMovieId || !targetCommentId) {
+        return
+      }
+
+      const detail = await fetchMovieCommentForEdit(targetMovieId, targetCommentId)
+
+      if (!detail) {
+        return
+      }
+
+        setSelectedCommentDetail({
+          ...detail,
+          isMine: true,
+        })
+        setCanWriteComment(true)
+      applyEditableComment(detail)
+      setCommentModalMode('edit')
     } catch {
       // 코멘트 수정 조회 실패 무시 처리
     }
@@ -288,7 +330,7 @@ function MovieDetailPage() {
       return
     }
 
-    // 수정 저장 요청 미연결 안내 처리
+    // 수정 대상 요청 미연결 안내 처리
     if (isEditMode) {
       alert('코멘트 수정 저장 기능은 다음 단계에서 연결됩니다.')
       return
@@ -306,7 +348,7 @@ function MovieDetailPage() {
       setCommentDraft('')
       setSelectedRating(0)
       setHoverRating(0)
-      setIsCommentModalOpen(false)
+      setCommentModalMode(null)
       setIsCommentsLoading(true)
 
       try {
@@ -338,7 +380,7 @@ function MovieDetailPage() {
 
         <section className="movie-detail-comments-shell" aria-labelledby="movie-detail-comments-title">
           <div className="movie-detail-comments">
-            <h2 id="movie-detail-comments-title">한줄 코멘트</h2>
+            <h2 id="movie-detail-comments-title">코멘트</h2>
 
             <button
               className="movie-detail-comment-open-button"
@@ -351,6 +393,7 @@ function MovieDetailPage() {
             <MovieCommentList
               comments={comments}
               isLoading={isCommentsLoading}
+              onCommentClick={handleCommentClick}
               onEditClick={handleCommentEditClick}
             />
           </div>
@@ -373,6 +416,26 @@ function MovieDetailPage() {
             onHoverRatingChange={setHoverRating}
             onSubmit={handleCommentSubmit}
             onCommentFocus={handleCommentInputFocus}
+          />
+        ) : null}
+
+        {isViewMode && selectedCommentDetail ? (
+          <MovieCommentDetailModal
+            title={movieDetail.title}
+            comment={selectedCommentDetail}
+            onClose={handleCloseCommentModal}
+            onEdit={() => {
+              setCommentModalMode(null)
+              void handleCommentEditClick({
+                id: selectedCommentDetail.commentId,
+                commentId: selectedCommentDetail.commentId,
+                movieId: selectedCommentDetail.movieId || resolvedMovieId,
+                nickname: selectedCommentDetail.nickname,
+                content: selectedCommentDetail.content,
+                rating: String(selectedCommentDetail.rating),
+                isMine: true,
+              })
+            }}
           />
         ) : null}
       </main>

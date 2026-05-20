@@ -4,11 +4,11 @@ import { authRequest } from '../utils/fetchUtil'
 import type {
   AuthMeResponse,
   CreateCommentRequest,
-  EditableMovieComment,
   MovieComment,
+  MovieCommentDetail,
 } from '../types/movieDetail'
 import {
-  normalizeEditableMovieComment,
+  normalizeMovieCommentDetail,
   normalizeMovieComments,
   normalizeMovieDetail,
 } from '../utils/movieDetail'
@@ -61,14 +61,27 @@ export function createMovieComment(movieId: string, body: CreateCommentRequest) 
   })
 }
 
-// 단일 코멘트 수정 데이터 조회 처리
-export function fetchMovieCommentForEdit(movieId: string, commentId: string) {
-  return authRequest<unknown>(`/movies/${movieId}/comments/${commentId}`, {
+// 단일 코멘트 상세 조회 처리
+export function fetchMovieCommentDetail(movieId: string, commentId: string) {
+  const session = getAuthSession()
+
+  return request<unknown>(`/movies/${movieId}/comments/${commentId}`, {
     method: 'GET',
-  }).then((response) => normalizeEditableMovieComment(response))
+    headers: session?.accessToken
+      ? {
+          Authorization: `Bearer ${session.accessToken}`,
+        }
+      : undefined,
+  }).then((response) => normalizeMovieCommentDetail(response))
 }
 
 // 코멘트 작성 로그인 확인 처리
+export function fetchMovieCommentForEdit(movieId: string, commentId: string) {
+  return authRequest<unknown>(`/movies/${movieId}/comments/${commentId}/edit`, {
+    method: 'GET',
+  }).then((response) => normalizeMovieCommentDetail(response))
+}
+
 export function verifyCommentAuth() {
   return authRequest<AuthMeResponse>('/auth/me', {
     method: 'GET',

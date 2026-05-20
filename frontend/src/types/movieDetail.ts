@@ -42,10 +42,15 @@ export type CreateCommentRequest = {
   rating: number
 }
 
-// 코멘트 수정 조회 응답 타입 정의
-export type EditableMovieComment = {
+// 코멘트 수정 및 상세 조회 응답 타입 정의
+export type MovieCommentDetail = {
+  movieId: string
+  commentId: string
+  nickname: string
   content: string
   rating: number
+  likeCount: string
+  isMine?: boolean
 }
 
 // 코멘트 목록 데이터 타입 정의

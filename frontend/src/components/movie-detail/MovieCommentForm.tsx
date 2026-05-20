@@ -48,7 +48,7 @@ function MovieCommentForm({
 
       <form className="movie-detail-comment-form" onSubmit={onSubmit}>
         <label className="sr-only" htmlFor="movie-detail-comment-input">
-          한줄 코멘트 입력
+          코멘트 입력
         </label>
         <div className="movie-detail-comment-input-shell">
           <textarea

@@ -4,18 +4,36 @@ import type { MovieComment } from '../../types/movieDetail'
 type MovieCommentListProps = {
   comments: MovieComment[]
   isLoading: boolean
+  onCommentClick: (comment: MovieComment) => void
   onEditClick: (comment: MovieComment) => void
 }
 
 // 코멘트 목록 영역 구성
-function MovieCommentList({ comments, isLoading, onEditClick }: MovieCommentListProps) {
+function MovieCommentList({
+  comments,
+  isLoading,
+  onCommentClick,
+  onEditClick,
+}: MovieCommentListProps) {
   return (
     <div className="movie-detail-comment-list">
       {isLoading ? (
         <p className="movie-detail-comment-list-message">코멘트를 불러오는 중입니다...</p>
       ) : comments.length > 0 ? (
         comments.map((comment) => (
-          <article className="movie-detail-comment-card" key={comment.id}>
+          <article
+            className="movie-detail-comment-card"
+            key={comment.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => onCommentClick(comment)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onCommentClick(comment)
+              }
+            }}
+          >
             <div className="movie-detail-comment-card-header">
               <div className="movie-detail-comment-card-profile">
                 <span className="movie-detail-comment-card-avatar" aria-hidden="true">
@@ -35,7 +53,13 @@ function MovieCommentList({ comments, isLoading, onEditClick }: MovieCommentList
             <div className="movie-detail-comment-card-divider" aria-hidden="true" />
             <p className="movie-detail-comment-card-content">{comment.content}</p>
             <div className="movie-detail-comment-card-footer">
-              <button className="movie-detail-comment-like-button" type="button">
+              <button
+                className="movie-detail-comment-like-button"
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                }}
+              >
                 좋아요
               </button>
               {comment.isMine ? (
@@ -43,11 +67,20 @@ function MovieCommentList({ comments, isLoading, onEditClick }: MovieCommentList
                   <button
                     className="movie-detail-comment-owner-button"
                     type="button"
-                    onClick={() => onEditClick(comment)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onEditClick(comment)
+                    }}
                   >
                     수정
                   </button>
-                  <button className="movie-detail-comment-owner-button" type="button">
+                  <button
+                    className="movie-detail-comment-owner-button"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                    }}
+                  >
                     삭제
                   </button>
                 </div>
