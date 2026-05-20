@@ -437,7 +437,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .movie-detail-comment-modal-backdrop {
@@ -446,6 +446,7 @@
   display: flex;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(2px);
+  pointer-events: auto;
 }
 
 .movie-detail-comment-modal {

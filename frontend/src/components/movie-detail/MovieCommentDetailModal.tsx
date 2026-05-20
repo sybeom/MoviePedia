@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import type { MovieCommentDetail } from '../../types/movieDetail'
 import { STAR_ICON_PATH, getSelectedRatingLabel } from '../../utils/movieDetail'
 
@@ -10,43 +9,22 @@ type MovieCommentDetailModalProps = {
 
 // 코멘트 상세 모달 구성
 function MovieCommentDetailModal({ title, comment, onClose }: MovieCommentDetailModalProps) {
-  // 모달 내부 클릭 감지용 참조 준비
-  const modalRef = useRef<HTMLDivElement | null>(null)
-
-  // 모달 외부 클릭 시 닫기 처리
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent | TouchEvent) {
-      const target = event.target
-
-      if (!(target instanceof Node)) {
-        return
-      }
-
-      if (modalRef.current?.contains(target)) {
-        return
-      }
-
-      onClose()
-    }
-
-    document.addEventListener('mousedown', handlePointerDown)
-    document.addEventListener('touchstart', handlePointerDown)
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown)
-      document.removeEventListener('touchstart', handlePointerDown)
-    }
-  }, [onClose])
-
   return (
     <div className="movie-detail-comment-modal-layer" role="presentation">
-      <div className="movie-detail-comment-modal-backdrop" aria-hidden="true" />
+      <button
+        className="movie-detail-comment-modal-backdrop"
+        type="button"
+        aria-label="코멘트 상세 닫기"
+        onClick={onClose}
+      />
       <div
-        ref={modalRef}
         className="movie-detail-comment-modal movie-detail-comment-modal-detail"
         role="dialog"
         aria-modal="true"
         aria-labelledby="movie-detail-comment-detail-modal-title"
+        onClick={(event) => {
+          event.stopPropagation()
+        }}
       >
         <div className="movie-detail-comment-modal-header">
           <div className="movie-detail-comment-modal-copy">

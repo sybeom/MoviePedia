@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FormEvent, type RefObject } from 'react'
+import type { FormEvent, RefObject } from 'react'
 import MovieCommentForm from './MovieCommentForm'
 import type { AuthMeResponse } from '../../types/movieDetail'
 
@@ -38,43 +38,22 @@ function MovieCommentModal({
   onSubmit,
   onCommentFocus,
 }: MovieCommentModalProps) {
-  // 모달 내부 클릭 감지용 참조 준비
-  const modalRef = useRef<HTMLDivElement | null>(null)
-
-  // 모달 외부 클릭 시 닫기 처리
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent | TouchEvent) {
-      const target = event.target
-
-      if (!(target instanceof Node)) {
-        return
-      }
-
-      if (modalRef.current?.contains(target)) {
-        return
-      }
-
-      onClose()
-    }
-
-    document.addEventListener('mousedown', handlePointerDown)
-    document.addEventListener('touchstart', handlePointerDown)
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown)
-      document.removeEventListener('touchstart', handlePointerDown)
-    }
-  }, [onClose])
-
   return (
     <div className="movie-detail-comment-modal-layer" role="presentation">
-      <div className="movie-detail-comment-modal-backdrop" aria-hidden="true" />
+      <button
+        className="movie-detail-comment-modal-backdrop"
+        type="button"
+        aria-label="코멘트 모달 닫기"
+        onClick={onClose}
+      />
       <div
-        ref={modalRef}
         className="movie-detail-comment-modal movie-detail-comment-modal-detail"
         role="dialog"
         aria-modal="true"
         aria-labelledby="movie-detail-comment-modal-title"
+        onClick={(event) => {
+          event.stopPropagation()
+        }}
       >
         <div className="movie-detail-comment-modal-header">
           <div className="movie-detail-comment-modal-copy">
