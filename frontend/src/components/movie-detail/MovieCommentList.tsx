@@ -1,5 +1,7 @@
+import { useMemo, useState } from 'react'
 import { STAR_ICON_PATH } from '../../utils/movieDetail'
 import type { MovieComment } from '../../types/movieDetail'
+import likeIcon from '../../assets/icons/like.svg'
 
 type MovieCommentListProps = {
   comments: MovieComment[]
@@ -15,6 +17,33 @@ function MovieCommentList({
   onCommentClick,
   onEditClick,
 }: MovieCommentListProps) {
+  // 좋아요 활성화 상태 관리
+  const [likedCommentIds, setLikedCommentIds] = useState<Record<string, boolean>>({})
+
+  // 코멘트 목록 기준 좋아요 수 계산
+  const baseLikeCounts = useMemo(
+    () =>
+      comments.reduce<Record<string, number>>((accumulator, comment) => {
+        const parsedLikeCount = Number(comment.likeCount)
+
+        accumulator[comment.id] = Number.isFinite(parsedLikeCount) ? parsedLikeCount : 0
+        return accumulator
+      }, {}),
+    [comments],
+  )
+
+  // 좋아요 토글 처리
+  function handleLikeClick(commentId: string) {
+    setLikedCommentIds((previousLikedCommentIds) => {
+      const isCurrentlyLiked = previousLikedCommentIds[commentId] ?? false
+
+      return {
+        ...previousLikedCommentIds,
+        [commentId]: !isCurrentlyLiked,
+      }
+    })
+  }
+
   return (
     <div className="movie-detail-comment-list">
       {isLoading ? (
@@ -53,15 +82,29 @@ function MovieCommentList({
             <div className="movie-detail-comment-card-divider" aria-hidden="true" />
             <p className="movie-detail-comment-card-content">{comment.content}</p>
             <div className="movie-detail-comment-card-footer">
-              <button
-                className="movie-detail-comment-like-button"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                }}
-              >
-                좋아요
-              </button>
+              {(() => {
+                const isLiked = likedCommentIds[comment.id] ?? false
+                const displayedLikeCount = Math.max(
+                  0,
+                  (baseLikeCounts[comment.id] ?? 0) + (isLiked ? 1 : 0),
+                )
+
+                return (
+                  <button
+                    className={`movie-detail-comment-like-button${
+                      isLiked ? ' is-active' : ''
+                    }`}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      handleLikeClick(comment.id)
+                    }}
+                  >
+                    <img src={likeIcon} alt="" aria-hidden="true" />
+                    <span>{displayedLikeCount}</span>
+                  </button>
+                )
+              })()}
               {comment.isMine ? (
                 <div className="movie-detail-comment-card-owner-actions">
                   <button

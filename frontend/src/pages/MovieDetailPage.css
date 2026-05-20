@@ -285,6 +285,9 @@
 }
 
 .movie-detail-comment-like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   justify-self: start;
   padding: 0;
   color: #7e7e7e;
@@ -294,10 +297,31 @@
   background: transparent;
   border: 0;
   cursor: pointer;
+  transition: color 0.18s ease;
 }
 
 .movie-detail-comment-like-button:hover {
   color: #5e5e5e;
+}
+
+.movie-detail-comment-like-button img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  opacity: 0.52;
+  transition: opacity 0.18s ease, filter 0.18s ease, transform 0.18s ease;
+}
+
+.movie-detail-comment-like-button.is-active {
+  color: #e11d48;
+}
+
+.movie-detail-comment-like-button.is-active img {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(19%) sepia(95%) saturate(3278%) hue-rotate(334deg)
+    brightness(93%) contrast(95%);
+  transform: scale(1.04);
 }
 
 .movie-detail-comment-card-owner-actions {

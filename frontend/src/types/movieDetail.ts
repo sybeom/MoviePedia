@@ -61,5 +61,6 @@ export type MovieComment = {
   nickname: string
   content: string
   rating: string
+  likeCount: string
   isMine: boolean
 }
