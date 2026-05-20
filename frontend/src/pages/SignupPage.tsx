@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+﻿import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signup } from '../api/auth'
 import { isApiError } from '../api/client'
@@ -48,12 +48,10 @@ function SignupPage() {
 
   // 중복 필드 목록 추출 처리
   function getDuplicateFields(errors: unknown): DuplicateSignupField[] {
-    // 배열 형태 응답 여부 확인
     if (!Array.isArray(errors)) {
       return []
     }
 
-    // 중복 허용 대상 필드 추출 처리
     return errors.filter(
       (field): field is DuplicateSignupField => field === 'loginId' || field === 'nickname',
     )
@@ -61,21 +59,23 @@ function SignupPage() {
 
   // 회원가입 중복 필드 에러 처리
   function handleDuplicateSignupError(errors: unknown) {
-    // 중복 필드 목록 추출 처리
     const duplicateFields = getDuplicateFields(errors)
     const duplicateFieldErrors: SignupFormErrors = {}
 
-    // 아이디 중복 메시지 반영
     if (duplicateFields.includes('loginId')) {
       duplicateFieldErrors.loginId = '이미 사용중인 아이디입니다.'
     }
 
-    // 닉네임 중복 메시지 반영
     if (duplicateFields.includes('nickname')) {
       duplicateFieldErrors.nickname = '이미 사용중인 닉네임입니다.'
     }
 
-    setValidationErrors(duplicateFieldErrors)
+    if (Object.keys(duplicateFieldErrors).length > 0) {
+      setValidationErrors(duplicateFieldErrors)
+      return true
+    }
+
+    return false
   }
 
   // 회원가입 폼 제출 처리
@@ -106,20 +106,15 @@ function SignupPage() {
         nickname,
       })
 
-      // 회원가입 성공 후 로그인 화면 이동
+      // 회원가입 성공 시 로그인 화면 이동
       navigate('/login')
     } catch (error) {
       // 중복 필드 응답 분기 처리
-      if (isApiError(error) && error.status === 400 && error.code === 'DUPLICATE_FIELD') {
+      if (
+        isApiError(error) &&
+        ((error.status === 400 && error.code === 'DUPLICATE_FIELD') || error.status === 409) &&
         handleDuplicateSignupError(error.errors)
-        return
-      }
-
-      // 닉네임 중복 응답 분기 처리
-      if (isApiError(error) && error.status === 409) {
-        setValidationErrors({
-          nickname: '사용중인 닉네임입니다.',
-        })
+      ) {
         return
       }
 
@@ -145,7 +140,7 @@ function SignupPage() {
               <input
                 id="signup-id"
                 type="text"
-                placeholder="사용할 아이디를 입력하세요."
+                placeholder="사용할 아이디를 입력하세요"
                 autoComplete="username"
                 value={loginId}
                 onChange={(event) => setLoginId(event.target.value)}
@@ -166,7 +161,7 @@ function SignupPage() {
               <input
                 id="signup-password"
                 type="password"
-                placeholder="비밀번호를 입력하세요."
+                placeholder="비밀번호를 입력하세요"
                 autoComplete="new-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -187,7 +182,7 @@ function SignupPage() {
               <input
                 id="nickname"
                 type="text"
-                placeholder="닉네임을 입력하세요."
+                placeholder="닉네임을 입력하세요"
                 autoComplete="nickname"
                 value={nickname}
                 onChange={(event) => setNickname(event.target.value)}
