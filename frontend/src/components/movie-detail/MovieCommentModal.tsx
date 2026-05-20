@@ -38,8 +38,6 @@ function MovieCommentModal({
   onSubmit,
   onCommentFocus,
 }: MovieCommentModalProps) {
-  const isEditMode = submitLabel === '수정'
-
   // 모달 내부 클릭 감지용 참조 준비
   const modalRef = useRef<HTMLDivElement | null>(null)
 
@@ -73,7 +71,7 @@ function MovieCommentModal({
       <div className="movie-detail-comment-modal-backdrop" aria-hidden="true" />
       <div
         ref={modalRef}
-        className={`movie-detail-comment-modal${isEditMode ? ' movie-detail-comment-modal-detail' : ''}`}
+        className="movie-detail-comment-modal movie-detail-comment-modal-detail"
         role="dialog"
         aria-modal="true"
         aria-labelledby="movie-detail-comment-modal-title"
@@ -81,7 +79,6 @@ function MovieCommentModal({
         <div className="movie-detail-comment-modal-header">
           <div className="movie-detail-comment-modal-copy">
             <h3 id="movie-detail-comment-modal-title">{title}</h3>
-            {!isEditMode ? <p>감상한 영화에 대해 자유롭게 평가해보세요!</p> : null}
           </div>
           <button
             className="movie-detail-comment-modal-close"

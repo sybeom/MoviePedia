@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import {
   createMovieComment,
-  fetchMovieCommentForEdit,
   fetchMovieCommentDetail,
+  fetchMovieCommentForEdit,
   fetchMovieComments,
   fetchMovieDetail,
   verifyCommentAuth,
@@ -97,7 +97,7 @@ function MovieDetailPage() {
   const isCreateMode = commentModalMode === 'create'
   const isViewMode = commentModalMode === 'view'
   const isCommentModalOpen = isCreateMode || isEditMode
-  const commentModalSubmitLabel = isEditMode ? '수정' : '저장'
+  const commentModalSubmitLabel = '저장'
 
   // 상세 페이지 최상단 이동 처리
   useEffect(() => {
@@ -241,7 +241,7 @@ function MovieDetailPage() {
     setSelectedCommentDetail(null)
   }
 
-  // 코멘트 수정 대상 데이터 반영 처리
+  // 코멘트 수정 데이터 반영 처리
   function applyEditableComment(comment: MovieCommentDetail) {
     setCommentDraft(comment.content)
     setSelectedRating(comment.rating)
@@ -269,17 +269,17 @@ function MovieDetailPage() {
         return
       }
 
-        setSelectedCommentDetail({
-          ...detail,
-          isMine: comment.isMine,
-        })
-        setCommentModalMode('view')
+      setSelectedCommentDetail({
+        ...detail,
+        isMine: comment.isMine,
+      })
+      setCommentModalMode('view')
     } catch {
       // 코멘트 상세 조회 실패 무시 처리
     }
   }
 
-  // 코멘트 수정 대상 조회 요청 처리
+  // 코멘트 수정 조회 요청 처리
   async function handleCommentEditClick(comment: MovieComment) {
     try {
       const targetMovieId = comment.movieId || resolvedMovieId
@@ -295,11 +295,11 @@ function MovieDetailPage() {
         return
       }
 
-        setSelectedCommentDetail({
-          ...detail,
-          isMine: true,
-        })
-        setCanWriteComment(true)
+      setSelectedCommentDetail({
+        ...detail,
+        isMine: true,
+      })
+      setCanWriteComment(true)
       applyEditableComment(detail)
       setCommentModalMode('edit')
     } catch {
@@ -326,7 +326,7 @@ function MovieDetailPage() {
 
     // 코멘트 글자 수 조건 확인 처리
     if (!isCommentLengthValid) {
-      alert('코멘트는 1자 이상 100자 이하로 작성해주세요.')
+      alert('코멘트는 1자 이상 300자 이하로 작성해주세요.')
       return
     }
 
@@ -424,18 +424,6 @@ function MovieDetailPage() {
             title={movieDetail.title}
             comment={selectedCommentDetail}
             onClose={handleCloseCommentModal}
-            onEdit={() => {
-              setCommentModalMode(null)
-              void handleCommentEditClick({
-                id: selectedCommentDetail.commentId,
-                commentId: selectedCommentDetail.commentId,
-                movieId: selectedCommentDetail.movieId || resolvedMovieId,
-                nickname: selectedCommentDetail.nickname,
-                content: selectedCommentDetail.content,
-                rating: String(selectedCommentDetail.rating),
-                isMine: true,
-              })
-            }}
           />
         ) : null}
       </main>

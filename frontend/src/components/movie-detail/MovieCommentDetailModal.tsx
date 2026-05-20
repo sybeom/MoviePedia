@@ -6,11 +6,10 @@ type MovieCommentDetailModalProps = {
   title: string
   comment: MovieCommentDetail
   onClose: () => void
-  onEdit: () => void
 }
 
 // 코멘트 상세 모달 구성
-function MovieCommentDetailModal({ title, comment, onClose, onEdit }: MovieCommentDetailModalProps) {
+function MovieCommentDetailModal({ title, comment, onClose }: MovieCommentDetailModalProps) {
   // 모달 내부 클릭 감지용 참조 준비
   const modalRef = useRef<HTMLDivElement | null>(null)
 
@@ -83,15 +82,6 @@ function MovieCommentDetailModal({ title, comment, onClose, onEdit }: MovieComme
 
           <div className="movie-detail-comment-detail-footer">
             <span className="movie-detail-comment-detail-like">좋아요 {comment.likeCount || '0'}</span>
-            {comment.isMine ? (
-              <button
-                className="movie-detail-comment-owner-button"
-                type="button"
-                onClick={onEdit}
-              >
-                수정
-              </button>
-            ) : null}
           </div>
         </div>
       </div>

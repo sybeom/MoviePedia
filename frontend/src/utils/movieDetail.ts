@@ -7,7 +7,7 @@ import type {
 } from '../types/movieDetail'
 
 export const STAR_COUNT = 5
-export const MAX_COMMENT_LENGTH = 100
+export const MAX_COMMENT_LENGTH = 300
 export const STAR_ICON_PATH =
   'M12 2.8c.38 0 .73.21.9.55l2.37 4.8 5.3.77c.75.11 1.05 1.03.5 1.56l-3.83 3.73.9 5.27c.13.74-.65 1.31-1.32.96L12 17.96l-4.82 2.53c-.67.35-1.45-.22-1.32-.96l.9-5.27-3.83-3.73c-.55-.53-.25-1.45.5-1.56l5.3-.77 2.37-4.8c.17-.34.52-.55.9-.55Z'
 

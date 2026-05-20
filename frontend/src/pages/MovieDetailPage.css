@@ -543,15 +543,21 @@
   }
 
 .movie-detail-comment-modal .movie-detail-comment-footer {
-    margin-top: auto;
-    padding: 0;
-  }
+  margin-top: auto;
+  padding: 0 14px;
+  transform: translateY(-8px);
+}
+
+.movie-detail-comment-modal.movie-detail-comment-modal-detail .movie-detail-comment-count {
+  margin-left: 22px;
+}
 
 .movie-detail-comment-modal .movie-detail-comment-submit {
-  min-width: 112px;
-  min-height: 46px;
+  min-width: auto;
+  min-height: auto;
   font-size: 16px;
-  border-radius: 8px;
+  border-radius: 0;
+  margin-right: 16px;
 }
 
 .movie-detail-comment-footer {
@@ -559,7 +565,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 10px;
+  padding: 0 14px;
 }
 
 .movie-detail-comment-input-shell {
@@ -595,26 +601,26 @@
 .movie-detail-comment-submit {
   position: relative;
   justify-self: end;
-  min-width: 52px;
-  min-height: 36px;
-  padding: 0 10px;
-  color: #ffffff;
-  font-size: 12px;
+  min-width: auto;
+  min-height: auto;
+  padding: 0;
+  color: #7e7e7e;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1;
-  background: #0f172a;
+  line-height: 1.4;
+  background: transparent;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   transform: none;
 }
 
 .movie-detail-comment-submit:hover {
-  background: #1e293b;
+  color: #5e5e5e;
 }
 
 .movie-detail-comment-submit:disabled {
-  background: #cbd5e1;
+  color: #c0c0c0;
   cursor: default;
 }
 
@@ -627,6 +633,7 @@
 
 .movie-detail-comment-count {
   margin: 0;
+  margin-left: 16px;
   color: rgba(15, 23, 42, 0.48);
   font-size: 14px;
   font-weight: 600;
