@@ -10,7 +10,7 @@ import java.util.Set;
  */
 @Getter
 public class DuplicateSignupFieldException extends RuntimeException {
-    Set<String> errors;
+    private final Set<String> errors;
 
     public DuplicateSignupFieldException(Set<String> errors, String message) {
         super(message);

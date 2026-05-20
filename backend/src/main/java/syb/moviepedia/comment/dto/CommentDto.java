@@ -2,6 +2,7 @@ package syb.moviepedia.comment.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 /**
@@ -11,8 +12,10 @@ import lombok.Builder;
 @Builder
 public record CommentDto(
         @NotBlank String nickname,
-        @NotNull String content,
+        @Size(min = 1, max = 100)
+        @NotNull
+        String content,
         @NotNull Double rating,
-        @NotNull Integer like
+        Integer like
 ) {
 }
