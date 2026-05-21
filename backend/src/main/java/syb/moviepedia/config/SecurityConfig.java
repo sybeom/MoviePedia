@@ -104,7 +104,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/auth/me").authenticated() // 로그인 여부 확인
                         .requestMatchers(HttpMethod.POST, "/movies/{movieId}/comments").authenticated() // 코멘트 작성
-                        .requestMatchers(HttpMethod.GET, "/movies/{movieId}/comments/{commentId}").authenticated() // 코멘트 수정 조회
+                        .requestMatchers(HttpMethod.GET, "/movies/{movieId}/comments/{commentId}/edit").authenticated() // 코멘트 수정 조회
+                        .requestMatchers(HttpMethod.POST, "/movies/{movieId}/comments/{commentId}/like").authenticated() // 좋아요 누름
                         .anyRequest().permitAll());
 
         // 커스텀 필터 추가

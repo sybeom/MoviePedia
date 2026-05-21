@@ -58,6 +58,7 @@ public class CommentService {
         return toCommentListResponseDto(movie.getId(), comments, loinId);
     }
 
+    // TODO: Transactional 안했는데 어케 등록됐찌?
     // 저장
     public void saveComment(Long code, CommentDto dto) {
         Movie movie = movieRepository.findByCode(code).orElseThrow(
@@ -83,7 +84,7 @@ public class CommentService {
 
         commentRepository.save(comment);
     }
-
+    // TODO: Transactional 넣지 않고 수정되는지 실험해보기
     // 수정
     public void updateContent(Long code, CommentUpdateRequestDto dto) {
         // TODO: 영화를 매번 찾아와야한다. 즉 쿼리가 한번씩 실행된다는 말이다.
@@ -95,7 +96,7 @@ public class CommentService {
 
         comment.updateContent(dto.content());
     }
-
+    // TODO: Transactional 넣지 않고 수정되는지 실험해보기
     // 평점 업데이트
     public void updateRating(Long code, CommentUpdateRequestDto dto) {
         Movie movie = movieRepository.findByCode(code).orElseThrow(

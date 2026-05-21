@@ -98,6 +98,11 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.COMMENT_MEMBER_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
+    @ExceptionHandler(DuplicateLikeException.class)
+    public ResponseEntity<ApiResult<Void>> handleDuplicateLikeException(DuplicateLikeException e) {
+        return fail(ErrorCode.DUPLICATE_LIKE, HttpStatus.CONFLICT, e);
+    }
+
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
     private ResponseEntity<ApiResult<Void>> fail(
             ErrorCode errorCode,
