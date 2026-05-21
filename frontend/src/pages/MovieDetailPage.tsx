@@ -7,6 +7,7 @@ import {
   fetchMovieCommentForEdit,
   fetchMovieComments,
   fetchMovieDetail,
+  likeMovieComment,
   verifyCommentAuth,
 } from '../api/movieDetail'
 import Header from '../components/Header'
@@ -307,6 +308,23 @@ function MovieDetailPage() {
     }
   }
 
+  // 코멘트 좋아요 요청 처리
+  async function handleCommentLikeClick(comment: MovieComment) {
+    const targetMovieId = comment.movieId || resolvedMovieId
+    const targetCommentId = comment.commentId || comment.id
+
+    if (!targetMovieId || !targetCommentId) {
+      return false
+    }
+
+    try {
+      await likeMovieComment(targetMovieId, targetCommentId)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   // 코멘트 제출 기본 동작 방지 처리
   async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -395,6 +413,7 @@ function MovieDetailPage() {
               isLoading={isCommentsLoading}
               onCommentClick={handleCommentClick}
               onEditClick={handleCommentEditClick}
+              onLikeClick={handleCommentLikeClick}
             />
           </div>
         </section>

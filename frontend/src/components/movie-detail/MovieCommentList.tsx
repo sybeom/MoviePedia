@@ -8,6 +8,7 @@ type MovieCommentListProps = {
   isLoading: boolean
   onCommentClick: (comment: MovieComment) => void
   onEditClick: (comment: MovieComment) => void
+  onLikeClick: (comment: MovieComment) => Promise<boolean>
 }
 
 // 코멘트 목록 영역 구성
@@ -16,9 +17,11 @@ function MovieCommentList({
   isLoading,
   onCommentClick,
   onEditClick,
+  onLikeClick,
 }: MovieCommentListProps) {
   // 좋아요 활성화 상태 관리
   const [likedCommentIds, setLikedCommentIds] = useState<Record<string, boolean>>({})
+  const [likingCommentIds, setLikingCommentIds] = useState<Record<string, boolean>>({})
 
   // 코멘트 목록 기준 좋아요 수 계산
   const baseLikeCounts = useMemo(
@@ -33,15 +36,37 @@ function MovieCommentList({
   )
 
   // 좋아요 토글 처리
-  function handleLikeClick(commentId: string) {
-    setLikedCommentIds((previousLikedCommentIds) => {
-      const isCurrentlyLiked = previousLikedCommentIds[commentId] ?? false
+  async function handleLikeClick(comment: MovieComment) {
+    const commentId = comment.id
+    const isCurrentlyLiked = likedCommentIds[commentId] ?? false
+    const isCurrentlyLiking = likingCommentIds[commentId] ?? false
 
-      return {
-        ...previousLikedCommentIds,
-        [commentId]: !isCurrentlyLiked,
+    if (isCurrentlyLiked || isCurrentlyLiking) {
+      return
+    }
+
+    setLikingCommentIds((previousLikingCommentIds) => ({
+      ...previousLikingCommentIds,
+      [commentId]: true,
+    }))
+
+    try {
+      const isSuccess = await onLikeClick(comment)
+
+      if (!isSuccess) {
+        return
       }
-    })
+
+      setLikedCommentIds((previousLikedCommentIds) => ({
+        ...previousLikedCommentIds,
+        [commentId]: true,
+      }))
+    } finally {
+      setLikingCommentIds((previousLikingCommentIds) => ({
+        ...previousLikingCommentIds,
+        [commentId]: false,
+      }))
+    }
   }
 
   return (
@@ -84,6 +109,7 @@ function MovieCommentList({
             <div className="movie-detail-comment-card-footer">
               {(() => {
                 const isLiked = likedCommentIds[comment.id] ?? false
+                const isLiking = likingCommentIds[comment.id] ?? false
                 const displayedLikeCount = Math.max(
                   0,
                   (baseLikeCounts[comment.id] ?? 0) + (isLiked ? 1 : 0),
@@ -95,9 +121,10 @@ function MovieCommentList({
                       isLiked ? ' is-active' : ''
                     }`}
                     type="button"
+                    disabled={isLiked || isLiking}
                     onClick={(event) => {
                       event.stopPropagation()
-                      handleLikeClick(comment.id)
+                      void handleLikeClick(comment)
                     }}
                   >
                     <img src={likeIcon} alt="" aria-hidden="true" />

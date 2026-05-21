@@ -61,6 +61,13 @@ export function createMovieComment(movieId: string, body: CreateCommentRequest) 
   })
 }
 
+// 코멘트 좋아요 요청 처리
+export function likeMovieComment(movieId: string, commentId: string) {
+  return authRequest<void>(`/movies/${movieId}/comments/${commentId}/like`, {
+    method: 'POST',
+  })
+}
+
 // 단일 코멘트 상세 조회 처리
 export function fetchMovieCommentDetail(movieId: string, commentId: string) {
   const session = getAuthSession()
