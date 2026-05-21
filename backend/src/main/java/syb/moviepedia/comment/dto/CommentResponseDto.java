@@ -11,7 +11,8 @@ public record CommentResponseDto(
         Long movieId,
         String nickname,
         String content,
-        double rating,
+        Double rating,
+        Integer like,
         boolean isMine
 ) {
 }

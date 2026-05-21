@@ -134,6 +134,7 @@ public class CommentService {
                         .nickname(comment.getNickname())
                         .content(comment.getContent())
                         .rating(comment.getRating())
+                        .like(comment.getLike())
                         .isMine(comment.getMember().getLoginId().equals(loinId)) // 로그인 유저가 코멘트 작성자면 true
                         .build())
                 .toList();
