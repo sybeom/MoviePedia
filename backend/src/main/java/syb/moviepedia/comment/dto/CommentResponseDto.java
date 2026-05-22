@@ -13,6 +13,7 @@ public record CommentResponseDto(
         String content,
         Double rating,
         Integer like,
-        boolean isMine
+        Boolean likedByMe, // 나(현재 로그인 유저)에 의해 눌러짐
+        Boolean writtenByMe // 나(현재 로그인 유저)에 의해 쓰여짐
 ) {
 }

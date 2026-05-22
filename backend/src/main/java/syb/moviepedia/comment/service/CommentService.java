@@ -10,12 +10,15 @@ import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
 import syb.moviepedia.comment.dto.EditCommentResponseDto;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.exception.*;
+import syb.moviepedia.like.repository.LikeRepository;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.repository.MovieRepository;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -24,6 +27,7 @@ public class CommentService {
     private final MovieRepository movieRepository;
     private final MemberRepository memberRepository;
     private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
 
     // 상세 보기
     public CommentDto getComment(Long id) {
@@ -55,7 +59,24 @@ public class CommentService {
         // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
         List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loinId);
 
-        return toCommentListResponseDto(movie.getId(), comments, loinId);
+        // 코멘트 목록들 id만 추출
+        List<Long> commentIds = comments.stream().map(Comment::getId).toList();
+
+        // 현재 로그인 중인 멤버 ID
+        Member member = memberRepository.findByLoginId(loinId).orElseThrow(
+                () -> new MemberNotFoundException("멤버를 찾을 수 없습니다. loginId: " + loinId));
+        Long memberId = member.getId();
+
+        // 중복 제거 목적이 아닌 성능때문에 사용
+        Set<Long> likedIdSet = Set.of(); // List를 사용하면 비교할 때 앞에서부터 하나하나 비교하기 때문
+        if (memberId != null && !commentIds.isEmpty()) {
+            // 현재 로그인한 유저가 좋아요 누른 코멘트들의 좋아요 아이디 목록
+            List<Long> likeIds = likeRepository.findLikeIdsByMemberIdAndCommentIds(memberId, commentIds);
+
+            likedIdSet = new HashSet<>(likeIds);
+        }
+
+        return toCommentListResponseDto(movie.getId(), comments, loinId, likedIdSet);
     }
 
     // TODO: Transactional 안했는데 어케 등록됐찌?
@@ -127,7 +148,8 @@ public class CommentService {
     private List<CommentResponseDto> toCommentListResponseDto(
             Long movieId,
             List<Comment> comments,
-            String loinId) {
+            String loinId,
+            Set<Long> likedIdsSet) {
         return comments.stream().map(comment ->
                 CommentResponseDto.builder()
                         .commentId(comment.getId())
@@ -136,7 +158,8 @@ public class CommentService {
                         .content(comment.getContent())
                         .rating(comment.getRating())
                         .like(comment.getLike())
-                        .isMine(comment.getMember().getLoginId().equals(loinId)) // 로그인 유저가 코멘트 작성자면 true
+                        .writtenByMe(comment.getMember().getLoginId().equals(loinId)) // 로그인 유저가 코멘트 작성자면 true
+                        .likedByMe(likedIdsSet.contains(comment.getId())) // 각 코멘트에 대하여 id를 포함하고 있는지 검사, 포함하면 해당 코멘트에 좋아요 눌른 상태
                         .build())
                 .toList();
     }

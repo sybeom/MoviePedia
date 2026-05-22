@@ -26,7 +26,7 @@ public class LikeService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException("코멘트를 찾을 수 없습니다, id: " + commentId));
 
-        Boolean exist = likeRepository.existsByCommentAndMember(comment, member);
+        Boolean exist = likeRepository.existsByCommentIdAndMemberId(comment.getId(), member.getId());
 
         if (exist) { // 이미 좋아요를 누른 경우
             throw new DuplicateLikeException("이미 해당 코멘트에 좋아요를 눌렀습니다.");
@@ -34,9 +34,10 @@ public class LikeService {
 
         Like like = Like.builder()
                 .comment(comment)
-                .member(comment.getMember())
+                .member(member)
                 .build();
 
         likeRepository.save(like);
+        // TODO : like Count 증가 로직 추가
     }
 }
