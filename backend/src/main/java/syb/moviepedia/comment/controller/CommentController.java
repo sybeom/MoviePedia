@@ -76,6 +76,4 @@ public class CommentController {
         }
         return ResponseEntity.ok().body(ApiResult.success("코멘트 업데이트 성공"));
     }
-
-    // TODO : 좋아요 누른 상태를 관리하려면 엔티티가 편하단다.. 엔티티명 Likes로 ㄱㄱ
 }

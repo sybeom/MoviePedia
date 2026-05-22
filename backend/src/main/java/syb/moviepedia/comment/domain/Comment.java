@@ -40,6 +40,8 @@ public class Comment {
     @Column(name = "like_count", nullable = false)
     Integer like = 0;// 시작값 0 고정
 
+
+    // 코멘트 수정
     public void updateContent(String content) {
         this.content = content;
     }

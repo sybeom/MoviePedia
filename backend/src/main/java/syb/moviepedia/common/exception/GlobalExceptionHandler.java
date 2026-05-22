@@ -88,19 +88,27 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.ALREADY_EXISTS_COMMENT, HttpStatus.CONFLICT, e);
     }
 
+    // 코멘트 조회 실패
     @ExceptionHandler(CommentNotFoundException.class)
     public ResponseEntity<ApiResult<Void>> handleCommentNotFoundException(CommentNotFoundException e) {
         return fail(ErrorCode.COMMENT_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
+    // 코멘트 작성 멤버 조회 실패
     @ExceptionHandler(CommentMemberNotFound.class)
     public ResponseEntity<ApiResult<Void>> handleCommentMemberNotFound(CommentMemberNotFound e) {
         return fail(ErrorCode.COMMENT_MEMBER_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
-    @ExceptionHandler(DuplicateLikeException.class)
-    public ResponseEntity<ApiResult<Void>> handleDuplicateLikeException(DuplicateLikeException e) {
-        return fail(ErrorCode.DUPLICATE_LIKE, HttpStatus.CONFLICT, e);
+    // 좋아요 중복 클릭
+    @ExceptionHandler(AlreadyLikedException.class)
+    public ResponseEntity<ApiResult<Void>> handleDuplicateLikeException(AlreadyLikedException e) {
+        return fail(ErrorCode.ALREADY_LIKED, HttpStatus.CONFLICT, e);
+    }
+
+    @ExceptionHandler(CannotLikeOwnCommentException.class)
+    public ResponseEntity<ApiResult<Void>> handleCannotLikeOwnCommentException(CannotLikeOwnCommentException e) {
+        return fail(ErrorCode.CANNOT_LIKE_OWN_COMMENT, HttpStatus.FORBIDDEN, e);
     }
 
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
