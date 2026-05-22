@@ -14,6 +14,8 @@ public interface LikeRepository extends JpaRepository<Like, Integer> {
 
     Boolean existsByCommentIdAndMemberId(Long commentId, Long memberId);
 
+    void deleteByCommentIdAndMemberId(Long commentId, Long memberId);
+
     @Query("""
         select l.comment.id
         from Like l
@@ -24,4 +26,6 @@ public interface LikeRepository extends JpaRepository<Like, Integer> {
             @Param("memberId") Long memberId,
             @Param("commentIds") List<Long> commentIds
     );
+
+
 }

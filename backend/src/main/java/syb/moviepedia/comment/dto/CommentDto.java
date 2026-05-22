@@ -16,6 +16,6 @@ public record CommentDto(
         @NotNull
         String content,
         @NotNull Double rating,
-        Integer like
+        Integer likeCount
 ) {
 }

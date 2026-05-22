@@ -100,7 +100,7 @@ public class CommentService {
                 .rating(dto.rating())
                 .movie(movie)
                 .member(member)
-                .like(0)
+                .likeCount(0)
                 .build();
 
         commentRepository.save(comment);
@@ -132,7 +132,7 @@ public class CommentService {
                 .nickname(comment.getNickname())
                 .content(comment.getContent())
                 .rating(comment.getRating())
-                .like(comment.getLike())
+                .likeCount(comment.getLikeCount())
                 .build();
     }
 
@@ -157,7 +157,7 @@ public class CommentService {
                         .nickname(comment.getNickname())
                         .content(comment.getContent())
                         .rating(comment.getRating())
-                        .like(comment.getLike())
+                        .likeCount(comment.getLikeCount())
                         .writtenByMe(comment.getMember().getLoginId().equals(loinId)) // 로그인 유저가 코멘트 작성자면 true
                         .likedByMe(likedIdsSet.contains(comment.getId())) // 각 코멘트에 대하여 id를 포함하고 있는지 검사, 포함하면 해당 코멘트에 좋아요 눌른 상태
                         .build())

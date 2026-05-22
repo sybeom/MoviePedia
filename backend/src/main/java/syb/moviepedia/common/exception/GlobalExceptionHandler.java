@@ -106,9 +106,16 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.ALREADY_LIKED, HttpStatus.CONFLICT, e);
     }
 
+    // 자신이 작성한 코멘트에 좋아요를 클릭
     @ExceptionHandler(CannotLikeOwnCommentException.class)
     public ResponseEntity<ApiResult<Void>> handleCannotLikeOwnCommentException(CannotLikeOwnCommentException e) {
         return fail(ErrorCode.CANNOT_LIKE_OWN_COMMENT, HttpStatus.FORBIDDEN, e);
+    }
+
+    // 좋아요 취소 클릭시 해당 좋아요 찾지 못했을 경우
+    @ExceptionHandler(LikeNotFoundException.class)
+    public ResponseEntity<ApiResult<Void>> handleLikeNotFoundException(LikeNotFoundException e) {
+        return fail(ErrorCode.LIKE_NOT_FOUND, HttpStatus.NOT_FOUND, e);
     }
 
     // 실패 응답 생성 - errors 없는 경우 (에러코드와 메시지만 전송)
