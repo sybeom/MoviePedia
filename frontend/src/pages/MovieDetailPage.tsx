@@ -272,7 +272,7 @@ function MovieDetailPage() {
 
       setSelectedCommentDetail({
         ...detail,
-        isMine: comment.isMine,
+        isMine: comment.writtenByMe,
       })
       setCommentModalMode('view')
     } catch {
@@ -312,15 +312,35 @@ function MovieDetailPage() {
   async function handleCommentLikeClick(comment: MovieComment) {
     const targetMovieId = comment.movieId || resolvedMovieId
     const targetCommentId = comment.commentId || comment.id
+    const session = getAuthSession()
 
     if (!targetMovieId || !targetCommentId) {
+      return false
+    }
+
+    // 비로그인 좋아요 차단 처리
+    if (!session?.accessToken) {
+      alert('로그인이 필요한 기능입니다.')
       return false
     }
 
     try {
       await likeMovieComment(targetMovieId, targetCommentId)
       return true
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof ApiError &&
+        error.status === 403 &&
+        error.code === 'CANNOT_LIKE_OWN_COMMENT'
+      ) {
+        alert('자신의 코멘트에는 좋아요를 누를 수 없습니다.')
+        return false
+      }
+
+      if (error instanceof ApiError && error.status === 409) {
+        return true
+      }
+
       return false
     }
   }

@@ -19,7 +19,7 @@ function MovieCommentList({
   onEditClick,
   onLikeClick,
 }: MovieCommentListProps) {
-  // 좋아요 활성화 상태 관리
+  // 좋아요 추가 활성화 상태 관리
   const [likedCommentIds, setLikedCommentIds] = useState<Record<string, boolean>>({})
   const [likingCommentIds, setLikingCommentIds] = useState<Record<string, boolean>>({})
 
@@ -38,7 +38,7 @@ function MovieCommentList({
   // 좋아요 토글 처리
   async function handleLikeClick(comment: MovieComment) {
     const commentId = comment.id
-    const isCurrentlyLiked = likedCommentIds[commentId] ?? false
+    const isCurrentlyLiked = (likedCommentIds[commentId] ?? false) || comment.likedByMe
     const isCurrentlyLiking = likingCommentIds[commentId] ?? false
 
     if (isCurrentlyLiked || isCurrentlyLiking) {
@@ -108,11 +108,12 @@ function MovieCommentList({
             <p className="movie-detail-comment-card-content">{comment.content}</p>
             <div className="movie-detail-comment-card-footer">
               {(() => {
-                const isLiked = likedCommentIds[comment.id] ?? false
+                const isLiked = (likedCommentIds[comment.id] ?? false) || comment.likedByMe
                 const isLiking = likingCommentIds[comment.id] ?? false
                 const displayedLikeCount = Math.max(
                   0,
-                  (baseLikeCounts[comment.id] ?? 0) + (isLiked ? 1 : 0),
+                  (baseLikeCounts[comment.id] ?? 0) +
+                    (likedCommentIds[comment.id] && !comment.likedByMe ? 1 : 0),
                 )
 
                 return (
@@ -132,7 +133,7 @@ function MovieCommentList({
                   </button>
                 )
               })()}
-              {comment.isMine ? (
+              {comment.writtenByMe ? (
                 <div className="movie-detail-comment-card-owner-actions">
                   <button
                     className="movie-detail-comment-owner-button"

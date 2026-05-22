@@ -62,5 +62,6 @@ export type MovieComment = {
   content: string
   rating: string
   likeCount: string
-  isMine: boolean
+  writtenByMe: boolean
+  likedByMe: boolean
 }
