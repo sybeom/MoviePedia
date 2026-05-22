@@ -8,7 +8,7 @@ type MovieCommentListProps = {
   isLoading: boolean
   onCommentClick: (comment: MovieComment) => void
   onEditClick: (comment: MovieComment) => void
-  onLikeClick: (comment: MovieComment) => Promise<boolean>
+  onLikeClick: (comment: MovieComment, isLiked: boolean) => Promise<boolean>
 }
 
 // 코멘트 목록 영역 구성
@@ -19,7 +19,7 @@ function MovieCommentList({
   onEditClick,
   onLikeClick,
 }: MovieCommentListProps) {
-  // 좋아요 추가 활성화 상태 관리
+  // 좋아요 활성화 덮어쓰기 상태 관리
   const [likedCommentIds, setLikedCommentIds] = useState<Record<string, boolean>>({})
   const [likingCommentIds, setLikingCommentIds] = useState<Record<string, boolean>>({})
 
@@ -38,10 +38,11 @@ function MovieCommentList({
   // 좋아요 토글 처리
   async function handleLikeClick(comment: MovieComment) {
     const commentId = comment.id
-    const isCurrentlyLiked = (likedCommentIds[commentId] ?? false) || comment.likedByMe
+    const hasLikeOverride = Object.prototype.hasOwnProperty.call(likedCommentIds, commentId)
+    const isCurrentlyLiked = hasLikeOverride ? likedCommentIds[commentId] : comment.likedByMe
     const isCurrentlyLiking = likingCommentIds[commentId] ?? false
 
-    if (isCurrentlyLiked || isCurrentlyLiking) {
+    if (isCurrentlyLiking) {
       return
     }
 
@@ -51,7 +52,7 @@ function MovieCommentList({
     }))
 
     try {
-      const isSuccess = await onLikeClick(comment)
+      const isSuccess = await onLikeClick(comment, isCurrentlyLiked)
 
       if (!isSuccess) {
         return
@@ -59,7 +60,7 @@ function MovieCommentList({
 
       setLikedCommentIds((previousLikedCommentIds) => ({
         ...previousLikedCommentIds,
-        [commentId]: true,
+        [commentId]: !isCurrentlyLiked,
       }))
     } finally {
       setLikingCommentIds((previousLikingCommentIds) => ({
@@ -108,12 +109,24 @@ function MovieCommentList({
             <p className="movie-detail-comment-card-content">{comment.content}</p>
             <div className="movie-detail-comment-card-footer">
               {(() => {
-                const isLiked = (likedCommentIds[comment.id] ?? false) || comment.likedByMe
+                const hasLikeOverride = Object.prototype.hasOwnProperty.call(
+                  likedCommentIds,
+                  comment.id,
+                )
+                const isLiked = hasLikeOverride
+                  ? likedCommentIds[comment.id]
+                  : comment.likedByMe
                 const isLiking = likingCommentIds[comment.id] ?? false
+                const likeCountDelta = hasLikeOverride
+                  ? likedCommentIds[comment.id] === comment.likedByMe
+                    ? 0
+                    : likedCommentIds[comment.id]
+                      ? 1
+                      : -1
+                  : 0
                 const displayedLikeCount = Math.max(
                   0,
-                  (baseLikeCounts[comment.id] ?? 0) +
-                    (likedCommentIds[comment.id] && !comment.likedByMe ? 1 : 0),
+                  (baseLikeCounts[comment.id] ?? 0) + likeCountDelta,
                 )
 
                 return (
@@ -122,7 +135,7 @@ function MovieCommentList({
                       isLiked ? ' is-active' : ''
                     }`}
                     type="button"
-                    disabled={isLiked || isLiking}
+                    disabled={isLiking}
                     onClick={(event) => {
                       event.stopPropagation()
                       void handleLikeClick(comment)

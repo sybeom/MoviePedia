@@ -268,7 +268,7 @@ export function normalizeMovieComments(data: unknown): MovieComment[] {
         nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '?듬챸',
         content: getStringValue(comment, ['content', 'comment']) || '-',
         rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
-        likeCount: getStringValue(comment, ['like', 'likeCount', 'likes', 'likeCnt']),
+        likeCount: getStringValue(comment, ['likeCount', 'likes', 'likeCnt']),
         writtenByMe: getBooleanValue(comment, ['writtenByMe', 'isMine']),
         likedByMe: getBooleanValue(comment, ['likedByMe']),
       }

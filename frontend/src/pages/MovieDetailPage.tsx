@@ -8,6 +8,7 @@ import {
   fetchMovieComments,
   fetchMovieDetail,
   likeMovieComment,
+  unlikeMovieComment,
   verifyCommentAuth,
 } from '../api/movieDetail'
 import Header from '../components/Header'
@@ -309,7 +310,7 @@ function MovieDetailPage() {
   }
 
   // 코멘트 좋아요 요청 처리
-  async function handleCommentLikeClick(comment: MovieComment) {
+  async function handleCommentLikeClick(comment: MovieComment, isLiked: boolean) {
     const targetMovieId = comment.movieId || resolvedMovieId
     const targetCommentId = comment.commentId || comment.id
     const session = getAuthSession()
@@ -325,9 +326,18 @@ function MovieDetailPage() {
     }
 
     try {
+      if (isLiked) {
+        await unlikeMovieComment(targetMovieId, targetCommentId)
+        return true
+      }
+
       await likeMovieComment(targetMovieId, targetCommentId)
       return true
     } catch (error) {
+      if (isLiked) {
+        return false
+      }
+
       if (
         error instanceof ApiError &&
         error.status === 403 &&
