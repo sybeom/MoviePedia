@@ -1,5 +1,6 @@
 package syb.moviepedia.like.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import syb.moviepedia.comment.domain.Comment;
@@ -19,6 +20,7 @@ public class LikeService {
     private final CommentRepository commentRepository;
     private final MemberRepository memberRepository;
 
+    @Transactional
     public void saveLike(Long commentId, String loginId) {
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new MemberNotFoundException("해당 멤버를 찾을 수 없습니다. loginId: " + loginId));
@@ -38,6 +40,6 @@ public class LikeService {
                 .build();
 
         likeRepository.save(like);
-        // TODO : like Count 증가 로직 추가
+        comment.increaseLike();
     }
 }
