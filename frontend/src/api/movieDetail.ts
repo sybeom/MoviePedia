@@ -5,7 +5,9 @@ import type {
   AuthMeResponse,
   CreateCommentRequest,
   MovieComment,
+  MovieCommentsResponse,
   MovieCommentDetail,
+  UpdateCommentRequest,
 } from '../types/movieDetail'
 import {
   normalizeMovieCommentDetail,
@@ -13,7 +15,7 @@ import {
   normalizeMovieDetail,
 } from '../utils/movieDetail'
 
-const commentRequestMap = new Map<string, Promise<MovieComment[]>>()
+const commentRequestMap = new Map<string, Promise<MovieCommentsResponse>>()
 
 // 영화 상세 조회 처리
 export async function fetchMovieDetail(movieId: string) {
@@ -57,6 +59,18 @@ export function fetchMovieComments(movieId: string) {
 export function createMovieComment(movieId: string, body: CreateCommentRequest) {
   return authRequest<CreateCommentRequest>(`/movies/${movieId}/comments`, {
     method: 'POST',
+    body,
+  })
+}
+
+// 코멘트 수정 요청 처리
+export function updateMovieComment(
+  movieId: string,
+  commentId: string,
+  body: UpdateCommentRequest,
+) {
+  return authRequest<UpdateCommentRequest>(`/movies/${movieId}/comments/${commentId}`, {
+    method: 'PATCH',
     body,
   })
 }

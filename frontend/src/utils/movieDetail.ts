@@ -1,6 +1,7 @@
 ﻿import type {
   CreditMember,
   MovieComment,
+  MovieCommentsResponse,
   MovieCommentDetail,
   MovieDetailState,
   MovieDetailView,
@@ -156,7 +157,14 @@ export function getCommentListValue(data: unknown) {
 
   return []
 }
+// 코멘트 목록 컨테이너 추출 처리
+export function getCommentContainerValue(data: unknown) {
+  if (isRecord(data)) {
+    return data
+  }
 
+  return null
+}
 // ?쒖옉 諛?異쒖뿰 紐⑸줉 ?뺣━ 泥섎━
 export function getCreditValue(record: Record<string, unknown>) {
   const creditValue = record.credit
@@ -254,8 +262,13 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
 }
 
 // 肄붾찘??紐⑸줉 ?뺢퇋??泥섎━
-export function normalizeMovieComments(data: unknown): MovieComment[] {
-  return getCommentListValue(data)
+export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
+  const commentContainer = getCommentContainerValue(data)
+  const responseMovieId = commentContainer
+    ? getStringValue(commentContainer, ['movieId'])
+    : ''
+
+  const comments = getCommentListValue(data)
     .filter(isRecord)
     .map((comment, index) => {
       const commentId =
@@ -264,7 +277,7 @@ export function normalizeMovieComments(data: unknown): MovieComment[] {
       return {
         id: getStringValue(comment, ['id', 'commentId', 'code']) || commentId,
         commentId,
-        movieId: getStringValue(comment, ['movieId']),
+        movieId: getStringValue(comment, ['movieId']) || responseMovieId,
         nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '?듬챸',
         content: getStringValue(comment, ['content', 'comment']) || '-',
         rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
@@ -273,6 +286,11 @@ export function normalizeMovieComments(data: unknown): MovieComment[] {
         likedByMe: getBooleanValue(comment, ['likedByMe']),
       }
     })
+
+  return {
+    movieId: responseMovieId,
+    comments,
+  }
 }
 
 // ?⑥씪 肄붾찘???곸꽭 ?뺢퇋??泥섎━
@@ -316,4 +334,7 @@ export function createInitialMovieDetail(movieId: string, movie?: MovieDetailSta
     credits: [],
   }
 }
+
+
+
 

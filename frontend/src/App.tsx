@@ -51,7 +51,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/movies/:movieId" element={<MovieDetailPage />} />
+      <Route path="/movies/:movieCode" element={<MovieDetailPage />} />
       <Route path="/cookie" element={<CookiePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />

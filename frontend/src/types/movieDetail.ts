@@ -37,7 +37,15 @@ export type AuthMeResponse = {
 
 // 코멘트 작성 요청 타입 정의
 export type CreateCommentRequest = {
+  movieId: string
   nickname: string
+  content: string
+  rating: number
+}
+
+// 코멘트 수정 요청 데이터 타입 정의
+export type UpdateCommentRequest = {
+  movieId: string
   content: string
   rating: number
 }
@@ -64,4 +72,10 @@ export type MovieComment = {
   likeCount: string
   writtenByMe: boolean
   likedByMe: boolean
+}
+
+// 코멘트 목록 응답 데이터 타입 정의
+export type MovieCommentsResponse = {
+  movieId: string
+  comments: MovieComment[]
 }

@@ -9,6 +9,7 @@ import {
   fetchMovieDetail,
   likeMovieComment,
   unlikeMovieComment,
+  updateMovieComment,
   verifyCommentAuth,
 } from '../api/movieDetail'
 import Header from '../components/Header'
@@ -33,9 +34,9 @@ type CommentModalMode = 'create' | 'edit' | 'view' | null
 
 // 영화 상세 화면 구성
 function MovieDetailPage() {
-  // URL 파라미터 조회 처리
-  const { movieId } = useParams()
-  const resolvedMovieId = movieId ?? ''
+  // URL 파라미터 영화 코드 조회 처리
+  const { movieCode: movieCodeParam } = useParams()
+  const resolvedMovieCode = movieCodeParam ?? ''
 
   // 이동 상태 조회 처리
   const location = useLocation()
@@ -44,15 +45,18 @@ function MovieDetailPage() {
 
   // 상세 데이터 상태 관리
   const [movieDetail, setMovieDetail] = useState<MovieDetailView>(() =>
-    createInitialMovieDetail(resolvedMovieId, initialMovie),
+    createInitialMovieDetail(resolvedMovieCode, initialMovie),
   )
 
+  // 실제 영화 ID 상태 관리
+  const [resolvedMovieRecordId, setResolvedMovieRecordId] = useState('')
+
   // 로딩 상태 관리
-  const [isLoading, setIsLoading] = useState(Boolean(resolvedMovieId))
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedMovieCode))
 
   // 안내 메시지 상태 관리
   const [message, setMessage] = useState(
-    resolvedMovieId ? '' : '영화 정보를 찾을 수 없습니다.',
+    resolvedMovieCode ? '' : '영화 정보를 찾을 수 없습니다.',
   )
 
   // 코멘트 입력값 상태 관리
@@ -62,7 +66,7 @@ function MovieDetailPage() {
   const [comments, setComments] = useState<MovieComment[]>([])
 
   // 코멘트 목록 로딩 상태 관리
-  const [isCommentsLoading, setIsCommentsLoading] = useState(Boolean(resolvedMovieId))
+  const [isCommentsLoading, setIsCommentsLoading] = useState(Boolean(resolvedMovieCode))
 
   // 사용자 별점 상태 관리
   const [selectedRating, setSelectedRating] = useState(0)
@@ -86,6 +90,12 @@ function MovieDetailPage() {
   const [selectedCommentDetail, setSelectedCommentDetail] =
     useState<MovieCommentDetail | null>(null)
 
+  // 수정 대상 식별자 상태 관리
+  const [editingCommentTarget, setEditingCommentTarget] = useState<{
+    movieId: string
+    commentId: string
+  } | null>(null)
+
   // 상세 요청 중복 방지 참조 준비
   const hasLoadedDetailRef = useRef(false)
 
@@ -99,7 +109,7 @@ function MovieDetailPage() {
   const isCreateMode = commentModalMode === 'create'
   const isViewMode = commentModalMode === 'view'
   const isCommentModalOpen = isCreateMode || isEditMode
-  const commentModalSubmitLabel = '저장'
+  const commentModalSubmitLabel = isEditMode ? '수정' : '저장'
 
   // 상세 페이지 최상단 이동 처리
   useEffect(() => {
@@ -108,7 +118,7 @@ function MovieDetailPage() {
       left: 0,
       behavior: 'auto',
     })
-  }, [resolvedMovieId])
+  }, [resolvedMovieCode])
 
   // 상세 정보 조회 처리
   useEffect(() => {
@@ -118,18 +128,18 @@ function MovieDetailPage() {
 
     hasLoadedDetailRef.current = true
 
-    if (!resolvedMovieId) {
+    if (!resolvedMovieCode) {
       return
     }
 
     // 영화 상세 조회 실행 처리
     async function loadMovieDetail() {
       try {
-        const normalizedDetail = await fetchMovieDetail(resolvedMovieId)
+        const normalizedDetail = await fetchMovieDetail(resolvedMovieCode)
 
         if (normalizedDetail) {
           setMovieDetail({
-            id: normalizedDetail.id || resolvedMovieId,
+            id: normalizedDetail.id || resolvedMovieCode,
             title: normalizedDetail.title || initialMovie?.title?.trim() || '영화 상세',
             poster: normalizedDetail.poster || initialMovie?.poster?.trim() || '',
             backdrop: normalizedDetail.backdrop,
@@ -153,13 +163,13 @@ function MovieDetailPage() {
     }
 
     void loadMovieDetail()
-  }, [initialMovie?.poster, initialMovie?.title, resolvedMovieId])
+  }, [initialMovie?.poster, initialMovie?.title, resolvedMovieCode])
 
   // 코멘트 목록 조회 처리
   useEffect(() => {
     let isMounted = true
 
-    if (!resolvedMovieId) {
+    if (!resolvedMovieCode) {
       return () => {
         isMounted = false
       }
@@ -168,13 +178,14 @@ function MovieDetailPage() {
     // 코멘트 목록 조회 실행 처리
     async function loadMovieComments() {
       try {
-        const response = await fetchMovieComments(resolvedMovieId)
+        const response = await fetchMovieComments(resolvedMovieCode)
 
         if (!isMounted) {
           return
         }
 
-        setComments(response)
+        setResolvedMovieRecordId(response.movieId)
+        setComments(response.comments)
       } catch {
         if (!isMounted) {
           return
@@ -193,7 +204,7 @@ function MovieDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [resolvedMovieId])
+  }, [resolvedMovieCode])
 
   // 코멘트 작성 로그인 확인 처리
   async function handleCommentInputFocus() {
@@ -231,6 +242,7 @@ function MovieDetailPage() {
   // 코멘트 작성 모달 열기 처리
   function handleOpenCommentModal() {
     setSelectedCommentDetail(null)
+    setEditingCommentTarget(null)
     setCommentDraft('')
     setSelectedRating(0)
     setHoverRating(0)
@@ -241,6 +253,7 @@ function MovieDetailPage() {
   function handleCloseCommentModal() {
     setCommentModalMode(null)
     setSelectedCommentDetail(null)
+    setEditingCommentTarget(null)
   }
 
   // 코멘트 수정 데이터 반영 처리
@@ -252,7 +265,7 @@ function MovieDetailPage() {
 
   // 코멘트 상세 조회 요청 처리
   async function fetchTargetComment(comment: MovieComment) {
-    const targetMovieId = comment.movieId || resolvedMovieId
+    const targetMovieId = comment.movieId || resolvedMovieRecordId
     const targetCommentId = comment.commentId || comment.id
 
     if (!targetMovieId || !targetCommentId) {
@@ -284,7 +297,7 @@ function MovieDetailPage() {
   // 코멘트 수정 조회 요청 처리
   async function handleCommentEditClick(comment: MovieComment) {
     try {
-      const targetMovieId = comment.movieId || resolvedMovieId
+      const targetMovieId = comment.movieId || resolvedMovieRecordId
       const targetCommentId = comment.commentId || comment.id
 
       if (!targetMovieId || !targetCommentId) {
@@ -301,6 +314,10 @@ function MovieDetailPage() {
         ...detail,
         isMine: true,
       })
+      setEditingCommentTarget({
+        movieId: targetMovieId,
+        commentId: targetCommentId,
+      })
       setCanWriteComment(true)
       applyEditableComment(detail)
       setCommentModalMode('edit')
@@ -311,7 +328,7 @@ function MovieDetailPage() {
 
   // 코멘트 좋아요 요청 처리
   async function handleCommentLikeClick(comment: MovieComment, isLiked: boolean) {
-    const targetMovieId = comment.movieId || resolvedMovieId
+    const targetMovieId = comment.movieId || resolvedMovieRecordId
     const targetCommentId = comment.commentId || comment.id
     const session = getAuthSession()
 
@@ -362,7 +379,7 @@ function MovieDetailPage() {
     const session = getAuthSession()
 
     // 로그인 세션 존재 여부 확인 처리
-    if (!session?.nickname || !canWriteComment || isSubmittingComment) {
+    if (!session?.nickname || ((!canWriteComment && !isEditMode) || isSubmittingComment)) {
       return
     }
 
@@ -378,16 +395,51 @@ function MovieDetailPage() {
       return
     }
 
-    // 수정 대상 요청 미연결 안내 처리
     if (isEditMode) {
-      alert('코멘트 수정 저장 기능은 다음 단계에서 연결됩니다.')
+      if (!editingCommentTarget?.movieId || !editingCommentTarget?.commentId) {
+        return
+      }
+
+      setIsSubmittingComment(true)
+
+      try {
+        await updateMovieComment(resolvedMovieCode, editingCommentTarget.commentId, {
+          movieId: editingCommentTarget.movieId || movieDetail.id,
+          content: trimmedCommentDraft,
+          rating: selectedRating,
+        })
+
+        setCommentDraft('')
+        setSelectedRating(0)
+        setHoverRating(0)
+        setCommentModalMode(null)
+        setSelectedCommentDetail(null)
+        setEditingCommentTarget(null)
+        setIsCommentsLoading(true)
+
+        try {
+          const commentsResponse = await fetchMovieComments(resolvedMovieCode)
+          setResolvedMovieRecordId(commentsResponse.movieId)
+          setComments(commentsResponse.comments)
+        } finally {
+          setIsCommentsLoading(false)
+        }
+      } finally {
+        setIsSubmittingComment(false)
+      }
+
       return
     }
 
     setIsSubmittingComment(true)
 
     try {
-      await createMovieComment(resolvedMovieId, {
+      if (!resolvedMovieRecordId) {
+        return
+      }
+
+      await createMovieComment(resolvedMovieCode, {
+        movieId: resolvedMovieRecordId,
         nickname: session.nickname,
         content: trimmedCommentDraft,
         rating: selectedRating,
@@ -400,8 +452,9 @@ function MovieDetailPage() {
       setIsCommentsLoading(true)
 
       try {
-        const commentsResponse = await fetchMovieComments(resolvedMovieId)
-        setComments(commentsResponse)
+          const commentsResponse = await fetchMovieComments(resolvedMovieCode)
+          setResolvedMovieRecordId(commentsResponse.movieId)
+          setComments(commentsResponse.comments)
       } finally {
         setIsCommentsLoading(false)
       }
@@ -454,7 +507,7 @@ function MovieDetailPage() {
             commentDraft={commentDraft}
             selectedRating={selectedRating}
             hoverRating={hoverRating}
-            canWriteComment={canWriteComment}
+            canWriteComment={isEditMode || canWriteComment}
             isSubmittingComment={isSubmittingComment}
             isCheckingCommentAuth={isCheckingCommentAuth}
             submitLabel={commentModalSubmitLabel}
