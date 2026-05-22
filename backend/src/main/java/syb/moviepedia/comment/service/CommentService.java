@@ -1,13 +1,13 @@
 package syb.moviepedia.comment.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
-import syb.moviepedia.comment.dto.CommentDto;
-import syb.moviepedia.comment.dto.CommentResponseDto;
-import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
-import syb.moviepedia.comment.dto.EditCommentResponseDto;
+import syb.moviepedia.comment.dto.*;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.exception.*;
 import syb.moviepedia.like.repository.LikeRepository;
@@ -49,7 +49,7 @@ public class CommentService {
     }
 
     // 모든 코멘트 목록
-    public List<CommentResponseDto> getAllComments(Long code, String loginId) {
+    public CommentListResponse getAllComments(Long code, String loginId) {
         Movie movie = movieRepository.findByCode(code)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
 
@@ -70,13 +70,16 @@ public class CommentService {
             Long memberId = member.getId();
 
 
-            // 현재 로그인한 유저가 좋아요 누른 코멘트들의 좋아요 아이디 목록
+            // 현재 로그인한 유저가 좋아요 누른 코멘트들의 좋아요 테이블의 아이디 목록
             List<Long> likeIds = likeRepository.findLikeIdsByMemberIdAndCommentIds(memberId, commentIds);
 
             likedIdSet = new HashSet<>(likeIds);
         }
 
-        return toCommentListResponseDto(movie.getId(), comments, loginId, likedIdSet);
+        return CommentListResponse.builder()
+                .movieId(movie.getId())
+                .comments(toCommentListResponseDto(comments, loginId, likedIdSet))
+                .build();
     }
 
     // TODO: Transactional 안했는데 어케 등록됐찌?
@@ -107,23 +110,14 @@ public class CommentService {
     }
     // TODO: Transactional 넣지 않고 수정되는지 실험해보기
     // 수정
-    public void updateContent(Long code, CommentUpdateRequestDto dto) {
-        // TODO: 영화를 매번 찾아와야한다. 즉 쿼리가 한번씩 실행된다는 말이다.
-        //  차라리 코멘트 작성할 때, 영화 아이디를 보내면 어떨까?
-        Movie movie = movieRepository.findByCode(code).orElseThrow(
-                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
-        Comment comment = commentRepository.findByMovieId(movie.getId()).orElseThrow(
-                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 코드: " + code));
+    @Transactional
+    public void update(Long movieId, String loginId, CommentUpdateRequestDto dto) {
+        log.info("movieId: {}", movieId);
+        // 내가 작성한 코멘트찾기
+        Comment comment = commentRepository.findByMovieIdAndLoginId(dto.movieId(), loginId).orElseThrow(
+                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 id: " + movieId));
 
-        comment.updateContent(dto.content());
-    }
-    // TODO: Transactional 넣지 않고 수정되는지 실험해보기
-    // 평점 업데이트
-    public void updateRating(Long code, CommentUpdateRequestDto dto) {
-        Movie movie = movieRepository.findByCode(code).orElseThrow(
-                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
-        commentRepository.findByMovieId(movie.getId()).orElseThrow(
-                ()-> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 코드: " + code));
+        comment.update(dto);
     }
 
     // 엔티티 -> Comment Dto로 가공
@@ -146,14 +140,12 @@ public class CommentService {
 
     // 엔티티 -> CommentResponseDTO로 가공 (리스트)
     private List<CommentResponseDto> toCommentListResponseDto(
-            Long movieId,
             List<Comment> comments,
             String loinId,
             Set<Long> likedIdsSet) {
         return comments.stream().map(comment ->
                 CommentResponseDto.builder()
                         .commentId(comment.getId())
-                        .movieId(movieId)
                         .nickname(comment.getNickname())
                         .content(comment.getContent())
                         .rating(comment.getRating())

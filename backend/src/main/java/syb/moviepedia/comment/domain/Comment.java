@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNullApi;
+import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.movie.domain.Movie;
 
@@ -15,6 +17,7 @@ import syb.moviepedia.movie.domain.Movie;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Slf4j
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,8 +45,9 @@ public class Comment {
 
 
     // 코멘트 수정
-    public void updateContent(String content) {
-        this.content = content;
+    public void update(CommentUpdateRequestDto dto) {
+        this.content = dto.content();
+        this.rating = dto.rating();
     }
 
     public void increaseLike() {

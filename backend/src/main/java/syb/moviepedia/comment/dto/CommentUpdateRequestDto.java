@@ -8,9 +8,9 @@ import lombok.Builder;
  */
 @Builder
 public record CommentUpdateRequestDto(
-        @NotNull Long id,
+        @NotNull Long movieId,
         @NotNull String content,
         @NotNull Double rating,
-        @NotNull Integer like
+        Integer like
 ) {
 }
