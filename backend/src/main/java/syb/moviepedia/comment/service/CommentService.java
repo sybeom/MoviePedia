@@ -42,9 +42,6 @@ public class CommentService {
         Member member = commentRepository.findByCommentId(id).orElseThrow(
                 () -> new CommentMemberNotFound("코멘트 작성자를 찾지 못하였습니다. 코멘트 Id : " + id));
 
-        // 액세스 토큰 파싱의 로그인 아이디와 코멘트 작성 로그인 아이디가 동일하면 수정 가능
-        boolean editable = loginId != null && loginId.equals(member.getLoginId());
-
         Comment comment = commentRepository.findById(id).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
 
@@ -52,31 +49,34 @@ public class CommentService {
     }
 
     // 모든 코멘트 목록
-    public List<CommentResponseDto> getAllComments(Long code, String loinId) {
+    public List<CommentResponseDto> getAllComments(Long code, String loginId) {
         Movie movie = movieRepository.findByCode(code)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
 
         // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
-        List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loinId);
+        List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loginId);
 
         // 코멘트 목록들 id만 추출
         List<Long> commentIds = comments.stream().map(Comment::getId).toList();
 
-        // 현재 로그인 중인 멤버 ID
-        Member member = memberRepository.findByLoginId(loinId).orElseThrow(
-                () -> new MemberNotFoundException("멤버를 찾을 수 없습니다. loginId: " + loinId));
-        Long memberId = member.getId();
-
         // 중복 제거 목적이 아닌 성능때문에 사용
         Set<Long> likedIdSet = Set.of(); // List를 사용하면 비교할 때 앞에서부터 하나하나 비교하기 때문
-        if (memberId != null && !commentIds.isEmpty()) {
+
+        // 로그인한 경우에만 멤버 조회 + 좋아요 여부 조회
+        if (loginId != null && !commentIds.isEmpty()) {
+            // 현재 로그인 중인 멤버 ID
+            Member member = memberRepository.findByLoginId(loginId).orElseThrow(
+                    () -> new MemberNotFoundException("멤버를 찾을 수 없습니다. loginId: " + loginId));
+            Long memberId = member.getId();
+
+
             // 현재 로그인한 유저가 좋아요 누른 코멘트들의 좋아요 아이디 목록
             List<Long> likeIds = likeRepository.findLikeIdsByMemberIdAndCommentIds(memberId, commentIds);
 
             likedIdSet = new HashSet<>(likeIds);
         }
 
-        return toCommentListResponseDto(movie.getId(), comments, loinId, likedIdSet);
+        return toCommentListResponseDto(movie.getId(), comments, loginId, likedIdSet);
     }
 
     // TODO: Transactional 안했는데 어케 등록됐찌?

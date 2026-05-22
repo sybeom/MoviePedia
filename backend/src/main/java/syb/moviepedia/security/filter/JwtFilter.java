@@ -35,7 +35,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization"); // 요청 헤더에서 jwt를 가져옴
 
         if (authorization == null || authorization.isBlank()) { // 없으면 다음 필터로 넘어감 예) 비로그인으로 게시글 볼 경우
-            log.info("Authorization 헤더 존재 X, 다음 필터로 이동");
+            log.info(request.getRequestURI() + ": Authorization 헤더 존재 X, 다음 필터로 이동");
             filterChain.doFilter(request, response);
             return;
         }
