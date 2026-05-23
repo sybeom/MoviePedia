@@ -69,15 +69,17 @@ public class MovieService {
                     return movieRepository.save(toMovieFromDetail(detail, certification));
                 });
 
-        if(!movie.getDetailFetched()) { // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
+        // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
+        if(!movie.getDetailFetched()) {
             log.info("getMovieDetail(): 영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
             String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
             updateMovie(movie, detail, certification);
         }
 
-        // 출연 - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
+        // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
+
         return toMovieDetailDto(movie, creditDto);
     }
 

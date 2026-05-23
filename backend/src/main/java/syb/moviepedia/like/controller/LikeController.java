@@ -40,12 +40,12 @@ public class LikeController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "403", description = "자신의 코멘트에 좋아요 클릭",
+                    responseCode = "403", description = "자신의 코멘트에 좋아요 클릭한다",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )),
             @ApiResponse(
-                    responseCode = "409", description = "이미 해당 코멘트에 좋아요 클릭",
+                    responseCode = "409", description = "이미 해당 코멘트에 좋아요가 눌려져있다",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )
@@ -64,7 +64,7 @@ public class LikeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("좋아요 저장 성공"));
     }
 
-    @Operation(summary = "좋아요 취소", description = "좋아요를 취소 클릭에 의해 삭제한다")
+    @Operation(summary = "좋아요 취소", description = "좋아요 취소 클릭시 삭제한다")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "좋아요 삭제 성공",
@@ -73,7 +73,7 @@ public class LikeController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "404", description = "좋아요 찾지 못함",
+                    responseCode = "404", description = "좋아요 찾기 실패",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )

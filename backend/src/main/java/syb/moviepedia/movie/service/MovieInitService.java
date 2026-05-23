@@ -2,9 +2,16 @@ package syb.moviepedia.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.comment.domain.Comment;
+import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.common.ProviderType;
+import syb.moviepedia.common.RoleType;
+import syb.moviepedia.member.domain.Member;
+import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.Country;
 import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.domain.Movie;
@@ -17,7 +24,10 @@ import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.MovieCategoryRepository;
 import syb.moviepedia.movie.repository.MovieRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 영화 초기 데이터 설정을 위한 클래스
@@ -33,6 +43,9 @@ public class MovieInitService {
     private final MovieCategoryRepository movieCategoryRepository;
     private final GenreRepository tmdbGenreRepository;
     private final CountryRepository countryRepository;
+    private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final CommentRepository commentRepository;
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -182,5 +195,49 @@ public class MovieInitService {
                 .findFirst()
                 .map(info -> info.certification())
                 .orElse("등급 미정");
+    }
+
+    // 더미 회원 생성
+    public void createMember() {
+        if (memberRepository.count() > 0)
+            return;
+
+        log.info("createMember(): 더미 멤버 생성 시작");
+        List<Member> list = new ArrayList<>();
+
+        for (int i = 9; i < 100; i++) {
+            Member member = Member.builder()
+                    .loginId("test" + i)
+                    .password(passwordEncoder.encode("1234"))
+                    .nickname("test" + i)
+                    .email(null)
+                    .role(RoleType.USER)
+                    .providerType(ProviderType.LOCAL)
+                    .build();
+            list.add(member);
+        }
+        memberRepository.saveAll(list);
+    }
+
+    public void createComment() {
+        if (commentRepository.count() > 0) return;
+
+        log.info("createComment(): 코멘트 더미 데이터 생성 시작");
+        Movie movie = movieRepository.findByCode(350L).get();
+
+        List<Comment> list = new ArrayList<>();
+        for (int i = 7; i < 100; i++) {
+            Member member = memberRepository.findByLoginId("test" + i).get();
+            Comment comment = Comment.builder()
+                    .nickname(member.getNickname())
+                    .content("test" + i)
+                    .rating(ThreadLocalRandom.current().nextInt(1, 11) * 0.5)
+                    .movie(movie)
+                    .member(member)
+                    .likeCount(0)
+                    .build();
+            list.add(comment);
+        }
+        commentRepository.saveAll(list);
     }
 }

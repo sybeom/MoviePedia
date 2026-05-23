@@ -44,7 +44,7 @@ public class MovieController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("카테고리 별 영화 목록 조회 성공", movieService.getCategoryMovies()));
     }
 
-    @Operation(summary = "영화 상세", description = "영화 상세 정보를 응답한다")
+    @Operation(summary = "영화 상세", description = "영화 상세 페이지 데이터를 조회한다")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "영화 상세 정보 조회 성공"),
             @ApiResponse(
