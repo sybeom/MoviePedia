@@ -51,6 +51,11 @@ export type UpdateCommentRequest = {
   rating: number
 }
 
+// 코멘트 삭제 요청 데이터 타입 정의
+export type DeleteCommentRequest = {
+  movieId: string
+}
+
 // 코멘트 수정 및 상세 조회 응답 타입 정의
 export type MovieCommentDetail = {
   movieId: string

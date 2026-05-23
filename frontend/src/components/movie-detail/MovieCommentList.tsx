@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
-import { STAR_ICON_PATH } from '../../utils/movieDetail'
 import type { MovieComment } from '../../types/movieDetail'
 import likeIcon from '../../assets/icons/like.svg'
+import { STAR_ICON_PATH } from '../../utils/movieDetail'
 
 type MovieCommentListProps = {
   comments: MovieComment[]
   isLoading: boolean
   onCommentClick: (comment: MovieComment) => void
   onEditClick: (comment: MovieComment) => void
+  onDeleteClick: (comment: MovieComment) => void
   onLikeClick: (comment: MovieComment, isLiked: boolean) => Promise<boolean>
 }
 
@@ -17,9 +18,10 @@ function MovieCommentList({
   isLoading,
   onCommentClick,
   onEditClick,
+  onDeleteClick,
   onLikeClick,
 }: MovieCommentListProps) {
-  // 좋아요 활성화 덮어쓰기 상태 관리
+  // 좋아요 활성 상태 덮어쓰기 상태 관리
   const [likedCommentIds, setLikedCommentIds] = useState<Record<string, boolean>>({})
   const [likingCommentIds, setLikingCommentIds] = useState<Record<string, boolean>>({})
 
@@ -113,9 +115,7 @@ function MovieCommentList({
                   likedCommentIds,
                   comment.id,
                 )
-                const isLiked = hasLikeOverride
-                  ? likedCommentIds[comment.id]
-                  : comment.likedByMe
+                const isLiked = hasLikeOverride ? likedCommentIds[comment.id] : comment.likedByMe
                 const isLiking = likingCommentIds[comment.id] ?? false
                 const likeCountDelta = hasLikeOverride
                   ? likedCommentIds[comment.id] === comment.likedByMe
@@ -163,6 +163,7 @@ function MovieCommentList({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
+                      onDeleteClick(comment)
                     }}
                   >
                     삭제

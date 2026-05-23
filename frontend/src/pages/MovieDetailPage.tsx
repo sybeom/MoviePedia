@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import {
   createMovieComment,
+  deleteMovieComment,
   fetchMovieCommentDetail,
   fetchMovieCommentForEdit,
   fetchMovieComments,
@@ -327,6 +328,39 @@ function MovieDetailPage() {
     }
   }
 
+  // 코멘트 삭제 요청 처리
+  async function handleCommentDeleteClick(comment: MovieComment) {
+    const targetMovieId = comment.movieId || resolvedMovieRecordId
+    const targetCommentId = comment.commentId || comment.id
+
+    if (!targetMovieId || !targetCommentId) {
+      return
+    }
+
+    const isConfirmed = window.confirm('정말 삭제하시겠습니까?')
+
+    if (!isConfirmed) {
+      return
+    }
+
+    try {
+      await deleteMovieComment(resolvedMovieCode, targetCommentId, {
+        movieId: targetMovieId,
+      })
+
+      setComments((previousComments) =>
+        previousComments.filter((previousComment) => previousComment.id !== comment.id),
+      )
+
+      if (selectedCommentDetail?.commentId === targetCommentId) {
+        setSelectedCommentDetail(null)
+        setCommentModalMode(null)
+      }
+    } catch {
+      // 코멘트 삭제 실패 무시 처리
+    }
+  }
+
   // 코멘트 좋아요 요청 처리
   async function handleCommentLikeClick(comment: MovieComment, isLiked: boolean) {
     const targetMovieId = comment.movieId || resolvedMovieRecordId
@@ -497,6 +531,7 @@ function MovieDetailPage() {
               isLoading={isCommentsLoading}
               onCommentClick={handleCommentClick}
               onEditClick={handleCommentEditClick}
+              onDeleteClick={handleCommentDeleteClick}
               onLikeClick={handleCommentLikeClick}
             />
           </div>

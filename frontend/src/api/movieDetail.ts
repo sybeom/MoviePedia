@@ -4,9 +4,8 @@ import { authRequest } from '../utils/fetchUtil'
 import type {
   AuthMeResponse,
   CreateCommentRequest,
-  MovieComment,
+  DeleteCommentRequest,
   MovieCommentsResponse,
-  MovieCommentDetail,
   UpdateCommentRequest,
 } from '../types/movieDetail'
 import {
@@ -75,6 +74,18 @@ export function updateMovieComment(
   })
 }
 
+// 코멘트 삭제 요청 처리
+export function deleteMovieComment(
+  movieId: string,
+  commentId: string,
+  body: DeleteCommentRequest,
+) {
+  return authRequest<DeleteCommentRequest>(`/movies/${movieId}/comments/${commentId}`, {
+    method: 'DELETE',
+    body,
+  })
+}
+
 // 코멘트 좋아요 요청 처리
 export function likeMovieComment(movieId: string, commentId: string) {
   return authRequest<void>(`/movies/${movieId}/comments/${commentId}/like`, {
@@ -103,13 +114,14 @@ export function fetchMovieCommentDetail(movieId: string, commentId: string) {
   }).then((response) => normalizeMovieCommentDetail(response))
 }
 
-// 코멘트 작성 로그인 확인 처리
+// 코멘트 수정 조회 처리
 export function fetchMovieCommentForEdit(movieId: string, commentId: string) {
   return authRequest<unknown>(`/movies/${movieId}/comments/${commentId}/edit`, {
     method: 'GET',
   }).then((response) => normalizeMovieCommentDetail(response))
 }
 
+// 코멘트 작성 로그인 확인 처리
 export function verifyCommentAuth() {
   return authRequest<AuthMeResponse>('/auth/me', {
     method: 'GET',
