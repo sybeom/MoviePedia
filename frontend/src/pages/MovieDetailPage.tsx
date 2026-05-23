@@ -148,6 +148,7 @@ function MovieDetailPage() {
             releaseDate: normalizedDetail.releaseDate,
             originCountry: normalizedDetail.originCountry,
             runtime: normalizedDetail.runtime,
+            rating: normalizedDetail.rating,
             globalRating: normalizedDetail.globalRating,
             credits: normalizedDetail.credits,
           })
@@ -477,7 +478,7 @@ function MovieDetailPage() {
 
         <MovieDetailCredits credits={movieDetail.credits} />
 
-        <MovieDetailRatings globalRating={movieDetail.globalRating} />
+        <MovieDetailRatings rating={movieDetail.rating} globalRating={movieDetail.globalRating} />
 
         <section className="movie-detail-comments-shell" aria-labelledby="movie-detail-comments-title">
           <div className="movie-detail-comments">

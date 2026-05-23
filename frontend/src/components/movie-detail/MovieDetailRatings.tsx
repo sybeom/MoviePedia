@@ -1,11 +1,12 @@
 import { STAR_ICON_PATH, getDisplayRatingWithScale } from '../../utils/movieDetail'
 
 type MovieDetailRatingsProps = {
+  rating: string
   globalRating: string
 }
 
 // 평점 영역 구성
-function MovieDetailRatings({ globalRating }: MovieDetailRatingsProps) {
+function MovieDetailRatings({ rating, globalRating }: MovieDetailRatingsProps) {
   return (
     <section className="movie-detail-ratings-shell" aria-label="영화 평점">
       <div className="movie-detail-ratings-section">
@@ -19,7 +20,7 @@ function MovieDetailRatings({ globalRating }: MovieDetailRatingsProps) {
                   <path d={STAR_ICON_PATH} />
                 </svg>
               </span>
-              <p className="movie-detail-rating-value">{getDisplayRatingWithScale('', 5)}</p>
+              <p className="movie-detail-rating-value">{getDisplayRatingWithScale(rating, 5)}</p>
             </div>
           </article>
 

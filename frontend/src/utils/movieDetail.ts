@@ -200,6 +200,12 @@ export function getDisplayRatingWithScale(value: string, maxScore: number) {
     return `- / ${maxScore}`
   }
 
+  const parsedValue = Number(normalizedValue)
+
+  if (Number.isFinite(parsedValue) && parsedValue === 0) {
+    return `- / ${maxScore}`
+  }
+
   return `${normalizedValue} / ${maxScore}`
 }
 
@@ -239,6 +245,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const releaseDate = getStringValue(data, ['releaseYear', 'releaseDate'])
   const originCountry = getJoinedStringArrayValue(data, ['country'])
   const runtime = getStringValue(data, ['runtime'])
+  const rating = getStringValue(data, ['rating'])
   const globalRating = getStringValue(data, ['globalRating'])
   const credits = getCreditValue(data)
 
@@ -256,6 +263,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     releaseDate,
     originCountry,
     runtime,
+    rating,
     globalRating,
     credits,
   }
@@ -330,6 +338,7 @@ export function createInitialMovieDetail(movieId: string, movie?: MovieDetailSta
     releaseDate: '',
     originCountry: '',
     runtime: '',
+    rating: '',
     globalRating: '',
     credits: [],
   }
