@@ -1,12 +1,12 @@
-package syb.moviepedia.comment.dto;
+package syb.moviepedia.comment.dto.response;
 
 import lombok.Builder;
 
 /**
- * 코멘트 목록 응답 DTO
+ * 상세 페이지 코멘트 목록의 각 코멘트 개체 응답 DTO
  */
 @Builder
-public record CommentResponseDto(
+public record CommentResponse(
         Long commentId,
         String nickname,
         String content,

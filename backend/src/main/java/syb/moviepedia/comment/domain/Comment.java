@@ -7,8 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNullApi;
-import syb.moviepedia.comment.dto.CommentUpdateRequestDto;
+import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.movie.domain.Movie;
 
@@ -26,6 +25,7 @@ public class Comment {
     private String nickname;
 
     @Nullable
+    @Column(length = 300)
     private String content;
 
     @Nullable
@@ -45,7 +45,7 @@ public class Comment {
 
 
     // 코멘트 수정
-    public void update(CommentUpdateRequestDto dto) {
+    public void update(CommentUpdateRequest dto) {
         this.content = dto.content();
         this.rating = dto.rating();
     }

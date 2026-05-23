@@ -6,11 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import syb.moviepedia.comment.dto.*;
+import syb.moviepedia.comment.dto.response.CommentDetailResponse;
+import syb.moviepedia.comment.dto.request.CommentSaveRequest;
+import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
+import syb.moviepedia.comment.dto.response.CommentEditResponse;
+import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.service.CommentService;
 import syb.moviepedia.common.api.ApiResult;
-
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -19,10 +21,10 @@ import java.util.List;
 public class CommentController {
 
     private final CommentService commentService;
-    // TODO: API 명세 작성하기
 
+    // TODO: API 명세 작성하기
     @GetMapping("/{commentId}")
-    public ResponseEntity<ApiResult<CommentDto>> getComment(
+    public ResponseEntity<ApiResult<CommentDetailResponse>> getComment(
             @PathVariable Long commentId
     ) {
         return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getComment(commentId)));
@@ -43,7 +45,7 @@ public class CommentController {
     @PostMapping
     public ResponseEntity<ApiResult<Void>> saveComment(
             @PathVariable Long movieId,
-            @Valid @RequestBody CommentDto dto) { // 검증은 글로벌 예외에서 처리
+            @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외에서 처리
 
         commentService.saveComment(movieId, dto);
         return ResponseEntity.ok().body(ApiResult.success("코멘트 저장 성공"));
@@ -51,7 +53,7 @@ public class CommentController {
 
     // 수정 화면 데이터 조회
     @GetMapping("/{commentId}/edit")
-    public ResponseEntity<ApiResult<EditCommentResponseDto>> getEditComment(
+    public ResponseEntity<ApiResult<CommentEditResponse>> getEditComment(
             @PathVariable Long commentId,
             Authentication authentication
     ) {
@@ -62,7 +64,7 @@ public class CommentController {
     @PatchMapping("/{commentId}")
     public ResponseEntity<ApiResult<Void>> updateComment(
             @PathVariable("movieId") Long mvCode,
-            @Valid @RequestBody CommentUpdateRequestDto dto,
+            @Valid @RequestBody CommentUpdateRequest dto,
             Authentication authentication
     ) {
         String loginId = authentication.getName();

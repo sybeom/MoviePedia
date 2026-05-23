@@ -15,12 +15,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findByMovieId(Long movieId);
     Boolean existsByMovieIdAndMemberId(Long  movieId, Long memberId);
 
+    //내가 작성한 코멘트 조회
     @Query("""
         select c
         from Comment c
         where c.movie.id = :movieId 
             and c.member.loginId=:loginId     
-    """) // 해당 영화에서 내가 작성한 코멘트 조회
+    """)
     Optional<Comment> findByMovieIdAndLoginId(@Param("movieId") Long movieId, @Param("loginId") String loginId);
 
     // 코멘트 작성자 찾기

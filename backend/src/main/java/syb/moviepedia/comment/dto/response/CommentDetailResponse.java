@@ -1,18 +1,16 @@
-package syb.moviepedia.comment.dto;
+package syb.moviepedia.comment.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
 /**
- * 코멘트 저장 요청 및 상세 응답 DTO
+ * 상세 응답 DTO
  */
 // TODO: 작성날짜 추가
 @Builder
-public record CommentDto(
+public record CommentDetailResponse(
         @NotBlank String nickname,
-        @Size(min = 1, max = 100)
         @NotNull
         String content,
         @NotNull Double rating,

@@ -1,13 +1,16 @@
 package syb.moviepedia.comment.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
-import syb.moviepedia.comment.dto.*;
+import syb.moviepedia.comment.dto.response.CommentDetailResponse;
+import syb.moviepedia.comment.dto.request.CommentSaveRequest;
+import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
+import syb.moviepedia.comment.dto.response.CommentEditResponse;
+import syb.moviepedia.comment.dto.response.CommentListResponse;
+import syb.moviepedia.comment.dto.response.CommentResponse;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.exception.*;
 import syb.moviepedia.like.repository.LikeRepository;
@@ -30,7 +33,7 @@ public class CommentService {
     private final LikeRepository likeRepository;
 
     // 상세 보기
-    public CommentDto getComment(Long id) {
+    public CommentDetailResponse getComment(Long id) {
         Comment comment = commentRepository.findById(id).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
 
@@ -38,7 +41,7 @@ public class CommentService {
     }
 
     // 수정 코멘트 조회
-    public EditCommentResponseDto getEditComment(Long id, String loginId) {
+    public CommentEditResponse getEditComment(Long id, String loginId) {
         Member member = commentRepository.findByCommentId(id).orElseThrow(
                 () -> new CommentMemberNotFound("코멘트 작성자를 찾지 못하였습니다. 코멘트 Id : " + id));
 
@@ -84,7 +87,7 @@ public class CommentService {
 
     // TODO: Transactional 안했는데 어케 등록됐찌?
     // 저장
-    public void saveComment(Long code, CommentDto dto) {
+    public void saveComment(Long code, CommentSaveRequest dto) {
         Movie movie = movieRepository.findByCode(code).orElseThrow(
                 () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
 
@@ -108,10 +111,11 @@ public class CommentService {
 
         commentRepository.save(comment);
     }
+
     // TODO: Transactional 넣지 않고 수정되는지 실험해보기
     // 수정
     @Transactional
-    public void update(Long movieId, String loginId, CommentUpdateRequestDto dto) {
+    public void update(Long movieId, String loginId, CommentUpdateRequest dto) {
         log.info("movieId: {}", movieId);
         // 내가 작성한 코멘트찾기
         Comment comment = commentRepository.findByMovieIdAndLoginId(dto.movieId(), loginId).orElseThrow(
@@ -121,8 +125,8 @@ public class CommentService {
     }
 
     // 엔티티 -> Comment Dto로 가공
-    private CommentDto toCommentDto(Comment comment) {
-        return CommentDto.builder()
+    private CommentDetailResponse toCommentDto(Comment comment) {
+        return CommentDetailResponse.builder()
                 .nickname(comment.getNickname())
                 .content(comment.getContent())
                 .rating(comment.getRating())
@@ -131,20 +135,20 @@ public class CommentService {
     }
 
     // 엔티티 -> 수정 Comment Dto로 가공
-    private EditCommentResponseDto toEditCommentDto(Comment comment) {
-        return EditCommentResponseDto.builder()
+    private CommentEditResponse toEditCommentDto(Comment comment) {
+        return CommentEditResponse.builder()
                 .content(comment.getContent())
                 .rating(comment.getRating())
                 .build();
     }
 
     // 엔티티 -> CommentResponseDTO로 가공 (리스트)
-    private List<CommentResponseDto> toCommentListResponseDto(
+    private List<CommentResponse> toCommentListResponseDto(
             List<Comment> comments,
             String loinId,
             Set<Long> likedIdsSet) {
         return comments.stream().map(comment ->
-                CommentResponseDto.builder()
+                        CommentResponse.builder()
                         .commentId(comment.getId())
                         .nickname(comment.getNickname())
                         .content(comment.getContent())

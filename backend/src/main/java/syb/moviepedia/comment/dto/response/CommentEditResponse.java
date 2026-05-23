@@ -1,13 +1,13 @@
-package syb.moviepedia.comment.dto;
+package syb.moviepedia.comment.dto.response;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 /**
- * 수정 코멘트 응답 Dto
+ * 코멘트 수정 응답 Dto
  */
 @Builder
-public record EditCommentResponseDto(
+public record CommentEditResponse(
         @NotNull String content,
         @NotNull Double rating
 ) {
