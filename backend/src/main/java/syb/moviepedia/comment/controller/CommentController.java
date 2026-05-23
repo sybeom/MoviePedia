@@ -22,6 +22,7 @@ import syb.moviepedia.comment.service.CommentService;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
+import syb.moviepedia.movie.dto.request.MovieIdRequest;
 
 @Tag(name = "Comment API", description = "Like 도메인 API")
 @Slf4j
@@ -151,5 +152,33 @@ public class CommentController {
             commentService.update(mvCode, loginId, dto);
         }
         return ResponseEntity.ok().body(ApiResult.success("코멘트 업데이트 성공"));
+    }
+
+    @Operation(summary = "코멘트 삭제", description = "코멘트를 삭제합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "코멘트 삭제 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "코멘트 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerFailResponse.class)
+                    )),
+            @ApiResponse(responseCode = "409", description = "코멘트 삭제 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerFailResponse.class)
+                    )
+            )
+    })
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResult<Void>> deleteComment(
+            @PathVariable Long movieCode,
+            @RequestBody MovieIdRequest movieIdRequest,
+            Authentication authentication) {
+
+        String loginId = authentication.getName();
+        commentService.delete(movieCode, movieIdRequest.movieId(), loginId);
+        return ResponseEntity.ok().body(ApiResult.success("코멘트 삭제 완료"));
     }
 }

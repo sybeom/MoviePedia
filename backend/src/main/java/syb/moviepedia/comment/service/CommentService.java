@@ -2,6 +2,7 @@ package syb.moviepedia.comment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
@@ -33,6 +34,7 @@ public class CommentService {
     private final LikeRepository likeRepository;
 
     // 상세 보기
+    @Transactional
     public CommentDetailResponse getComment(Long id) {
         Comment comment = commentRepository.findById(id).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
@@ -41,6 +43,7 @@ public class CommentService {
     }
 
     // 수정 코멘트 조회
+    @Transactional
     public CommentEditResponse getEditComment(Long id) {
         Comment comment = commentRepository.findById(id).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
@@ -48,7 +51,11 @@ public class CommentService {
         return toEditCommentDto(comment);
     }
 
+    //TODO: 평점도 한번 계산해서 영화 테이블에 저장해 놓는게 좋을듯
+    // 그래서 매번 불러올떄마다 평점을 계산하지 말고 일정 시간마다만 계산하도록 스케쥴링하는게 좋을듯하다
+
     // 모든 코멘트 목록
+    @Transactional
     public CommentListResponse getAllComments(Long mvCode, String loginId) {
         Movie movie = movieRepository.findByCode(mvCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
@@ -83,6 +90,7 @@ public class CommentService {
     }
 
     // 저장
+    @Transactional
     public void saveComment(Long mvCode, CommentSaveRequest dto) {
         Movie movie = movieRepository.findByCode(mvCode).orElseThrow(
                 () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
@@ -109,13 +117,25 @@ public class CommentService {
     }
 
     @Transactional
-    public void update(Long movieId, String loginId, CommentUpdateRequest dto) {
-        log.info("movieId: {}", movieId);
+    public void update(Long mvCode, String loginId, CommentUpdateRequest dto) {
         // 내가 작성한 코멘트찾기
-        Comment comment = commentRepository.findByMovieIdAndLoginId(dto.movieId(), loginId).orElseThrow(
-                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 id: " + movieId));
+        Comment comment = findMyComment(mvCode, dto.movieId(), loginId);
 
         comment.update(dto);
+    }
+
+    @Transactional
+    public void delete(Long mvCode, Long movieId, String loginId) {
+
+        Comment comment = findMyComment(mvCode, movieId, loginId);
+
+        commentRepository.delete(comment);
+    }
+
+    // 내가 작성한 코멘트 찾기
+    private Comment findMyComment(Long mvCode, Long mvId, String loginId) {
+        return commentRepository.findByMovieIdAndLoginId(mvId, loginId).orElseThrow(
+                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 code: " + mvCode));
     }
 
     // 엔티티 -> Comment Dto로 가공

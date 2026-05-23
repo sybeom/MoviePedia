@@ -11,7 +11,6 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-
     Optional<Comment> findByMovieId(Long mvId);
     Boolean existsByMovieIdAndMemberId(Long  mvId, Long memberId);
 
