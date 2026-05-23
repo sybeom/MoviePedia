@@ -85,7 +85,6 @@ public class CommentService {
                 .build();
     }
 
-    // TODO: Transactional 안했는데 어케 등록됐찌?
     // 저장
     public void saveComment(Long code, CommentSaveRequest dto) {
         Movie movie = movieRepository.findByCode(code).orElseThrow(
@@ -112,8 +111,6 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    // TODO: Transactional 넣지 않고 수정되는지 실험해보기
-    // 수정
     @Transactional
     public void update(Long movieId, String loginId, CommentUpdateRequest dto) {
         log.info("movieId: {}", movieId);

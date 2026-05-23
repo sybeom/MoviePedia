@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
-import syb.moviepedia.common.swagger.SwaggerMovieCategoriesDtoResponse;
-import syb.moviepedia.movie.dto.MovieCategoriesDto;
-import syb.moviepedia.movie.dto.MovieDetailDto;
+import syb.moviepedia.common.swagger.SwaggerMovieCategoriesResponse;
+import syb.moviepedia.movie.dto.response.MovieDetailResponse;
+import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
 import syb.moviepedia.movie.service.MovieService;
 
 @Tag(name = "Movie API", description = "영화 도메인 API")
@@ -35,7 +35,7 @@ public class MovieController {
                             responseCode = "200",
                             description = "성공",
                             content = @Content(
-                                    schema = @Schema(implementation = SwaggerMovieCategoriesDtoResponse.class)
+                                    schema = @Schema(implementation = SwaggerMovieCategoriesResponse.class)
                             )
                     ),
                     @ApiResponse(
@@ -48,7 +48,7 @@ public class MovieController {
             }
     )
     @GetMapping
-    public ResponseEntity<ApiResult<MovieCategoriesDto>> home() {
+    public ResponseEntity<ApiResult<MovieCategoriesResponse>> home() {
         return ResponseEntity.ok().body(ApiResult.success("카테고리 별 영화 목록 조회 성공",movieService.getCategoryMovies()));
     }
 
@@ -57,7 +57,7 @@ public class MovieController {
             description = "영화 상세 정보를 응답한다"
     )
     @GetMapping("/{movieId}")
-    public ResponseEntity<ApiResult<MovieDetailDto>> getMovieDetail(@PathVariable Long movieId) {
+    public ResponseEntity<ApiResult<MovieDetailResponse>> getMovieDetail(@PathVariable Long movieId) {
         return ResponseEntity.ok().body(ApiResult.success("영화 상세 정보",movieService.getMovieDetail(movieId)));
     }
 }

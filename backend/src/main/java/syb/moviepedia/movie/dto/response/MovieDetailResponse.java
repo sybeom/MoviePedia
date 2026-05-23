@@ -1,4 +1,4 @@
-package syb.moviepedia.movie.dto;
+package syb.moviepedia.movie.dto.response;
 
 import lombok.Builder;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * @param globalRating 글로벌 평점
  */
 @Builder
-public record MovieDetailDto(
+public record MovieDetailResponse(
         Long code,
         String title,
         String backdropPath,
@@ -29,11 +29,11 @@ public record MovieDetailDto(
         List<String> country,
         Integer runtime,
         Double globalRating,
-        List<MovieCreditDto> credit
+        List<MovieCreditResponse> credit
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 
-    public MovieDetailDto {
+    public MovieDetailResponse {
         if (posterPath != null) {
             posterPath = IMAGE_BASE_URL + posterPath;
         }

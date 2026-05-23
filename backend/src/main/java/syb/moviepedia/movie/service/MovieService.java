@@ -9,7 +9,10 @@ import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.dto.*;
+import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
+import syb.moviepedia.movie.dto.response.MovieCreditResponse;
+import syb.moviepedia.movie.dto.response.MovieDetailResponse;
+import syb.moviepedia.movie.dto.response.MovieSummaryResponse;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.CountryRepository;
@@ -31,19 +34,19 @@ public class MovieService {
     private final MovieCreditRepository movieCreditRepository;
 
     @Transactional(readOnly = true)
-    public MovieCategoriesDto getCategoryMovies() {
+    public MovieCategoriesResponse getCategoryMovies() {
 
         List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
         List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
         List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.NOW_PLAYING);
 
         // DTO로 가공
-        List<MovieSummaryDto> popularListDto = popularList.stream().map(response -> toMovieSummaryDto(response)).toList();
-        List<MovieSummaryDto> upcomingListDto = upcomingList.stream().map(response -> toMovieSummaryDto(response)).toList();
-        List<MovieSummaryDto> nowPlayingListDto = nowPlayingList.stream().map(response -> toMovieSummaryDto(response)).toList();
+        List<MovieSummaryResponse> popularListDto = popularList.stream().map(response -> toMovieSummaryDto(response)).toList();
+        List<MovieSummaryResponse> upcomingListDto = upcomingList.stream().map(response -> toMovieSummaryDto(response)).toList();
+        List<MovieSummaryResponse> nowPlayingListDto = nowPlayingList.stream().map(response -> toMovieSummaryDto(response)).toList();
 
         log.info("Popular movies found: {}", popularList);
-        return MovieCategoriesDto.builder()
+        return MovieCategoriesResponse.builder()
                 .popular(popularListDto)
                 .upcoming(upcomingListDto)
                 .nowPlaying(nowPlayingListDto)
@@ -56,7 +59,7 @@ public class MovieService {
      * DB에 있더라도 detailFetched가 false면 일부 상세 정보(국가, 관람등급, 런타임 등)이 비어있는 상태이므로 업데이트한다.
      */
     @Transactional
-    public MovieDetailDto getMovieDetail(Long movieId) {
+    public MovieDetailResponse getMovieDetail(Long movieId) {
         // 영화 상세
         Movie movie = movieRepository.findByCode(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
                 .orElseGet(() -> {
@@ -74,7 +77,7 @@ public class MovieService {
         }
 
         // 출연 - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
-        List<MovieCreditDto> creditDto = toMovieCreditDto(getCredit(movie));
+        List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
         return toMovieDetailDto(movie, creditDto);
     }
 
@@ -126,11 +129,11 @@ public class MovieService {
 
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
-    private MovieSummaryDto toMovieSummaryDto(MovieCategory category) {
+    private MovieSummaryResponse toMovieSummaryDto(MovieCategory category) {
         // TODO: N+1 문제 추후 해결해보기
         Movie movie = category.getMovie(); // N+1 문제 발생할 수 있음. 추후 알아보고 수정
 
-        return MovieSummaryDto.builder()
+        return MovieSummaryResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
                 .poster(movie.getPosterPath())
@@ -158,8 +161,8 @@ public class MovieService {
     }
 
     // 영화 상세 DTO 가공
-    private MovieDetailDto toMovieDetailDto(Movie movie, List<MovieCreditDto> dto) {
-        return MovieDetailDto.builder()
+    private MovieDetailResponse toMovieDetailDto(Movie movie, List<MovieCreditResponse> dto) {
+        return MovieDetailResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
                 .posterPath(movie.getPosterPath())
@@ -175,8 +178,8 @@ public class MovieService {
     }
 
     // Credit 엔티티 영화 크레딧 DTO로 가공
-    private List<MovieCreditDto> toMovieCreditDto(List<Credit> list) {
-        return list.stream().map(credit -> MovieCreditDto.builder()
+    private List<MovieCreditResponse> toMovieCreditDto(List<Credit> list) {
+        return list.stream().map(credit -> MovieCreditResponse.builder()
                         .role(credit.getRole())
                         .name(credit.getName())
                         .profile(credit.getProfile())
