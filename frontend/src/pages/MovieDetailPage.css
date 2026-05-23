@@ -263,8 +263,12 @@
   color: #5e5e5e;
   font-size: 15px;
   line-height: 1.85;
-  white-space: pre-wrap;
+  overflow: hidden;
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  -webkit-box-orient: vertical;
 }
 
 .movie-detail-comment-card-footer {
