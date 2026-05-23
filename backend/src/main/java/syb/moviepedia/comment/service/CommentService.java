@@ -41,10 +41,7 @@ public class CommentService {
     }
 
     // 수정 코멘트 조회
-    public CommentEditResponse getEditComment(Long id, String loginId) {
-        Member member = commentRepository.findByCommentId(id).orElseThrow(
-                () -> new CommentMemberNotFound("코멘트 작성자를 찾지 못하였습니다. 코멘트 Id : " + id));
-
+    public CommentEditResponse getEditComment(Long id) {
         Comment comment = commentRepository.findById(id).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
 

@@ -59,20 +59,20 @@ public class MovieService {
      * DB에 있더라도 detailFetched가 false면 일부 상세 정보(국가, 관람등급, 런타임 등)이 비어있는 상태이므로 업데이트한다.
      */
     @Transactional
-    public MovieDetailResponse getMovieDetail(Long movieId) {
+    public MovieDetailResponse getMovieDetail(Long mvCode) {
         // 영화 상세
-        Movie movie = movieRepository.findByCode(movieId) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
+        Movie movie = movieRepository.findByCode(mvCode) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
                 .orElseGet(() -> {
                     log.info("DB 영화 존재 X, DB 저장 시작");
-                    TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
-                    String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
+                    TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
+                    String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
                     return movieRepository.save(toMovieFromDetail(detail, certification));
                 });
 
         if(!movie.getDetailFetched()) { // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
             log.info("getMovieDetail(): 영화 상세 업데이트");
-            TmdbMovieDetail detail = tmdbClient.getMovieDetail(movieId);
-            String certification = extractCertification(tmdbClient.getMovieCertification(movieId));
+            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
+            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
             updateMovie(movie, detail, certification);
         }
 

@@ -10,7 +10,7 @@ import syb.moviepedia.jwt.dto.response.JwtResponse;
  * 즉, 순전 Swagger에 응답 명세를 기록하기 위한 클래스이다.
  */
 @Schema(name = "JwtApiResult") // swagger-ui 문서에 표기할 명칭
-public record JwtApiResult(
+public record SwaggerJwtResponse(
         String code,
         String message,
         JwtResponse data) {

@@ -37,7 +37,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
     }
 
     @Transactional
-    public Long signup(MemberSignupRequest memberDto) {
+    public void signup(MemberSignupRequest memberDto) {
 
         Set<String> errors = new HashSet<>(); // 회원 가입시 에러 메시를 담음
         if(memberRepository.existsByLoginId(memberDto.loginId())) { // true면 중복
@@ -58,7 +58,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
                 .role(RoleType.USER)
                 .providerType(ProviderType.LOCAL)
                 .build();
-        return memberRepository.save(member).getId();
+        memberRepository.save(member).getId();
     }
 
     @Transactional(readOnly = true)
@@ -117,7 +117,6 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
             // role 조회
 //            role = member.get().getRole().name();
             // 기존 유저 업데이트
-            // TODO: Member Base 엔티티 선언하고 로컬, 소셜 구현으로 나누는 방법 고려
             SocialMemberDto memberDto = new SocialMemberDto(nickname, email);
             member.get().update(memberDto);
 

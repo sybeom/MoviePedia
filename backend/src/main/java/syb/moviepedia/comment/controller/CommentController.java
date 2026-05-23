@@ -1,8 +1,15 @@
 package syb.moviepedia.comment.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +20,10 @@ import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.service.CommentService;
 import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.common.swagger.SwaggerFailResponse;
 
+@Tag(name = "Comment API", description = "Like 도메인 API")
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -22,7 +32,17 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    // TODO: API 명세 작성하기
+    @Operation(summary = "상세 코멘트 조회", description = "코멘트 상세보기 화면의 정보를 조회한다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "코멘트 조회 성공"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "DB 코멘트 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
     @GetMapping("/{commentId}")
     public ResponseEntity<ApiResult<CommentDetailResponse>> getComment(
             @PathVariable Long commentId
@@ -30,6 +50,17 @@ public class CommentController {
         return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getComment(commentId)));
     }
 
+    @Operation(summary = "코멘트 목록 조회", description = "영화 상세페이지 코멘트 목록을 조회한다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "코멘트 목록 조회 성공"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "DB 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
     @GetMapping
     public ResponseEntity<ApiResult<CommentListResponse>> getCommentList(
             @PathVariable Long movieId,
@@ -42,25 +73,73 @@ public class CommentController {
         return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieId, loinId)));
     }
 
+    @Operation(summary = "코멘트 작성", description = "코멘트를 작성하여 저장한다")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201", description = "코멘트 목록 조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "잘못된 코멘트 값",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerFailResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "DB 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
     @PostMapping
     public ResponseEntity<ApiResult<Void>> saveComment(
             @PathVariable Long movieId,
             @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외에서 처리
 
         commentService.saveComment(movieId, dto);
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 저장 성공"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("코멘트 저장 성공"));
     }
 
     // 수정 화면 데이터 조회
+    @Operation(summary = "수정 데이터 조회", description = "코멘트 수정 화면 데이터를 조회한다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "수정할 데이터 조회 성공"),
+            @ApiResponse(
+                    responseCode = "404", description = "DB 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
     @GetMapping("/{commentId}/edit")
-    public ResponseEntity<ApiResult<CommentEditResponse>> getEditComment(
-            @PathVariable Long commentId,
-            Authentication authentication
-    ) {
-        String loginId = authentication == null ? "" : authentication.getName();
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getEditComment(commentId, loginId)));
+    public ResponseEntity<ApiResult<CommentEditResponse>> getEditComment(@PathVariable Long commentId) {
+        return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getEditComment(commentId)));
     }
 
+    @Operation(summary = "코멘트 수정", description = "코멘트를 수정한다")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "수정 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "잘못된 코멘트 값",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerFailResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "코멘트 DB 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
     @PatchMapping("/{commentId}")
     public ResponseEntity<ApiResult<Void>> updateComment(
             @PathVariable("movieId") Long mvCode,

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,37 +32,20 @@ public class MemberController {
 
     @Operation(
             summary = "회원 가입",
-            description = "회원 가입을 진행한다",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "가입할 회원 JSON Body 데이터",
-                    required = true,
-                    content = @Content( // 요청 데이터 타입
-                            schema = @Schema(implementation = MemberSignupRequest.class)
-                    )
-            ),
-            responses = {
-                    @ApiResponse(
-                            responseCode = "201",
-                            description = "성공",
-                            content = @Content(
-                                    schema = @Schema(implementation = SwaggerApiResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "실패",
-                            content = @Content(
-                                    schema =  @Schema(implementation = SwaggerFailResponse.class)
-                            )
-                    )
-            }
-    )
+            description = "회원 가입을 진행한다")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201", description = "회원 가입 성공",
+                    content = @Content(schema = @Schema(implementation = SwaggerApiResponse.class))),
+            @ApiResponse(
+                    responseCode = "400", description = "입력값 검증 실패 또는 중복 아이디",
+                    content = @Content(schema = @Schema(implementation = SwaggerFailResponse.class)))
+    })
     @PostMapping
     public ResponseEntity<ApiResult<Void>> signup(
-            @Valid
-            @RequestBody
-            MemberSignupRequest dto) {
+            @Valid @RequestBody MemberSignupRequest dto) {
         log.info("signup 호출");
+
         // 중복 검사 및 가입
         memberService.signup(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("회원 가입 성공"));

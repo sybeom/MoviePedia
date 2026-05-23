@@ -57,9 +57,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
             List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
 
-//            LoginMemberPrincipal.builder()
-//                    .memberId()
-
             /**
              * UsernamePasswordAuthenticationToken의 파라미터들
              * Principal : 유저에 대한 정보
@@ -67,6 +64,7 @@ public class JwtFilter extends OncePerRequestFilter {
              * Authorities : 유저의 권한(ROLE) 목록
              */
             Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+
             // 넣은 Authentication을 AuthorizationFilter에서 꺼내어 hasRole값과 비교한다.
             // username과 권한(role)만 넣었으므로 Authentication으로 username과 권한만 꺼낼 수 있다
             SecurityContextHolder.getContext().setAuthentication(auth);

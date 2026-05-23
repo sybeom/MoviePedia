@@ -106,7 +106,7 @@ public class GlobalExceptionHandler {
         return fail(ErrorCode.ALREADY_LIKED, HttpStatus.CONFLICT, e);
     }
 
-    // 자신이 작성한 코멘트에 좋아요를 클릭
+    // 자신이 작성한 코멘트에 좋아요 클릭
     @ExceptionHandler(CannotLikeOwnCommentException.class)
     public ResponseEntity<ApiResult<Void>> handleCannotLikeOwnCommentException(CannotLikeOwnCommentException e) {
         return fail(ErrorCode.CANNOT_LIKE_OWN_COMMENT, HttpStatus.FORBIDDEN, e);
