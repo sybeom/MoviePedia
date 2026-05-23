@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
-import syb.moviepedia.member.dto.request.MemberSignupRequestDto;
+import syb.moviepedia.member.dto.request.MemberSignupRequest;
 import syb.moviepedia.member.service.MemberService;
 
 @Tag(name = "Member API", description = "회원 도메인 API")
@@ -36,7 +36,7 @@ public class MemberController {
                     description = "가입할 회원 JSON Body 데이터",
                     required = true,
                     content = @Content( // 요청 데이터 타입
-                            schema = @Schema(implementation = MemberSignupRequestDto.class)
+                            schema = @Schema(implementation = MemberSignupRequest.class)
                     )
             ),
             responses = {
@@ -60,7 +60,7 @@ public class MemberController {
     public ResponseEntity<ApiResult<Void>> signup(
             @Valid
             @RequestBody
-            MemberSignupRequestDto dto) {
+            MemberSignupRequest dto) {
         log.info("signup 호출");
         // 중복 검사 및 가입
         memberService.signup(dto);

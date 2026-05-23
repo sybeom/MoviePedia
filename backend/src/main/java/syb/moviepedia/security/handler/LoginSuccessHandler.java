@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.service.JwtService;
-import syb.moviepedia.member.domain.CustomUserDetails;
-import syb.moviepedia.member.dto.request.MemberLoginResponseDto;
+import syb.moviepedia.security.user.CustomUserDetails;
+import syb.moviepedia.member.dto.response.MemberLoginResponse;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -62,7 +62,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     
     // 로그인 데이터, 닉네임, 액세스 및 리프레쉬 토큰 Json 문자열화
     public String generateJsonString(String loginId, String nickname, String accessToken, String refreshToken) {
-        MemberLoginResponseDto loginResponseDto = MemberLoginResponseDto.builder()
+        MemberLoginResponse loginResponseDto = MemberLoginResponse.builder()
                 .loginId(loginId)
                 .nickname(nickname)
                 .accessToken(accessToken)

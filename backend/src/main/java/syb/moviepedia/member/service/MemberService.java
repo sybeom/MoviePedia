@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.common.RoleType;
 import syb.moviepedia.common.exception.DuplicateSignupFieldException;
-import syb.moviepedia.member.domain.CustomUserDetails;
+import syb.moviepedia.security.user.CustomUserDetails;
 import syb.moviepedia.member.domain.Member;
-import syb.moviepedia.member.dto.MemberDto;
-import syb.moviepedia.member.dto.OAuth2MemberDto;
-import syb.moviepedia.member.dto.request.MemberSignupRequestDto;
+import syb.moviepedia.member.dto.SocialMemberDto;
+import syb.moviepedia.security.oauth.OAuth2MemberPrincipal;
+import syb.moviepedia.member.dto.request.MemberSignupRequest;
 import syb.moviepedia.member.repository.MemberRepository;
 
 import java.util.*;
@@ -37,7 +37,7 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
     }
 
     @Transactional
-    public Long signup(MemberSignupRequestDto memberDto) {
+    public Long signup(MemberSignupRequest memberDto) {
 
         Set<String> errors = new HashSet<>(); // 회원 가입시 에러 메시를 담음
         if(memberRepository.existsByLoginId(memberDto.loginId())) { // true면 중복
@@ -117,8 +117,8 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
             // role 조회
 //            role = member.get().getRole().name();
             // 기존 유저 업데이트
-            // TODO: 소셜 전용 DTO로 변경 고려해보기(또는 Member Base 엔티티 선언하고 로컬, 소셜 구현으로 나누는 방법 고려)
-            MemberDto memberDto = new MemberDto(nickname, email);
+            // TODO: Member Base 엔티티 선언하고 로컬, 소셜 구현으로 나누는 방법 고려
+            SocialMemberDto memberDto = new SocialMemberDto(nickname, email);
             member.get().update(memberDto);
 
             memberRepository.save(member.get());
@@ -137,6 +137,6 @@ public class MemberService extends DefaultOAuth2UserService implements UserDetai
 
         authorities = List.of(new SimpleGrantedAuthority("USER"));
 
-        return new OAuth2MemberDto(attributes, authorities, loginId);
+        return new OAuth2MemberPrincipal(attributes, authorities, loginId);
     }
 }

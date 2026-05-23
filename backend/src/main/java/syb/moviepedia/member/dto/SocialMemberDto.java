@@ -8,14 +8,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 회원 가입에 필요한 MemberDto
- * 이 클래스는 소셜에서 쓰인다.
+ * 소셜 회원가입시 Member 업데이트에 사용된느 DTO
  */
-// TODO: 추후 요청,응답 Dto 별도로 분리하도록 한다.
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class MemberDto {
+public class SocialMemberDto {
 
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z0-9]+$")
@@ -33,7 +31,7 @@ public class MemberDto {
 
     String email;
 
-    public MemberDto(String nickname, String email) {
+    public SocialMemberDto(String nickname, String email) {
         this.email = email;
         this.nickname = nickname;
     }

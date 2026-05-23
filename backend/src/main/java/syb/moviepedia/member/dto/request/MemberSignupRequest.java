@@ -7,10 +7,10 @@ import lombok.Builder;
 import lombok.Getter;
 
 /**
- * 회원가입 요청 dto 클래스
+ * 회원가입 요청 dto
  */
 @Builder
-public record MemberSignupRequestDto(
+public record MemberSignupRequest(
         @NotBlank
         @Pattern(regexp = "^[a-zA-Z0-9]+$")
         @Size(min = 5, max = 10)

@@ -1,7 +1,6 @@
 package syb.moviepedia.member.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.common.RoleType;
-import syb.moviepedia.member.dto.MemberDto;
+import syb.moviepedia.member.dto.SocialMemberDto;
 
 @Slf4j
 @Entity
@@ -42,7 +41,7 @@ public class Member {
     @Column(name = "provider_type", nullable = false)
     private ProviderType providerType;
 
-    public void update(MemberDto memberDto) {
+    public void update(SocialMemberDto memberDto) {
         this.email = memberDto.getEmail();
         this.nickname = memberDto.getNickname();
     }

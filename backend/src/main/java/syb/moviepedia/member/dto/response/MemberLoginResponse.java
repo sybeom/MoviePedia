@@ -1,12 +1,12 @@
-package syb.moviepedia.member.dto.request;
+package syb.moviepedia.member.dto.response;
 
 import lombok.Builder;
 
 /**
- * 로그인 응답 DTO 클래스
+ * 로그인 응답 DTO
  */
 @Builder
-public record MemberLoginResponseDto(
+public record MemberLoginResponse(
         String loginId,
         String nickname,
         String accessToken,

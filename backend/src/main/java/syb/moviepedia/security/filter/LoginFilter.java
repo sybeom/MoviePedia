@@ -20,7 +20,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StreamUtils;
 import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.api.ErrorCode;
-import syb.moviepedia.member.dto.request.MemberLoginResponseDto;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
