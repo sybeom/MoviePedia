@@ -12,8 +12,8 @@ import syb.moviepedia.common.exception.InvalidRefreshTokenException;
 import syb.moviepedia.common.exception.RefreshTokenCookieNotFoundException;
 import syb.moviepedia.common.util.JwtUtil;
 import syb.moviepedia.jwt.domain.JwtRefresh;
-import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
-import syb.moviepedia.jwt.dto.JwtResponseDto;
+import syb.moviepedia.jwt.dto.request.JwtRefreshRequest;
+import syb.moviepedia.jwt.dto.response.JwtResponse;
 import syb.moviepedia.jwt.repository.JwtRepository;
 import syb.moviepedia.member.repository.MemberRepository;
 
@@ -34,9 +34,9 @@ public class JwtService {
     // 소셜은 RESTFul하게 설계를 하게되면 쿠키 형태로 토큰을 발급해줘야한다.
     // 따라서 이 쿠키를 다시 헤더 방식으로 변경해야줘야한다.
     @Transactional
-    public JwtResponseDto cookieToHeader( // 소셜 로그인 성공 후 쿠키로 발급받은 jwt를 다시 헤더로 발급
-                                          HttpServletRequest request,
-                                          HttpServletResponse response
+    public JwtResponse cookieToHeader( // 소셜 로그인 성공 후 쿠키로 발급받은 jwt를 다시 헤더로 발급
+                                       HttpServletRequest request,
+                                       HttpServletResponse response
     ) {
         // 쿠키에서 리프레쉬 토큰 획득
         Cookie[] cookies = request.getCookies();
@@ -82,12 +82,12 @@ public class JwtService {
         refreshCookie.setMaxAge(10);
         response.addCookie(refreshCookie);
 
-        return new JwtResponseDto(loginId, nickname, newAccessToken, newRefreshToken);
+        return new JwtResponse(loginId, nickname, newAccessToken, newRefreshToken);
     }
 
     // Refresh 토큰으로 Access 토큰 재발급 로직 (Rotate 포함)
     @Transactional
-    public JwtResponseDto refreshRotate(JwtRefreshRequestDto dto) {
+    public JwtResponse refreshRotate(JwtRefreshRequest dto) {
         String refreshToken = dto.getRefreshToken();
 
         // Refresh 토큰 검증
@@ -124,7 +124,7 @@ public class JwtService {
         removeRefresh(refreshToken);
         jwtRepository.save(newRefreshEntity);
 
-        return new JwtResponseDto(loginId, nickname, newAccessToken, newRefreshToken);
+        return new JwtResponse(loginId, nickname, newAccessToken, newRefreshToken);
     }
 
     // JWT Refresh 토큰 발급 후 DB 저장

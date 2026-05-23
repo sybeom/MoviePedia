@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,8 +17,8 @@ import syb.moviepedia.common.api.ApiResult;
 import syb.moviepedia.common.swagger.JwtApiResult;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
-import syb.moviepedia.jwt.dto.JwtRefreshRequestDto;
-import syb.moviepedia.jwt.dto.JwtResponseDto;
+import syb.moviepedia.jwt.dto.request.JwtRefreshRequest;
+import syb.moviepedia.jwt.dto.response.JwtResponse;
 import syb.moviepedia.jwt.service.JwtService;
 
 /**
@@ -60,7 +59,7 @@ public class JwtController {
 
     )
     @PostMapping(value = "/jwt/exchange")
-    public ResponseEntity<ApiResult<JwtResponseDto>> jwtExchangeApi(
+    public ResponseEntity<ApiResult<JwtResponse>> jwtExchangeApi(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
@@ -77,7 +76,7 @@ public class JwtController {
                     description = "액세스 토큰 재발급 위한 리프레쉬 토큰",
                     required = true,
                     content = @Content(
-                            schema =  @Schema(implementation = JwtRefreshRequestDto.class)
+                            schema =  @Schema(implementation = JwtRefreshRequest.class)
                     )
             ),
             responses = {
@@ -98,8 +97,8 @@ public class JwtController {
             }
     )
     @PostMapping(value = "/jwt/refresh")
-    public ResponseEntity<ApiResult<JwtResponseDto>> jwtRefreshApi(
-            @Validated @RequestBody JwtRefreshRequestDto dto
+    public ResponseEntity<ApiResult<JwtResponse>> jwtRefreshApi(
+            @Validated @RequestBody JwtRefreshRequest dto
     ) {
         log.info("JwtController 토큰 재발급 요청 호출. uri: /jwt/refresh");
         return ResponseEntity.ok().body(ApiResult.success("액세스 토큰 재발급 성공", jwtService.refreshRotate(dto)));
