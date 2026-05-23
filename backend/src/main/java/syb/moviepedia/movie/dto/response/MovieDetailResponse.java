@@ -28,6 +28,7 @@ public record MovieDetailResponse(
         Integer releaseYear,
         List<String> country,
         Integer runtime,
+        Double rating,
         Double globalRating,
         List<MovieCreditResponse> credit
 ) {

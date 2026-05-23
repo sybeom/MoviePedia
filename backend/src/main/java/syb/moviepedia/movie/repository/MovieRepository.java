@@ -12,6 +12,4 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Optional<Movie> findByCode(Long code);
     Boolean existsByCode(Long code);
 
-    @Query()
-    Double findByRating();
 }

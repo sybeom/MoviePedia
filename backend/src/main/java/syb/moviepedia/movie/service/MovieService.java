@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.movie.domain.Credit;
@@ -32,6 +33,7 @@ public class MovieService {
     private final MovieCategoryRepository movieCategoryRepository;
     private final CountryRepository countryRepository;
     private final MovieCreditRepository movieCreditRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
@@ -80,7 +82,16 @@ public class MovieService {
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
 
-        return toMovieDetailDto(movie, creditDto);
+        Long count = commentRepository.findCommentsCountByMovieId(movie.getId());
+
+        log.info("movieId = {}, commentCount = {}", movie.getId(), count);
+
+        // 영화의 코멘트가 20개 이상이면 평점 계산
+        Double rating = 0.0;
+        if (commentRepository.findCommentsCountByMovieId(movie.getId()) >= 20) {
+            rating = commentRepository.findCommentsRatingAverage(movie.getId());
+        }
+        return toMovieDetailDto(movie, creditDto, rating);
     }
 
     // 출연 배우
@@ -163,7 +174,7 @@ public class MovieService {
     }
 
     // 영화 상세 DTO 가공
-    private MovieDetailResponse toMovieDetailDto(Movie movie, List<MovieCreditResponse> dto) {
+    private MovieDetailResponse toMovieDetailDto(Movie movie, List<MovieCreditResponse> dto, Double rating) {
         return MovieDetailResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
@@ -174,6 +185,7 @@ public class MovieService {
                 .releaseYear(movie.getReleaseDate().getYear())
                 .country(movie.getCountry())
                 .runtime(movie.getRuntime())
+                .rating(rating)
                 .globalRating(movie.getGlobalRating())
                 .credit(dto)
                 .build();

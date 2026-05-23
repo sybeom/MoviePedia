@@ -12,17 +12,17 @@ import java.util.Optional;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
 
-    Optional<Comment> findByMovieId(Long movieId);
-    Boolean existsByMovieIdAndMemberId(Long  movieId, Long memberId);
+    Optional<Comment> findByMovieId(Long mvId);
+    Boolean existsByMovieIdAndMemberId(Long  mvId, Long memberId);
 
     //내가 작성한 코멘트 조회
     @Query("""
         select c
         from Comment c
-        where c.movie.id = :movieId 
+        where c.movie.id = :movieId
             and c.member.loginId=:loginId     
     """)
-    Optional<Comment> findByMovieIdAndLoginId(@Param("movieId") Long movieId, @Param("loginId") String loginId);
+    Optional<Comment> findByMovieIdAndLoginId(@Param("movieId") Long mvId, @Param("loginId") String loginId);
 
     // 코멘트 작성자 찾기
     @Query("""
@@ -41,6 +41,22 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             case when c.member.loginId = :loginId then 0 else 1 end
     """)
     List<Comment> findByMovieIdWithMyCommentFirst(
-            @Param("movieId") Long movieId,
+            @Param("movieId") Long mvId,
             @Param("loginId") String loginId);
+
+    // 영화에 달린 코멘트 개수
+    @Query("""
+        select count(c)
+        from Comment c
+        where c.movie.id=:movieId
+    """)
+    Long findCommentsCountByMovieId(@Param("movieId") Long mvId);
+
+    // 영화 평점 계산
+    @Query("""
+        select round(avg(c.rating),1)
+        from Comment c
+        where c.movie.id=:movieId
+    """)
+    Double findCommentsRatingAverage(@Param("movieId") Long mvId);
 }

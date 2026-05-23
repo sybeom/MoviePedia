@@ -49,9 +49,9 @@ public class CommentService {
     }
 
     // 모든 코멘트 목록
-    public CommentListResponse getAllComments(Long code, String loginId) {
-        Movie movie = movieRepository.findByCode(code)
-                .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
+    public CommentListResponse getAllComments(Long mvCode, String loginId) {
+        Movie movie = movieRepository.findByCode(mvCode)
+                .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
         // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
         List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loginId);
@@ -83,9 +83,9 @@ public class CommentService {
     }
 
     // 저장
-    public void saveComment(Long code, CommentSaveRequest dto) {
-        Movie movie = movieRepository.findByCode(code).orElseThrow(
-                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
+    public void saveComment(Long mvCode, CommentSaveRequest dto) {
+        Movie movie = movieRepository.findByCode(mvCode).orElseThrow(
+                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
         Member member = memberRepository.findByNickname(dto.nickname()).orElseThrow(
                 () -> new MemberNotFoundException("멤버를 찾을 수 없습니다. 닉네임:" + dto.nickname()));

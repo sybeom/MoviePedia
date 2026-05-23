@@ -27,7 +27,7 @@ import syb.moviepedia.common.swagger.SwaggerFailResponse;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/movies/{movieId}/comments")
+@RequestMapping("/movies/{movieCode}/comments")
 public class CommentController {
 
     private final CommentService commentService;
@@ -63,14 +63,14 @@ public class CommentController {
     })
     @GetMapping
     public ResponseEntity<ApiResult<CommentListResponse>> getCommentList(
-            @PathVariable Long movieId,
+            @PathVariable Long movieCode,
             Authentication authentication) {
 
         // 작성자 코멘트를 찾기 위한 로그인 판별. 아이디가 있으면 로그인 상태, null이면 비로그인
         // 로그인 아이디를 바탕으로 작성자 코멘트를 찾는다.
         String loinId = authentication != null ? authentication.getName() : null;
 
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieId, loinId)));
+        return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieCode, loinId)));
     }
 
     @Operation(summary = "코멘트 작성", description = "코멘트를 작성하여 저장한다")
@@ -96,10 +96,10 @@ public class CommentController {
     })
     @PostMapping
     public ResponseEntity<ApiResult<Void>> saveComment(
-            @PathVariable Long movieId,
+            @PathVariable Long movieCode,
             @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외에서 처리
 
-        commentService.saveComment(movieId, dto);
+        commentService.saveComment(movieCode, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("코멘트 저장 성공"));
     }
 
@@ -142,7 +142,7 @@ public class CommentController {
     })
     @PatchMapping("/{commentId}")
     public ResponseEntity<ApiResult<Void>> updateComment(
-            @PathVariable("movieId") Long mvCode,
+            @PathVariable("movieCode") Long mvCode,
             @Valid @RequestBody CommentUpdateRequest dto,
             Authentication authentication
     ) {
