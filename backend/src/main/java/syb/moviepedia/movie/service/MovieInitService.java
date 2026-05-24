@@ -26,7 +26,6 @@ import syb.moviepedia.movie.repository.MovieRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -219,6 +218,7 @@ public class MovieInitService {
         memberRepository.saveAll(list);
     }
 
+    // 더미 코멘트 생성
     public void createComment() {
         if (commentRepository.count() > 0) return;
 
@@ -239,5 +239,10 @@ public class MovieInitService {
             list.add(comment);
         }
         commentRepository.saveAll(list);
+    }
+
+    public void calculateMovieAverage() {
+//        commentRepository
+
     }
 }

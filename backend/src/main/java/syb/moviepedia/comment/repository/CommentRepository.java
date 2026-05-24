@@ -11,7 +11,6 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    Optional<Comment> findByMovieId(Long mvId);
     Boolean existsByMovieIdAndMemberId(Long  mvId, Long memberId);
 
     //내가 작성한 코멘트 조회
@@ -51,11 +50,18 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     """)
     Long findCommentsCountByMovieId(@Param("movieId") Long mvId);
 
-    // 영화 평점 계산
+    // 코멘트 조회시 영화도 함께 가져오기
     @Query("""
-        select round(avg(c.rating),1)
+        select c
         from Comment c
-        where c.movie.id=:movieId
+        join fetch c.movie
+        where c.movie.id = :movieId
+          and c.movie.code = :mvCode
+          and c.member.loginId = :loginId
     """)
-    Double findCommentsRatingAverage(@Param("movieId") Long mvId);
+    Optional<Comment> findMyCommentWithMovie(
+            @Param("mvCode") Long mvCode,
+            @Param("movieId") Long movieId,
+            @Param("loginId") String loginId
+    );
 }

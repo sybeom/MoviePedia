@@ -22,6 +22,7 @@ import syb.moviepedia.movie.repository.MovieRepository;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -50,9 +51,6 @@ public class CommentService {
 
         return toEditCommentDto(comment);
     }
-
-    //TODO: 평점도 한번 계산해서 영화 테이블에 저장해 놓는게 좋을듯
-    // 그래서 매번 불러올떄마다 평점을 계산하지 말고 일정 시간마다만 계산하도록 스케쥴링하는게 좋을듯하다
 
     // 모든 코멘트 목록
     @Transactional
@@ -114,28 +112,43 @@ public class CommentService {
                 .build();
 
         commentRepository.save(comment);
+        movie.saveRating(dto.rating());
     }
 
     @Transactional
     public void update(Long mvCode, String loginId, CommentUpdateRequest dto) {
+
         // 내가 작성한 코멘트찾기
-        Comment comment = findMyComment(mvCode, dto.movieId(), loginId);
+        Comment comment = findMyCommentWithMovie(mvCode, dto.movieId(), loginId);
+
+        Movie movie = comment.getMovie();
+
+        Double oldRating = comment.getRating();
+        Double newRating = dto.rating();
 
         comment.update(dto);
+
+        // 평점 변화 있을 때만 업데이트
+        if (!Objects.equals(oldRating, newRating)) {
+            movie.updateRating(oldRating, newRating);
+        }
     }
 
     @Transactional
     public void delete(Long mvCode, Long movieId, String loginId) {
 
-        Comment comment = findMyComment(mvCode, movieId, loginId);
+        Comment comment = findMyCommentWithMovie(mvCode, movieId, loginId);
+
+        Movie movie = comment.getMovie();
+        movie.removeRating(comment.getRating());
 
         commentRepository.delete(comment);
     }
 
-    // 내가 작성한 코멘트 찾기
-    private Comment findMyComment(Long mvCode, Long mvId, String loginId) {
-        return commentRepository.findByMovieIdAndLoginId(mvId, loginId).orElseThrow(
-                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. 영화 code: " + mvCode));
+    // 내가 작성한 코멘트 조회시 영화도 함께 가져오기 (fetch join)
+    private Comment findMyCommentWithMovie(Long mvCode, Long movieId, String loginId) {
+        return commentRepository.findMyCommentWithMovie(mvCode, movieId, loginId)
+                .orElseThrow(() -> new CommentNotFoundException("코멘트를 찾을 수 없습니다."));
     }
 
     // 엔티티 -> Comment Dto로 가공

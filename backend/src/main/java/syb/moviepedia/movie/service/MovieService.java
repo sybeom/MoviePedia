@@ -81,16 +81,14 @@ public class MovieService {
 
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
+        Long mvId = movie.getId();
+        Long cmtCount = commentRepository.findCommentsCountByMovieId(mvId); // 코멘트 개수
 
-        Long count = commentRepository.findCommentsCountByMovieId(movie.getId());
+        log.info("movieId = {}, commentCount = {}", mvId, cmtCount);
 
-        log.info("movieId = {}, commentCount = {}", movie.getId(), count);
+        // 영화의 코멘트가 20개 이상이면 평점 조회
+        Double rating = movie.getDisplayRating();
 
-        // 영화의 코멘트가 20개 이상이면 평점 계산
-        Double rating = 0.0;
-        if (commentRepository.findCommentsCountByMovieId(movie.getId()) >= 20) {
-            rating = commentRepository.findCommentsRatingAverage(movie.getId());
-        }
         return toMovieDetailDto(movie, creditDto, rating);
     }
 

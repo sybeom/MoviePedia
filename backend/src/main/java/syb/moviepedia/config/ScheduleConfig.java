@@ -19,7 +19,7 @@ import java.util.Locale;
 @Component
 public class ScheduleConfig {
     private final JwtRepository jwtRepository;
-    private final MovieInitService movieInitService ;
+    private final MovieInitService movieInitService;
 
     // 새벽 3시마다 Refresh 토큰 저장소 8일 지난 토큰 삭제
     @Scheduled(cron = "0 0 3 * * *") // 기본 cron = "0 0 3 * * *" (새벽 3시 진행)

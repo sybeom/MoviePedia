@@ -52,6 +52,15 @@ public class Movie {
     @Column(name = "detail_fetched")
     private Boolean detailFetched;
 
+    @Column(name = "rating_sum")
+    private Double ratingSum;      // 평점 총합
+
+    @Column(name = "rating_count")
+    private Long ratingCount;      // 평점 개수
+
+    @Column(name = "rating")
+    private Double averageRating;  // 평균 평점
+
     public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();
         this.overview = movie.overview();
@@ -68,5 +77,45 @@ public class Movie {
         this.country = country;
         this.runtime = runtime;
         detailFetched = true;
+    }
+
+    // 코멘트 작성시 평점 저장
+    public void saveRating(double newRating) {
+        this.ratingSum += newRating;
+        this.ratingCount++;
+        this.averageRating = roundToOneDecimal(this.ratingSum / this.ratingCount);
+    }
+
+    // 코멘트 평점 수정
+    public void updateRating(double oldRating, double newRating) {
+        this.ratingSum = this.ratingSum - oldRating + newRating;
+        this.averageRating = roundToOneDecimal(this.ratingSum / this.ratingCount);
+    }
+
+    // 코멘트 삭제 평점 수정
+    public void removeRating(double rating) {
+        this.ratingSum -= rating;
+        this.ratingCount--;
+
+        if (this.ratingCount <= 0) {
+            this.ratingSum = 0.0;
+            this.ratingCount = 0L;
+            this.averageRating = null;
+            return;
+        }
+
+        this.averageRating = roundToOneDecimal(this.ratingSum / this.ratingCount);
+    }
+
+    public Double getDisplayRating() {
+        if (this.ratingCount < 20) {
+            return null;
+        }
+        return this.averageRating;
+    }
+
+    // 소수점 둘째자리에서 반올림 (첫째자리까지 표현)
+    private double roundToOneDecimal(double value) {
+        return Math.round(value * 10) / 10.0;
     }
 }
