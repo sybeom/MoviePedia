@@ -37,7 +37,6 @@ public class MovieService {
 
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
-
         List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
         List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
         List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.NOW_PLAYING);
@@ -140,12 +139,15 @@ public class MovieService {
 
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
-    private MovieSummaryResponse toMovieSummaryDto(MovieCategory category) {
+    private MovieSummaryResponse toMovieSummaryDto(MovieCategory mc) {
         // TODO: N+1 문제 추후 해결해보기
-        Movie movie = category.getMovie(); // N+1 문제 발생할 수 있음. 추후 알아보고 수정
+        log.info("N+1 체크: {}", mc.getCategoryType());
+        Movie movie = mc.getMovie();
+//        Movie movie = category.getMovie(); // N+1 문제 발생할 수 있음. 추후 알아보고 수정
 
         return MovieSummaryResponse.builder()
-                .code(movie.getCode())
+                .code(
+                        movie.getCode())
                 .title(movie.getTitle())
                 .poster(movie.getPosterPath())
                 .certification(movie.getCertification())
