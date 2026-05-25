@@ -21,10 +21,17 @@ function MovieDetailCredits({ credits }: MovieDetailCreditsProps) {
           {directorCredits.length > 0 ? (
             <div className="movie-detail-cast-director-row">
               {directorCredits.map((member, index) => (
-                <article className="movie-detail-cast-card movie-detail-cast-card-director" key={`director-${member.name}-${index}`}>
+                <article
+                  className="movie-detail-cast-card movie-detail-cast-card-director"
+                  key={`director-${member.name}-${index}`}
+                >
                   <div className="movie-detail-cast-profile-shell">
                     {member.profile ? (
-                      <img className="movie-detail-cast-profile" src={member.profile} alt={member.name} />
+                      <img
+                        className="movie-detail-cast-profile"
+                        src={member.profile}
+                        alt={member.name}
+                      />
                     ) : null}
                   </div>
                   <p className="movie-detail-cast-name">{member.name || '-'}</p>
@@ -40,7 +47,11 @@ function MovieDetailCredits({ credits }: MovieDetailCreditsProps) {
                 <article className="movie-detail-cast-card" key={`actor-${member.name}-${index}`}>
                   <div className="movie-detail-cast-profile-shell">
                     {member.profile ? (
-                      <img className="movie-detail-cast-profile" src={member.profile} alt={member.name} />
+                      <img
+                        className="movie-detail-cast-profile"
+                        src={member.profile}
+                        alt={member.name}
+                      />
                     ) : null}
                   </div>
                   <p className="movie-detail-cast-name">{member.name || '-'}</p>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { request } from '../api/client'
 import rating12Icon from '../assets/ratings/12.svg'
@@ -6,16 +6,15 @@ import rating15Icon from '../assets/ratings/15.svg'
 import rating19Icon from '../assets/ratings/19.svg'
 import ratingAllIcon from '../assets/ratings/all.svg'
 import Header from '../components/Header'
+import HomeSearchResults from '../components/home/HomeSearchResults'
 import './HomePage.css'
 
-// 영화 묶음 응답 타입 정의
 type MovieCollectionResponse = {
   popular?: unknown[]
   upcoming?: unknown[]
   nowPlaying?: unknown[]
 }
 
-// 영화 카드 데이터 타입 정의
 type MovieCard = {
   id: string
   rank: string
@@ -26,7 +25,8 @@ type MovieCard = {
   certification: string
 }
 
-// 영화 섹션 속성 타입 정의
+type SearchMovieTitle = string
+
 type MovieSectionProps = {
   title: string
   titleId: string
@@ -44,6 +44,7 @@ type MovieSectionProps = {
 
 const MOVIES_PER_PAGE = 5
 const PLACEHOLDER_CARD_COUNT = 5
+const SEARCH_DEBOUNCE_MS = 500
 const CERTIFICATION_ICON_MAP: Record<string, string> = {
   '12': rating12Icon,
   '15': rating15Icon,
@@ -186,13 +187,19 @@ function normalizeMovies(data: unknown): MovieCard[] {
   }
 
   return data.filter(isRecord).map((movie, index) => {
-    const title = getStringValue(movie, ['title', 'movieNm', 'name', 'movieTitle']) || `영화 ${index + 1}`
+    const title =
+      getStringValue(movie, ['title', 'movieNm', 'name', 'movieTitle']) || `영화 ${index + 1}`
     const rank = getScalarStringValue(movie, ['rank', 'rnum']) || String(index + 1)
     const poster = getPrimaryPosterUrl(
       getStringValue(movie, ['poster', 'posterUrl', 'imageUrl', 'posterPath', 'poster_path']),
     )
     const genre = getGenreValue(movie)
-    const voteAverage = getScalarStringValue(movie, ['voteAverage', 'vote', 'rating', 'vote_average'])
+    const voteAverage = getScalarStringValue(movie, [
+      'voteAverage',
+      'vote',
+      'rating',
+      'vote_average',
+    ])
     const certification = getCertificationValue(movie)
 
     return {
@@ -205,6 +212,17 @@ function normalizeMovies(data: unknown): MovieCard[] {
       certification,
     }
   })
+}
+
+// 검색 제목 목록 정규화 처리
+function normalizeSearchTitles(data: unknown): SearchMovieTitle[] {
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean)
 }
 
 // 빈 카드 목록 생성 처리
@@ -248,10 +266,14 @@ function MovieTitleRow({ movie }: { movie: MovieCard }) {
       {movie.certification
         ? certificationIcon
           ? (
-            <img className="movie-certification-icon" src={certificationIcon} alt={`${movie.certification} 등급`} />
+              <img
+                className="movie-certification-icon"
+                src={certificationIcon}
+                alt={`${movie.certification} 등급`}
+              />
             )
           : (
-            <span className="movie-certification-fallback">{movie.certification}</span>
+              <span className="movie-certification-fallback">{movie.certification}</span>
             )
         : null}
       <h3>
@@ -338,15 +360,22 @@ function MovieSection({
 
           <div className="movie-grid">
             {visibleMovies.map((movie) => (
-              <article className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`} key={movie.id}>
+              <article
+                className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
+                key={movie.id}
+              >
                 <Link
                   className="movie-card-link"
                   to={getMovieDetailPath(movie)}
                   state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
                 >
                   <div className="movie-poster-shell">
-                    {movie.poster ? <img className="movie-poster-image" src={movie.poster} alt={movie.title} /> : null}
-                    {showRankBadge && movie.rank ? <span className="movie-rank-badge">{movie.rank}</span> : null}
+                    {movie.poster ? (
+                      <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
+                    ) : null}
+                    {showRankBadge && movie.rank ? (
+                      <span className="movie-rank-badge">{movie.rank}</span>
+                    ) : null}
                   </div>
                 </Link>
                 <div className="movie-card-content">
@@ -381,6 +410,12 @@ function HomePage() {
 
   // 검색 진행 상태 관리
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // 실시간 검색 로딩 상태 관리
+  const [isSearchLoading, setIsSearchLoading] = useState(false)
+
+  // 검색 결과 상태 관리
+  const [searchMovies, setSearchMovies] = useState<SearchMovieTitle[]>([])
 
   // 인기 영화 목록 상태 관리
   const [popularMovies, setPopularMovies] = useState<MovieCard[]>([])
@@ -426,12 +461,20 @@ function HomePage() {
   const upcomingPlaceholderMovies = createPlaceholderMovies('upcoming-placeholder')
 
   const popularCarouselMovies = popularMovies.length > 0 ? popularMovies : popularPlaceholderMovies
-  const nowPlayingCarouselMovies = nowPlayingMovies.length > 0 ? nowPlayingMovies : nowPlayingPlaceholderMovies
-  const upcomingCarouselMovies = upcomingMovies.length > 0 ? upcomingMovies : upcomingPlaceholderMovies
+  const nowPlayingCarouselMovies =
+    nowPlayingMovies.length > 0 ? nowPlayingMovies : nowPlayingPlaceholderMovies
+  const upcomingCarouselMovies =
+    upcomingMovies.length > 0 ? upcomingMovies : upcomingPlaceholderMovies
 
   const popularTotalPages = Math.max(1, Math.ceil(popularCarouselMovies.length / MOVIES_PER_PAGE))
-  const nowPlayingTotalPages = Math.max(1, Math.ceil(nowPlayingCarouselMovies.length / MOVIES_PER_PAGE))
-  const upcomingTotalPages = Math.max(1, Math.ceil(upcomingCarouselMovies.length / MOVIES_PER_PAGE))
+  const nowPlayingTotalPages = Math.max(
+    1,
+    Math.ceil(nowPlayingCarouselMovies.length / MOVIES_PER_PAGE),
+  )
+  const upcomingTotalPages = Math.max(
+    1,
+    Math.ceil(upcomingCarouselMovies.length / MOVIES_PER_PAGE),
+  )
 
   const visiblePopularMovies = getVisibleMovies(popularCarouselMovies, popularPage)
   const visibleNowPlayingMovies = getVisibleMovies(nowPlayingCarouselMovies, nowPlayingPage)
@@ -464,8 +507,12 @@ function HomePage() {
         setUpcomingPage(0)
 
         setPopularMessage(normalizedPopularMovies.length === 0 ? '인기 영화가 아직 없습니다.' : '')
-        setNowPlayingMessage(normalizedNowPlayingMovies.length === 0 ? '현재 상영중인 영화가 아직 없습니다.' : '')
-        setUpcomingMessage(normalizedUpcomingMovies.length === 0 ? '개봉 예정작이 아직 없습니다.' : '')
+        setNowPlayingMessage(
+          normalizedNowPlayingMovies.length === 0 ? '현재 상영중인 영화가 아직 없습니다.' : '',
+        )
+        setUpcomingMessage(
+          normalizedUpcomingMovies.length === 0 ? '개봉 예정작이 아직 없습니다.' : '',
+        )
       } catch {
         setPopularMessage('인기 영화를 불러오지 못했습니다.')
         setNowPlayingMessage('현재 상영중인 영화를 불러오지 못했습니다.')
@@ -479,6 +526,46 @@ function HomePage() {
 
     void fetchMovies()
   }, [])
+
+  useEffect(() => {
+    const trimmedQuery = query.trim()
+
+    if (!trimmedQuery) {
+      return
+    }
+
+    let isMounted = true
+    const debounceTimer = window.setTimeout(async () => {
+      setIsSearchLoading(true)
+
+      try {
+        const response = await request<unknown>(`/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`, {
+          method: 'GET',
+        })
+
+        if (!isMounted) {
+          return
+        }
+
+        setSearchMovies(normalizeSearchTitles(response))
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setSearchMovies([])
+      } finally {
+        if (isMounted) {
+          setIsSearchLoading(false)
+        }
+      }
+    }, SEARCH_DEBOUNCE_MS)
+
+    return () => {
+      isMounted = false
+      window.clearTimeout(debounceTimer)
+    }
+  }, [query])
 
   // 이전 인기 영화 페이지 이동 처리
   function handlePrevPopularPage() {
@@ -510,28 +597,34 @@ function HomePage() {
     setUpcomingPage((previousPage) => Math.min(previousPage + 1, upcomingTotalPages - 1))
   }
 
-  // 검색 요청 제출 처리
+  // 검색 버튼 즉시 실행 처리
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    const trimmedQuery = query.trim()
+
     setMessage('')
+
+    if (!trimmedQuery) {
+      setSearchMovies([])
+      return
+    }
+
     setIsSubmitting(true)
+    setIsSearchLoading(true)
 
     try {
-      const response = await request<MovieCollectionResponse>('/movies', {
+      const response = await request<unknown>(`/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`, {
         method: 'GET',
       })
 
-      const resultCount =
-        (response?.popular?.length ?? 0) +
-        (response?.nowPlaying?.length ?? 0) +
-        (response?.upcoming?.length ?? 0)
-
-      setMessage(`검색 요청이 전달되었습니다. 응답 항목 수 ${resultCount}`)
+      setSearchMovies(normalizeSearchTitles(response))
     } catch {
+      setSearchMovies([])
       setMessage('검색 요청에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
+      setIsSearchLoading(false)
     }
   }
 
@@ -542,22 +635,34 @@ function HomePage() {
       <main className="main-container">
         <section className="search-section" aria-labelledby="search-title">
           <h1 id="search-title">보고 싶은 영화를 찾아보세요.</h1>
-          <form className="search-form" onSubmit={handleSearch}>
-            <label className="sr-only" htmlFor="movie-search">
-              영화 검색
-            </label>
-            <input
-              id="movie-search"
-              className="search-input"
-              type="search"
-              placeholder="영화 제목, 배우, 감독을 검색해보세요."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            <button className="search-button" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? '검색 중...' : '검색'}
-            </button>
-          </form>
+          <div className="search-box-shell">
+            <form className="search-form" onSubmit={handleSearch}>
+              <label className="sr-only" htmlFor="movie-search">
+                영화 검색
+              </label>
+              <input
+                id="movie-search"
+                className="search-input"
+                type="search"
+                placeholder="영화 제목, 배우, 감독을 검색해보세요."
+                value={query}
+                onChange={(event) => {
+                  const nextQuery = event.target.value
+
+                  setQuery(nextQuery)
+
+                  if (!nextQuery.trim()) {
+                    setSearchMovies([])
+                    setIsSearchLoading(false)
+                  }
+                }}
+              />
+              <button className="search-button" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? '검색 중...' : '검색'}
+              </button>
+            </form>
+            <HomeSearchResults query={query} titles={searchMovies} isLoading={isSearchLoading} />
+          </div>
           {message ? <p className="search-message">{message}</p> : null}
         </section>
 

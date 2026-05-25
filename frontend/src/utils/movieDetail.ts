@@ -185,7 +185,7 @@ export function getCreditValue(record: Record<string, unknown>) {
       return {
         name: getStringValue(member, ['name']),
         profile: getPrimaryImageUrl(getStringValue(member, ['profile', 'profileUrl', 'profilePath'])),
-        roleLabel: role === 'DIRECTOR' ? '媛먮룆' : '',
+        roleLabel: role === 'DIRECTOR' ? '감독' : '',
       }
     })
     .filter((member): member is CreditMember => member !== null)
