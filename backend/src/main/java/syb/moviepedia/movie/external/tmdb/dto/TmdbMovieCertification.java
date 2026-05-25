@@ -14,10 +14,10 @@ public record TmdbMovieCertification(
  * {                <<  TmdbMovieCertification.class
  *   "id": 640146,
  *   "results": [
- *     {                                << TmdbMovieCertificationList.class
+ *     {                                << TmdbMovieCertificationCountry.class
  *       "iso_3166_1": "KR",
  *       "release_dates": [
- *         {                                        << TmdbMovieReleaseDates.class
+ *         {                                        << TmdbMovieReleaseInfo.class
  *           "certification": "12",
  *           "descriptors": [],
  *           "iso_639_1": "",

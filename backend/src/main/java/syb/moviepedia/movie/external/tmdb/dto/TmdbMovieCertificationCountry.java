@@ -23,7 +23,7 @@ public record TmdbMovieCertificationCountry(
  *   "results": [
  *     {                                << TmdbMovieCertificationCountry.class
  *       "iso_3166_1": "KR",
- *       "release_dates": [
+ *       "release_dates": [             << TmdbMovieReleaseInfo.class
  *         {
  *           "certification": "12",
  *           "descriptors": [],

@@ -37,6 +37,7 @@ public class MovieService {
 
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
+        log.info("영화 엔티티 수: {}", movieRepository.count());
         List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
         List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
         List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.NOW_PLAYING);
@@ -80,10 +81,6 @@ public class MovieService {
 
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
-        Long mvId = movie.getId();
-        Long cmtCount = commentRepository.findCommentsCountByMovieId(mvId); // 코멘트 개수
-
-        log.info("movieId = {}, commentCount = {}", mvId, cmtCount);
 
         // 영화의 코멘트가 20개 이상이면 평점 조회
         Double rating = movie.getDisplayRating();
@@ -140,14 +137,10 @@ public class MovieService {
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
     private MovieSummaryResponse toMovieSummaryDto(MovieCategory mc) {
-        // TODO: N+1 문제 추후 해결해보기
-        log.info("N+1 체크: {}", mc.getCategoryType());
         Movie movie = mc.getMovie();
-//        Movie movie = category.getMovie(); // N+1 문제 발생할 수 있음. 추후 알아보고 수정
 
         return MovieSummaryResponse.builder()
-                .code(
-                        movie.getCode())
+                .code(movie.getCode())
                 .title(movie.getTitle())
                 .poster(movie.getPosterPath())
                 .certification(movie.getCertification())
@@ -226,5 +219,10 @@ public class MovieService {
                 .findFirst()
                 .map(info -> info.certification())
                 .orElse("등급 미정");
+    }
+
+    // 영화 검색 목록
+    public List<String> getKeywords(String keyword) {
+        return tmdbClient.getKeywordList(keyword).results().stream().map(kw -> kw.title()).toList();
     }
 }
