@@ -12,9 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
-import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.like.service.LikeService;
 
 @Tag(name = "Like API", description = "좋아요 도메인 API")
@@ -52,7 +51,7 @@ public class LikeController {
             )
     })
     @PostMapping("/like")
-    public ResponseEntity<ApiResult<Void>> saveLike(
+    public ResponseEntity<ApiSuccessResponse<Void>> saveLike(
             @PathVariable Long commentId,
             Authentication authentication) {
 
@@ -61,7 +60,7 @@ public class LikeController {
         String loginId = authentication.getName();
         likeService.saveLike(commentId, loginId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("좋아요 저장 성공"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("좋아요 저장 성공"));
     }
 
     @Operation(summary = "좋아요 취소", description = "좋아요 취소 클릭시 삭제한다")
@@ -80,13 +79,13 @@ public class LikeController {
             )
     })
     @DeleteMapping("/like")
-    public ResponseEntity<ApiResult<Void>> deleteLike(
+    public ResponseEntity<ApiSuccessResponse<Void>> deleteLike(
             @PathVariable Long commentId,
             Authentication authentication) {
 
         String loginId = authentication.getName();
         likeService.deleteLike(commentId, loginId);
 
-        return ResponseEntity.ok().body(ApiResult.success("좋아요 삭제 성공"));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("좋아요 삭제 성공"));
     }
 }

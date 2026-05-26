@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StreamUtils;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiFailResponse;
 import syb.moviepedia.common.api.ErrorCode;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
@@ -109,6 +109,6 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
         errors.add("loginId");
         errors.add("password");
 
-        return new ObjectMapper().writeValueAsString(ApiResult.fail(ErrorCode.LOGIN_FAILED, "아이디 또는 비밀번호가 올바르지 않습니다.", errors));
+        return new ObjectMapper().writeValueAsString(ApiFailResponse.of(ErrorCode.LOGIN_FAILED, "아이디 또는 비밀번호가 올바르지 않습니다.", errors));
     }
 }

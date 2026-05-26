@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.member.dto.request.MemberSignupRequest;
@@ -42,12 +42,12 @@ public class MemberController {
                     content = @Content(schema = @Schema(implementation = SwaggerFailResponse.class)))
     })
     @PostMapping
-    public ResponseEntity<ApiResult<Void>> signup(
+    public ResponseEntity<ApiSuccessResponse<Void>> signup(
             @Valid @RequestBody MemberSignupRequest dto) {
         log.info("signup 호출");
 
         // 중복 검사 및 가입
         memberService.signup(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("회원 가입 성공"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("회원 가입 성공"));
     }
 }

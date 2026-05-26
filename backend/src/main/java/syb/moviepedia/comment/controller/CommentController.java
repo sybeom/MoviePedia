@@ -13,13 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import syb.moviepedia.comment.dto.response.CommentDetailResponse;
 import syb.moviepedia.comment.dto.request.CommentSaveRequest;
 import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
+import syb.moviepedia.comment.dto.response.CommentDetailResponse;
 import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.service.CommentService;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.movie.dto.request.MovieIdRequest;
@@ -45,10 +45,10 @@ public class CommentController {
             )
     })
     @GetMapping("/{commentId}")
-    public ResponseEntity<ApiResult<CommentDetailResponse>> getComment(
+    public ResponseEntity<ApiSuccessResponse<CommentDetailResponse>> getComment(
             @PathVariable Long commentId
     ) {
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getComment(commentId)));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 조회 성공", commentService.getComment(commentId)));
     }
 
     @Operation(summary = "코멘트 목록 조회", description = "영화 상세페이지 코멘트 목록을 조회한다")
@@ -63,7 +63,7 @@ public class CommentController {
             )
     })
     @GetMapping
-    public ResponseEntity<ApiResult<CommentListResponse>> getCommentList(
+    public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getCommentList(
             @PathVariable Long movieCode,
             Authentication authentication) {
 
@@ -71,7 +71,7 @@ public class CommentController {
         // 로그인 아이디를 바탕으로 작성자 코멘트를 찾는다.
         String loinId = authentication != null ? authentication.getName() : null;
 
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 목록 조회 성공", commentService.getAllComments(movieCode, loinId)));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 목록 조회 성공", commentService.getAllComments(movieCode, loinId)));
     }
 
     @Operation(summary = "코멘트 작성", description = "코멘트를 작성하여 저장한다")
@@ -96,12 +96,12 @@ public class CommentController {
             )
     })
     @PostMapping
-    public ResponseEntity<ApiResult<Void>> saveComment(
+    public ResponseEntity<ApiSuccessResponse<Void>> saveComment(
             @PathVariable Long movieCode,
             @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외에서 처리
 
         commentService.saveComment(movieCode, dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("코멘트 저장 성공"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("코멘트 저장 성공"));
     }
 
     // 수정 화면 데이터 조회
@@ -116,8 +116,8 @@ public class CommentController {
             )
     })
     @GetMapping("/{commentId}/edit")
-    public ResponseEntity<ApiResult<CommentEditResponse>> getEditComment(@PathVariable Long commentId) {
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 조회 성공", commentService.getEditComment(commentId)));
+    public ResponseEntity<ApiSuccessResponse<CommentEditResponse>> getEditComment(@PathVariable Long commentId) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 조회 성공", commentService.getEditComment(commentId)));
     }
 
     @Operation(summary = "코멘트 수정", description = "코멘트를 수정한다")
@@ -142,7 +142,7 @@ public class CommentController {
             )
     })
     @PatchMapping("/{commentId}")
-    public ResponseEntity<ApiResult<Void>> updateComment(
+    public ResponseEntity<ApiSuccessResponse<Void>> updateComment(
             @PathVariable("movieCode") Long mvCode,
             @Valid @RequestBody CommentUpdateRequest dto,
             Authentication authentication
@@ -151,7 +151,7 @@ public class CommentController {
         if (dto.content() != null && dto.rating() != null) {
             commentService.update(mvCode, loginId, dto);
         }
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 업데이트 성공"));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of(("코멘트 업데이트 성공")));
     }
 
     @Operation(summary = "코멘트 삭제", description = "코멘트를 삭제합니다")
@@ -172,13 +172,13 @@ public class CommentController {
             )
     })
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<ApiResult<Void>> deleteComment(
+    public ResponseEntity<ApiSuccessResponse<Void>> deleteComment(
             @PathVariable Long movieCode,
             @RequestBody MovieIdRequest movieIdRequest,
             Authentication authentication) {
 
         String loginId = authentication.getName();
         commentService.delete(movieCode, movieIdRequest.movieId(), loginId);
-        return ResponseEntity.ok().body(ApiResult.success("코멘트 삭제 완료"));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 삭제 완료"));
     }
 }

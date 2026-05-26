@@ -11,12 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
-import syb.moviepedia.common.swagger.SwaggerKeywordListResponse;
-import syb.moviepedia.movie.dto.response.MovieDetailResponse;
 import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbKeyword;
+import syb.moviepedia.movie.dto.response.MovieDetailResponse;
 import syb.moviepedia.movie.service.MovieService;
 
 import java.util.List;
@@ -41,8 +39,8 @@ public class MovieController {
             )
     })
     @GetMapping
-    public ResponseEntity<ApiResult<MovieCategoriesResponse>> home() {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.success("카테고리 별 영화 목록 조회 성공", movieService.getCategoryMovies()));
+    public ResponseEntity<ApiSuccessResponse<MovieCategoriesResponse>> home() {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("카테고리 별 영화 목록 조회 성공", movieService.getCategoryMovies()));
     }
 
     @Operation(summary = "영화 상세", description = "영화 상세 페이지 데이터를 조회한다")
@@ -56,8 +54,8 @@ public class MovieController {
             )
     })
     @GetMapping("/{movieCode}")
-    public ResponseEntity<ApiResult<MovieDetailResponse>> getMovieDetail(@PathVariable Long movieCode) {
-        return ResponseEntity.ok().body(ApiResult.success("영화 상세 정보", movieService.getMovieDetail(movieCode)));
+    public ResponseEntity<ApiSuccessResponse<MovieDetailResponse>> getMovieDetail(@PathVariable Long movieCode) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 상세 정보", movieService.getMovieDetail(movieCode)));
     }
 
     //TODO: API Result 클래스를 성공, 실패 별도로 나눈게 좋아 보인다.
@@ -68,14 +66,14 @@ public class MovieController {
             @ApiResponse(
                     responseCode = "502", description = "검색어 조회 실패",
                     content = @Content(
-                            schema = @Schema(implementation = SwaggerKeywordListResponse.class)
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
                     )
             )
     })
     @GetMapping("/search")
-    public ResponseEntity<ApiResult<List<String>>> searchMovies(
+    public ResponseEntity<ApiSuccessResponse<List<String>>> searchMovies(
             @RequestParam String keyword
     ) {
-        return ResponseEntity.ok().body(ApiResult.success("영화 검색어 목록", movieService.getKeywords(keyword)));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 검색어 목록", movieService.getKeywords(keyword)));
     }
 }

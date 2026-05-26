@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.jwt.dto.request.JwtRefreshRequest;
@@ -45,12 +45,12 @@ public class JwtController {
             )
     })
     @PostMapping(value = "/jwt/exchange")
-    public ResponseEntity<ApiResult<JwtResponse>> jwtExchangeApi(
+    public ResponseEntity<ApiSuccessResponse<JwtResponse>> jwtExchangeApi(
             HttpServletRequest request,
             HttpServletResponse response
     ) {
         log.info("JwtController 호출됨. uri: /jwt/exchange");
-        return ResponseEntity.ok(ApiResult.success("JWT 변환 성공", jwtService.cookieToHeader(request,response)));
+        return ResponseEntity.ok(ApiSuccessResponse.of("JWT 변환 성공", jwtService.cookieToHeader(request,response)));
     }
 
     // 액세스 토큰 만료시 재발급
@@ -72,10 +72,10 @@ public class JwtController {
             )
     })
     @PostMapping(value = "/jwt/refresh")
-    public ResponseEntity<ApiResult<JwtResponse>> jwtRefreshApi(
+    public ResponseEntity<ApiSuccessResponse<JwtResponse>> jwtRefreshApi(
             @Valid @RequestBody JwtRefreshRequest dto
     ) {
         log.info("JwtController 토큰 재발급 요청 호출. uri: /jwt/refresh");
-        return ResponseEntity.ok().body(ApiResult.success("액세스 토큰 재발급 성공", jwtService.refreshRotate(dto)));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("액세스 토큰 재발급 성공", jwtService.refreshRotate(dto)));
     }
 }

@@ -8,11 +8,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import syb.moviepedia.common.api.ApiResult;
+import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 
 @Tag(name = "Auth API", description = "인증 도메인 API")
@@ -31,7 +30,7 @@ public class AuthController {
             )
     })
     @GetMapping("/me") // 홈 화면 진입시 로그인 상태 판별을 위해 토큰 검증을 하는 요청
-    public ResponseEntity<ApiResult<Void>> checkMe() {
-        return ResponseEntity.ok().body(ApiResult.success("토큰 인증에 성공하였습니다"));
+    public ResponseEntity<ApiSuccessResponse<Void>> checkMe() {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("토큰 인증에 성공하였습니다"));
     }
 }

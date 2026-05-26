@@ -1,9 +1,5 @@
 package syb.moviepedia.common.swagger;
 
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.Set;
 
 /**
