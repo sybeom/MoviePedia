@@ -20,6 +20,7 @@ export type MovieDetailView = {
   title: string
   poster: string
   backdrop: string
+  certification: string
   genres: string
   overview: string
   releaseDate: string

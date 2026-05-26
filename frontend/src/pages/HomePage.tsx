@@ -25,7 +25,10 @@ type MovieCard = {
   certification: string
 }
 
-type SearchMovieTitle = string
+type SearchMovie = {
+  code: string
+  title: string
+}
 
 type MovieSectionProps = {
   title: string
@@ -215,14 +218,23 @@ function normalizeMovies(data: unknown): MovieCard[] {
 }
 
 // 검색 제목 목록 정규화 처리
-function normalizeSearchTitles(data: unknown): SearchMovieTitle[] {
+function normalizeSearchTitles(data: unknown): SearchMovie[] {
   if (!Array.isArray(data)) {
     return []
   }
 
   return data
-    .map((value) => (typeof value === 'string' ? value.trim() : ''))
-    .filter(Boolean)
+    .filter(isRecord)
+    .map((value) => {
+      const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
+      const title = getStringValue(value, ['title', 'movieNm', 'name'])
+
+      return {
+        code,
+        title,
+      }
+    })
+    .filter((value) => value.code && value.title)
 }
 
 // 빈 카드 목록 생성 처리
@@ -415,7 +427,7 @@ function HomePage() {
   const [isSearchLoading, setIsSearchLoading] = useState(false)
 
   // 검색 결과 상태 관리
-  const [searchMovies, setSearchMovies] = useState<SearchMovieTitle[]>([])
+  const [searchMovies, setSearchMovies] = useState<SearchMovie[]>([])
 
   // 검색 목록 노출 상태 관리
   const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
@@ -748,7 +760,7 @@ function HomePage() {
             </form>
             <HomeSearchResults
               query={query}
-              titles={searchMovies}
+              movies={searchMovies}
               isLoading={isSearchLoading}
               isOpen={isSearchResultsOpen}
               activeIndex={activeSearchIndex}

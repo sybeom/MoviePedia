@@ -240,6 +240,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const title = getStringValue(data, ['title', 'movieTitle', 'name'])
   const poster = getPrimaryImageUrl(getStringValue(data, ['poster', 'posterUrl', 'imageUrl', 'posterPath']))
   const backdrop = getPrimaryImageUrl(getStringValue(data, ['backdrop', 'backdropUrl', 'backdropPath']))
+  const certification = getStringValue(data, ['certification']).toUpperCase()
   const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
   const overview = getStringValue(data, ['overview', 'plot'])
   const releaseDate = getStringValue(data, ['releaseYear', 'releaseDate'])
@@ -258,6 +259,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     title,
     poster,
     backdrop,
+    certification,
     genres,
     overview,
     releaseDate,
@@ -333,6 +335,7 @@ export function createInitialMovieDetail(movieId: string, movie?: MovieDetailSta
     title: movie?.title?.trim() || '?곹솕 ?곸꽭',
     poster: movie?.poster?.trim() || '',
     backdrop: '',
+    certification: '',
     genres: '',
     overview: '',
     releaseDate: '',

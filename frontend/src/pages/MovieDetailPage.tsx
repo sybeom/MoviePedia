@@ -144,6 +144,7 @@ function MovieDetailPage() {
             title: normalizedDetail.title || initialMovie?.title?.trim() || '영화 상세',
             poster: normalizedDetail.poster || initialMovie?.poster?.trim() || '',
             backdrop: normalizedDetail.backdrop,
+            certification: normalizedDetail.certification,
             genres: normalizedDetail.genres,
             overview: normalizedDetail.overview,
             releaseDate: normalizedDetail.releaseDate,

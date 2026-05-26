@@ -96,6 +96,8 @@
 .home-search-result-item {
   display: block;
   padding: 14px 16px;
+  color: inherit;
+  text-decoration: none;
 }
 
 .home-search-result-item:hover {
