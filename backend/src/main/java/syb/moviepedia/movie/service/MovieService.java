@@ -74,9 +74,9 @@ public class MovieService {
             log.info("getMovieDetail(): 영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
 
-            // TODO: 확인 결과 등급은 초기 데이터 설정시 카테고리에서 채우는 것같은데 중복 저장아닌지 . 확인해보기
-            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
-            updateMovie(movie, detail, certification);
+//            // TODO: 확인 결과 등급은 초기 데이터 설정시 카테고리에서 채우는 것같은데 중복 저장아닌지 . 확인해보기
+//            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
+            updateMovie(movie, detail);
         }
 
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
@@ -196,13 +196,13 @@ public class MovieService {
                 .toList();
     }
 
-    // 영화 추가 정보(등급, 국가, 런타임 등) 업데이트
-    private void updateMovie(Movie movie, TmdbMovieDetail detail, String  certification) {
+    // 영화 추가 정보(국가, 런타임 등) 업데이트
+    private void updateMovie(Movie movie, TmdbMovieDetail detail) {
         // 상세 api 호출 (국가정보, 런타임)
         List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가 코드 한국어 매핑
         Integer runtime = detail.runtime();
 
-        movie.update(certification, countries, runtime);
+        movie.update(countries, runtime);
     }
 
     // 상세 영화 정보 장르 추출

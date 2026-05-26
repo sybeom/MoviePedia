@@ -75,8 +75,7 @@ public class Movie {
     }
 
     // 상세 정보 업데이트
-    public void update(String certification, List<String> country, Integer runtime) {
-        this.certification = certification;
+    public void update(List<String> country, Integer runtime) {
         this.country = country;
         this.runtime = runtime;
         detailFetched = true;
