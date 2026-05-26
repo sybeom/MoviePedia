@@ -46,5 +46,9 @@ public record TmdbMovieDetail(
         if (backdropPath != null) {
             backdropPath = IMAGE_BASE_URL + backdropPath;
         }
+
+        // 글로벌 평점 소수점 첫째자리까지 표기
+        // 0점이면 null (아직 평점 책정이 되지 않았다는 뜻이다)
+        globalRating = globalRating==0 ? null : Math.round(globalRating * 10) / 10.0; // 소수점 둘째자리에서 반올림
     }
 }

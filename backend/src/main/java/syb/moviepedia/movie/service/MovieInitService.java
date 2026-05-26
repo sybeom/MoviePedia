@@ -169,7 +169,7 @@ public class MovieInitService {
 
         return movieRepository.findByCode(tmdbMovie.code()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
-                    log.info("saveOrUpdateMovie() 영화 정보 갱신 됨");
+                    log.info("saveOrUpdateMovie(): 영화 정보 갱신");
                     movie.updateFrom(tmdbMovie, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
                     return movie;
                 })

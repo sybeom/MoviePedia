@@ -52,14 +52,17 @@ public class Movie {
     @Column(name = "detail_fetched")
     private Boolean detailFetched;
 
+    @Builder.Default
     @Column(name = "rating_sum")
-    private Double ratingSum;      // 평점 총합
+    private Double ratingSum = 0.0;      // 평점 총합
 
+    @Builder.Default
     @Column(name = "rating_count")
-    private Long ratingCount;      // 평점 개수
+    private Long ratingCount = 0L;      // 평점 개수
 
+    @Builder.Default
     @Column(name = "rating")
-    private Double averageRating;  // 평균 평점
+    private Double averageRating = 0.0;  // 평균 평점
 
     public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();

@@ -13,8 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.movie.dto.response.KeywordResponse;
 import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
 import syb.moviepedia.movie.dto.response.MovieDetailResponse;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbKeyword;
 import syb.moviepedia.movie.service.MovieService;
 
 import java.util.List;
@@ -58,8 +60,6 @@ public class MovieController {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 상세 정보", movieService.getMovieDetail(movieCode)));
     }
 
-    //TODO: API Result 클래스를 성공, 실패 별도로 나눈게 좋아 보인다.
-    // 나누면 매번 Swagger 응답 클래스를 만들지 않아도 될것 같다
     @Operation(summary = "검색어 목록", description = "키워드에 대한 관련 검색어 목록을 보여준다")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "검색어 목록 조회 성공"),
@@ -71,7 +71,7 @@ public class MovieController {
             )
     })
     @GetMapping("/search")
-    public ResponseEntity<ApiSuccessResponse<List<String>>> searchMovies(
+    public ResponseEntity<ApiSuccessResponse<List<KeywordResponse>>> searchMovies(
             @RequestParam String keyword
     ) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 검색어 목록", movieService.getKeywords(keyword)));

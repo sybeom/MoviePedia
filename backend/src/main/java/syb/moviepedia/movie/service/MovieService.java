@@ -10,10 +10,7 @@ import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
-import syb.moviepedia.movie.dto.response.MovieCreditResponse;
-import syb.moviepedia.movie.dto.response.MovieDetailResponse;
-import syb.moviepedia.movie.dto.response.MovieSummaryResponse;
+import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.CountryRepository;
@@ -71,10 +68,13 @@ public class MovieService {
                     return movieRepository.save(toMovieFromDetail(detail, certification));
                 });
 
-        // 영화가 있더라도 기타 세부 사항이 채워져있지 않으면
+        // 영화가 있더라도 기타(등급, 런타임, 국가) 채워져있지 않을 때.
+        // 보통 카테고리 영화 저장시 기타 정보는 저장되지 않아 상세 페이지 조회시 실행됨
         if(!movie.getDetailFetched()) {
             log.info("getMovieDetail(): 영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
+
+            // TODO: 확인 결과 등급은 초기 데이터 설정시 카테고리에서 채우는 것같은데 중복 저장아닌지 . 확인해보기
             String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
             updateMovie(movie, detail, certification);
         }
@@ -85,7 +85,7 @@ public class MovieService {
         // 영화의 코멘트가 20개 이상이면 평점 조회
         Double rating = movie.getDisplayRating();
 
-        return toMovieDetailDto(movie, creditDto, rating);
+        return toMovieDetailResponse(movie, creditDto, rating);
     }
 
     // 출연 배우
@@ -150,6 +150,7 @@ public class MovieService {
 
     // 영화 상세 정보 -> 영화 엔티티 가공
     private Movie toMovieFromDetail(TmdbMovieDetail detail, String certification) {
+        List<String> countries = countryRepository.findNameByCodeIn(detail.country());
         return Movie.builder()
                 .code(detail.id())
                 .title(detail.title())
@@ -159,7 +160,7 @@ public class MovieService {
                 .certification(certification)
                 .overview(detail.overview())
                 .releaseDate(detail.releaseYear())
-                .country(detail.country())
+                .country(countries)
                 .runtime(detail.runtime())
                 .globalRating(detail.globalRating())
                 .detailFetched(true)
@@ -167,13 +168,14 @@ public class MovieService {
     }
 
     // 영화 상세 DTO 가공
-    private MovieDetailResponse toMovieDetailDto(Movie movie, List<MovieCreditResponse> dto, Double rating) {
+    private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, Double rating) {
         return MovieDetailResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
                 .posterPath(movie.getPosterPath())
                 .backdropPath(movie.getBackdropPath())
                 .genres(movie.getGenres())
+                .certification(movie.getCertification())
                 .overview(movie.getOverview())
                 .releaseYear(movie.getReleaseDate().getYear())
                 .country(movie.getCountry())
@@ -222,7 +224,12 @@ public class MovieService {
     }
 
     // 영화 검색 목록
-    public List<String> getKeywords(String keyword) {
-        return tmdbClient.getKeywordList(keyword).results().stream().map(kw -> kw.title()).toList();
+    public List<KeywordResponse> getKeywords(String keyword) {
+        return tmdbClient.getKeywordList(keyword).results().stream().map(
+                tmdbKeyword -> KeywordResponse.builder()
+                        .code(tmdbKeyword.id())
+                        .title(tmdbKeyword.title())
+                        .build())
+                .toList();
     }
 }

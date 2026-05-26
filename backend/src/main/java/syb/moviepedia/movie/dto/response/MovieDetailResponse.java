@@ -24,6 +24,7 @@ public record MovieDetailResponse(
         String backdropPath,
         String posterPath,
         List<String> genres,
+        String certification,
         String overview,
         Integer releaseYear,
         List<String> country,
