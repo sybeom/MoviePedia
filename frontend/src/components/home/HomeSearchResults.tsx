@@ -2,13 +2,21 @@ type HomeSearchResultsProps = {
   query: string
   titles: string[]
   isLoading: boolean
+  isOpen: boolean
+  activeIndex: number
 }
 
 // 홈 검색 목록 레이어 구성
-function HomeSearchResults({ query, titles, isLoading }: HomeSearchResultsProps) {
+function HomeSearchResults({
+  query,
+  titles,
+  isLoading,
+  isOpen,
+  activeIndex,
+}: HomeSearchResultsProps) {
   const trimmedQuery = query.trim()
 
-  if (!trimmedQuery) {
+  if (!trimmedQuery || !isOpen) {
     return null
   }
 
@@ -18,7 +26,14 @@ function HomeSearchResults({ query, titles, isLoading }: HomeSearchResultsProps)
         <p className="home-search-result-empty">검색 중...</p>
       ) : titles.length > 0 ? (
         titles.map((title, index) => (
-          <div className="home-search-result-item" key={`${title}-${index}`} role="option">
+          <div
+            className={`home-search-result-item${
+              activeIndex === index ? ' home-search-result-item-active' : ''
+            }`}
+            key={`${title}-${index}`}
+            role="option"
+            aria-selected={activeIndex === index}
+          >
             <p className="home-search-result-title">{title}</p>
           </div>
         ))

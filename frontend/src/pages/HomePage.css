@@ -102,6 +102,10 @@
   background: #f8fafc;
 }
 
+.home-search-result-item-active {
+  background: #f8fafc;
+}
+
 .home-search-result-title,
 .home-search-result-empty {
   margin: 0;

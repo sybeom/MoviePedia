@@ -417,6 +417,12 @@ function HomePage() {
   // 검색 결과 상태 관리
   const [searchMovies, setSearchMovies] = useState<SearchMovieTitle[]>([])
 
+  // 검색 목록 노출 상태 관리
+  const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
+
+  // 검색 목록 키보드 선택 상태 관리
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+
   // 인기 영화 목록 상태 관리
   const [popularMovies, setPopularMovies] = useState<MovieCard[]>([])
 
@@ -455,6 +461,9 @@ function HomePage() {
 
   // 영화 목록 요청 중복 방지 참조 준비
   const hasLoadedMoviesRef = useRef(false)
+
+  // 검색 영역 참조 준비
+  const searchBoxRef = useRef<HTMLDivElement | null>(null)
 
   const popularPlaceholderMovies = createPlaceholderMovies('popular-placeholder')
   const nowPlayingPlaceholderMovies = createPlaceholderMovies('now-playing-placeholder')
@@ -548,12 +557,15 @@ function HomePage() {
         }
 
         setSearchMovies(normalizeSearchTitles(response))
+        setActiveSearchIndex(-1)
+        setIsSearchResultsOpen(true)
       } catch {
         if (!isMounted) {
           return
         }
 
         setSearchMovies([])
+        setActiveSearchIndex(-1)
       } finally {
         if (isMounted) {
           setIsSearchLoading(false)
@@ -566,6 +578,32 @@ function HomePage() {
       window.clearTimeout(debounceTimer)
     }
   }, [query])
+
+  useEffect(() => {
+    // 검색 영역 바깥 클릭 닫기 처리
+    function handleDocumentMouseDown(event: MouseEvent) {
+      if (!searchBoxRef.current?.contains(event.target as Node)) {
+        setIsSearchResultsOpen(false)
+        setActiveSearchIndex(-1)
+      }
+    }
+
+    // ESC 입력 닫기 처리
+    function handleDocumentKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsSearchResultsOpen(false)
+        setActiveSearchIndex(-1)
+      }
+    }
+
+    document.addEventListener('mousedown', handleDocumentMouseDown)
+    document.addEventListener('keydown', handleDocumentKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentMouseDown)
+      document.removeEventListener('keydown', handleDocumentKeyDown)
+    }
+  }, [])
 
   // 이전 인기 영화 페이지 이동 처리
   function handlePrevPopularPage() {
@@ -607,6 +645,7 @@ function HomePage() {
 
     if (!trimmedQuery) {
       setSearchMovies([])
+      setActiveSearchIndex(-1)
       return
     }
 
@@ -619,8 +658,11 @@ function HomePage() {
       })
 
       setSearchMovies(normalizeSearchTitles(response))
+      setActiveSearchIndex(-1)
+      setIsSearchResultsOpen(true)
     } catch {
       setSearchMovies([])
+      setActiveSearchIndex(-1)
       setMessage('검색 요청에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
@@ -635,7 +677,7 @@ function HomePage() {
       <main className="main-container">
         <section className="search-section" aria-labelledby="search-title">
           <h1 id="search-title">보고 싶은 영화를 찾아보세요.</h1>
-          <div className="search-box-shell">
+          <div className="search-box-shell" ref={searchBoxRef}>
             <form className="search-form" onSubmit={handleSearch}>
               <label className="sr-only" htmlFor="movie-search">
                 영화 검색
@@ -654,6 +696,49 @@ function HomePage() {
                   if (!nextQuery.trim()) {
                     setSearchMovies([])
                     setIsSearchLoading(false)
+                    setIsSearchResultsOpen(false)
+                    setActiveSearchIndex(-1)
+                    return
+                  }
+
+                  setActiveSearchIndex(-1)
+                  setIsSearchResultsOpen(true)
+                }}
+                onFocus={() => {
+                  if (query.trim()) {
+                    setIsSearchResultsOpen(true)
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (!query.trim() || searchMovies.length === 0) {
+                    return
+                  }
+
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault()
+                    setIsSearchResultsOpen(true)
+                    setActiveSearchIndex((previousIndex) =>
+                      previousIndex < searchMovies.length - 1 ? previousIndex + 1 : previousIndex,
+                    )
+                    return
+                  }
+
+                  if (event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    setIsSearchResultsOpen(true)
+                    setActiveSearchIndex((previousIndex) => {
+                      if (previousIndex === -1) {
+                        return searchMovies.length - 1
+                      }
+
+                      return previousIndex > 0 ? previousIndex - 1 : 0
+                    })
+                    return
+                  }
+
+                  if (event.key === 'Escape') {
+                    setIsSearchResultsOpen(false)
+                    setActiveSearchIndex(-1)
                   }
                 }}
               />
@@ -661,7 +746,13 @@ function HomePage() {
                 {isSubmitting ? '검색 중...' : '검색'}
               </button>
             </form>
-            <HomeSearchResults query={query} titles={searchMovies} isLoading={isSearchLoading} />
+            <HomeSearchResults
+              query={query}
+              titles={searchMovies}
+              isLoading={isSearchLoading}
+              isOpen={isSearchResultsOpen}
+              activeIndex={activeSearchIndex}
+            />
           </div>
           {message ? <p className="search-message">{message}</p> : null}
         </section>
