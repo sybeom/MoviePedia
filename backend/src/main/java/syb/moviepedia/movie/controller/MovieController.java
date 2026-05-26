@@ -60,7 +60,7 @@ public class MovieController {
         return ResponseEntity.ok().body(ApiResult.success("영화 상세 정보", movieService.getMovieDetail(movieCode)));
     }
 
-    //TODO: APIReust 클래스를 성공, 실패 별도로 나눈게 좋아 보인다.
+    //TODO: API Result 클래스를 성공, 실패 별도로 나눈게 좋아 보인다.
     // 나누면 매번 Swagger 응답 클래스를 만들지 않아도 될것 같다
     @Operation(summary = "검색어 목록", description = "키워드에 대한 관련 검색어 목록을 보여준다")
     @ApiResponses({
