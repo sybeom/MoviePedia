@@ -29,6 +29,9 @@ import java.util.List;
 public class MovieController {
     private final MovieService movieService;
 
+    /**
+     * 엘라스틱 도입 커밋
+     */
     @Operation(
             summary = "카테고리 별 영화 목록", description = "홈 화면 카테고리 별 영화 목록을 가져온다.")
     @ApiResponses({
