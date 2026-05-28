@@ -1,66 +1,49 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { request } from '../api/client'
-import rating12Icon from '../assets/ratings/12.svg'
-import rating15Icon from '../assets/ratings/15.svg'
-import rating19Icon from '../assets/ratings/19.svg'
-import ratingAllIcon from '../assets/ratings/all.svg'
-import Header from '../components/Header'
+import { useNavigate } from 'react-router-dom'
+import darkModeIcon from '../assets/icons/dark_mode.svg'
+import lightModeIcon from '../assets/icons/light_mode.svg'
+import naverLoginButtonImage from '../assets/icons/NAVER_login.png'
+import nextIcon from '../assets/icons/next.svg'
+import previousIcon from '../assets/icons/previous.svg'
+import searchIcon from '../assets/icons/search.svg'
+import { login, logout } from '../api/auth'
+import { isApiError, request } from '../api/client'
 import HomeSearchResults from '../components/home/HomeSearchResults'
+import {
+  clearAuthSession,
+  getAuthSession,
+  saveAuthSession,
+  subscribeAuthSessionChange,
+  type AuthSession,
+} from '../utils/authStorage'
 import './HomePage.css'
-
-type MovieCollectionResponse = {
-  popular?: unknown[]
-  upcoming?: unknown[]
-  nowPlaying?: unknown[]
-}
-
-type MovieCard = {
-  id: string
-  rank: string
-  title: string
-  poster: string
-  genre: string
-  voteAverage: string
-  certification: string
-}
 
 type SearchMovie = {
   code: string
   title: string
 }
 
-type MovieSectionProps = {
+type PopularMovie = {
+  code: string
   title: string
-  titleId: string
-  movies: MovieCard[]
-  placeholderMovies: MovieCard[]
-  isLoading: boolean
-  message: string
-  currentPage: number
-  totalPages: number
-  visibleMovies: MovieCard[]
-  onPrevPage: () => void
-  onNextPage: () => void
-  showRankBadge?: boolean
+  poster: string
 }
 
-const MOVIES_PER_PAGE = 5
-const PLACEHOLDER_CARD_COUNT = 5
+type MovieCollectionResponse = {
+  popular?: unknown
+}
+
+type PopularTransitionDirection = 'previous' | 'next'
+type HomeTheme = 'dark' | 'light'
+
 const SEARCH_DEBOUNCE_MS = 500
-const CERTIFICATION_ICON_MAP: Record<string, string> = {
-  '12': rating12Icon,
-  '15': rating15Icon,
-  '19': rating19Icon,
-  ALL: ratingAllIcon,
-}
+const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
+const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
 
-// 객체 데이터 여부 확인
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-// 문자열 필드 추출 처리
 function getStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -73,7 +56,6 @@ function getStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
-// 문자열 또는 숫자 필드 추출 처리
 function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -90,135 +72,7 @@ function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
-// 영화 식별자 추출 처리
-function getMovieIdentifier(record: Record<string, unknown>) {
-  const directIdentifier = getScalarStringValue(record, [
-    'movieCode',
-    'movie_code',
-    'id',
-    'movieId',
-    'movieCd',
-    'code',
-  ])
-
-  if (directIdentifier) {
-    return directIdentifier
-  }
-
-  const nestedCandidates = [record.movie, record.content, record.item, record.data]
-
-  for (const candidate of nestedCandidates) {
-    if (!isRecord(candidate)) {
-      continue
-    }
-
-    const nestedIdentifier = getScalarStringValue(candidate, [
-      'movieCode',
-      'movie_code',
-      'id',
-      'movieId',
-      'movieCd',
-      'code',
-    ])
-
-    if (nestedIdentifier) {
-      return nestedIdentifier
-    }
-  }
-
-  return ''
-}
-
-// 장르 문자열 변환 처리
-function getGenreValue(record: Record<string, unknown>) {
-  const genreValue = record.genre
-
-  if (Array.isArray(genreValue)) {
-    return genreValue
-      .map((value) => {
-        if (typeof value === 'string' && value.trim()) {
-          return value
-        }
-
-        if (isRecord(value)) {
-          return getStringValue(value, ['name', 'genre'])
-        }
-
-        return ''
-      })
-      .filter(Boolean)
-      .join(', ')
-  }
-
-  if (typeof genreValue === 'string' && genreValue.trim()) {
-    return genreValue
-  }
-
-  return ''
-}
-
-// 대표 포스터 URL 추출 처리
-function getPrimaryPosterUrl(poster: string) {
-  return (
-    poster
-      .split('|')
-      .map((url) => url.trim())
-      .find(Boolean) ?? ''
-  )
-}
-
-// 관람등급 문자열 추출 처리
-function getCertificationValue(record: Record<string, unknown>) {
-  const certification = getStringValue(record, ['certification'])
-
-  if (!certification) {
-    return ''
-  }
-
-  return certification.toUpperCase()
-}
-
-// 관람등급 아이콘 경로 조회 처리
-function getCertificationIcon(certification: string) {
-  return CERTIFICATION_ICON_MAP[certification] ?? ''
-}
-
-// 영화 목록 정규화 처리
-function normalizeMovies(data: unknown): MovieCard[] {
-  if (!Array.isArray(data)) {
-    return []
-  }
-
-  return data.filter(isRecord).map((movie, index) => {
-    const title =
-      getStringValue(movie, ['title', 'movieNm', 'name', 'movieTitle']) || `영화 ${index + 1}`
-    const rank = getScalarStringValue(movie, ['rank', 'rnum']) || String(index + 1)
-    const poster = getPrimaryPosterUrl(
-      getStringValue(movie, ['poster', 'posterUrl', 'imageUrl', 'posterPath', 'poster_path']),
-    )
-    const genre = getGenreValue(movie)
-    const voteAverage = getScalarStringValue(movie, [
-      'voteAverage',
-      'vote',
-      'rating',
-      'vote_average',
-    ])
-    const certification = getCertificationValue(movie)
-
-    return {
-      id: getMovieIdentifier(movie) || `${title}-${rank}-${index}`,
-      rank,
-      title,
-      poster,
-      genre,
-      voteAverage,
-      certification,
-    }
-  })
-}
-
-// 검색 제목 목록 정규화 처리
-function normalizeSearchTitles(data: unknown): SearchMovie[] {
+function normalizeSearchMovies(data: unknown): SearchMovie[] {
   if (!Array.isArray(data)) {
     return []
   }
@@ -229,323 +83,106 @@ function normalizeSearchTitles(data: unknown): SearchMovie[] {
       const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
 
-      return {
-        code,
-        title,
-      }
+      return { code, title }
     })
     .filter((value) => value.code && value.title)
 }
 
-// 빈 카드 목록 생성 처리
-function createPlaceholderMovies(prefix: string, count = PLACEHOLDER_CARD_COUNT): MovieCard[] {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `${prefix}-${index}`,
-    rank: '',
-    title: '',
-    poster: '',
-    genre: '',
-    voteAverage: '',
-    certification: '',
-  }))
+function normalizePopularMovies(data: unknown): PopularMovie[] {
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data
+    .filter(isRecord)
+    .map((value) => {
+      const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
+      const title = getStringValue(value, ['title', 'movieNm', 'name'])
+      const poster = getStringValue(value, ['poster', 'posterPath', 'poster_path'])
+
+      return { code, title, poster }
+    })
+    .filter((value) => value.code && value.title)
 }
 
-// 현재 페이지 노출 목록 계산 처리
-function getVisibleMovies(movies: MovieCard[], page: number) {
-  return Array.from({ length: MOVIES_PER_PAGE }, (_, index) => {
-    const movieIndex = page * MOVIES_PER_PAGE + index
-
-    return (
-      movies[movieIndex] ?? {
-        id: `movie-empty-${movieIndex}`,
-        rank: '',
-        title: '',
-        poster: '',
-        genre: '',
-        voteAverage: '',
-        certification: '',
-      }
-    )
-  })
-}
-
-// 등급 아이콘 포함 제목 행 구성 처리
-function MovieTitleRow({ movie }: { movie: MovieCard }) {
-  const certificationIcon = getCertificationIcon(movie.certification)
-
-  return (
-    <div className="movie-title-row">
-      {movie.certification
-        ? certificationIcon
-          ? (
-              <img
-                className="movie-certification-icon"
-                src={certificationIcon}
-                alt={`${movie.certification} 등급`}
-              />
-            )
-          : (
-              <span className="movie-certification-fallback">{movie.certification}</span>
-            )
-        : null}
-      <h3>
-        <span className="movie-title-text">{movie.title || ' '}</span>
-      </h3>
-    </div>
-  )
-}
-
-// 영화 상세 이동 경로 계산 처리
-function getMovieDetailPath(movie: MovieCard) {
-  return `/movies/${movie.id}`
-}
-
-// 영화 섹션 공통 화면 구성
-function MovieSection({
-  title,
-  titleId,
-  movies,
-  placeholderMovies,
-  isLoading,
-  message,
-  currentPage,
-  totalPages,
-  visibleMovies,
-  onPrevPage,
-  onNextPage,
-  showRankBadge = false,
-}: MovieSectionProps) {
-  return (
-    <section className="movie-list-section" aria-labelledby={titleId}>
-      <div className="movie-section-header">
-        <div className="movie-section-copy">
-          <h2 id={titleId}>{title}</h2>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="movie-carousel">
-          <div className="movie-grid">
-            {placeholderMovies.map((movie) => (
-              <article className="movie-card-shell" key={movie.id}>
-                <div className="movie-poster-shell" />
-                <div className="movie-card-content movie-card-content-skeleton">
-                  <div className="movie-title-shell" />
-                  <div className="movie-meta-shell" />
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : movies.length > 0 ? (
-        <div className="movie-carousel">
-          {movies.length > MOVIES_PER_PAGE ? (
-            <>
-              <button
-                className="movie-nav-button movie-nav-button-left"
-                type="button"
-                onClick={onPrevPage}
-                disabled={currentPage === 0}
-                aria-label={`이전 ${title} 보기`}
-              >
-                <span className="movie-nav-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                    <path d="M14.5 5 8 12l6.5 7" />
-                  </svg>
-                </span>
-              </button>
-              <button
-                className="movie-nav-button movie-nav-button-right"
-                type="button"
-                onClick={onNextPage}
-                disabled={currentPage === totalPages - 1}
-                aria-label={`다음 ${title} 보기`}
-              >
-                <span className="movie-nav-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                    <path d="m9.5 5 6.5 7-6.5 7" />
-                  </svg>
-                </span>
-              </button>
-            </>
-          ) : null}
-
-          <div className="movie-grid">
-            {visibleMovies.map((movie) => (
-              <article
-                className={`movie-card-shell${movie.title ? '' : ' movie-card-shell-empty'}`}
-                key={movie.id}
-              >
-                <Link
-                  className="movie-card-link"
-                  to={getMovieDetailPath(movie)}
-                  state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                >
-                  <div className="movie-poster-shell">
-                    {movie.poster ? (
-                      <img className="movie-poster-image" src={movie.poster} alt={movie.title} />
-                    ) : null}
-                    {showRankBadge && movie.rank ? (
-                      <span className="movie-rank-badge">{movie.rank}</span>
-                    ) : null}
-                  </div>
-                </Link>
-                <div className="movie-card-content">
-                  <Link
-                    className="movie-title-link"
-                    to={getMovieDetailPath(movie)}
-                    state={{ movie: { id: movie.id, title: movie.title, poster: movie.poster } }}
-                  >
-                    <MovieTitleRow movie={movie} />
-                  </Link>
-                  <p>{movie.genre || ' '}</p>
-                  <p>{movie.voteAverage ? `평점 ${movie.voteAverage}` : ' '}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <p className="movie-section-message">{message}</p>
-      )}
-    </section>
-  )
-}
-
-// 홈 화면 구성
 function HomePage() {
-  // 검색어 상태 관리
-  const [query, setQuery] = useState('')
-
-  // 검색 메시지 상태 관리
-  const [message, setMessage] = useState('')
-
-  // 검색 진행 상태 관리
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // 실시간 검색 로딩 상태 관리
-  const [isSearchLoading, setIsSearchLoading] = useState(false)
-
-  // 검색 결과 상태 관리
-  const [searchMovies, setSearchMovies] = useState<SearchMovie[]>([])
-
-  // 검색 목록 노출 상태 관리
-  const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
-
-  // 검색 목록 키보드 선택 상태 관리
-  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
-
-  // 인기 영화 목록 상태 관리
-  const [popularMovies, setPopularMovies] = useState<MovieCard[]>([])
-
-  // 현재 상영중 목록 상태 관리
-  const [nowPlayingMovies, setNowPlayingMovies] = useState<MovieCard[]>([])
-
-  // 개봉 예정작 목록 상태 관리
-  const [upcomingMovies, setUpcomingMovies] = useState<MovieCard[]>([])
-
-  // 인기 영화 로딩 상태 관리
-  const [isPopularLoading, setIsPopularLoading] = useState(true)
-
-  // 현재 상영중 로딩 상태 관리
-  const [isNowPlayingLoading, setIsNowPlayingLoading] = useState(true)
-
-  // 개봉 예정작 로딩 상태 관리
-  const [isUpcomingLoading, setIsUpcomingLoading] = useState(true)
-
-  // 인기 영화 메시지 상태 관리
-  const [popularMessage, setPopularMessage] = useState('')
-
-  // 현재 상영중 메시지 상태 관리
-  const [nowPlayingMessage, setNowPlayingMessage] = useState('')
-
-  // 개봉 예정작 메시지 상태 관리
-  const [upcomingMessage, setUpcomingMessage] = useState('')
-
-  // 인기 영화 페이지 상태 관리
-  const [popularPage, setPopularPage] = useState(0)
-
-  // 현재 상영중 페이지 상태 관리
-  const [nowPlayingPage, setNowPlayingPage] = useState(0)
-
-  // 개봉 예정작 페이지 상태 관리
-  const [upcomingPage, setUpcomingPage] = useState(0)
-
-  // 영화 목록 요청 중복 방지 참조 준비
-  const hasLoadedMoviesRef = useRef(false)
-
-  // 검색 영역 참조 준비
+  const navigate = useNavigate()
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
-
-  const popularPlaceholderMovies = createPlaceholderMovies('popular-placeholder')
-  const nowPlayingPlaceholderMovies = createPlaceholderMovies('now-playing-placeholder')
-  const upcomingPlaceholderMovies = createPlaceholderMovies('upcoming-placeholder')
-
-  const popularCarouselMovies = popularMovies.length > 0 ? popularMovies : popularPlaceholderMovies
-  const nowPlayingCarouselMovies =
-    nowPlayingMovies.length > 0 ? nowPlayingMovies : nowPlayingPlaceholderMovies
-  const upcomingCarouselMovies =
-    upcomingMovies.length > 0 ? upcomingMovies : upcomingPlaceholderMovies
-
-  const popularTotalPages = Math.max(1, Math.ceil(popularCarouselMovies.length / MOVIES_PER_PAGE))
-  const nowPlayingTotalPages = Math.max(
-    1,
-    Math.ceil(nowPlayingCarouselMovies.length / MOVIES_PER_PAGE),
-  )
-  const upcomingTotalPages = Math.max(
-    1,
-    Math.ceil(upcomingCarouselMovies.length / MOVIES_PER_PAGE),
-  )
-
-  const visiblePopularMovies = getVisibleMovies(popularCarouselMovies, popularPage)
-  const visibleNowPlayingMovies = getVisibleMovies(nowPlayingCarouselMovies, nowPlayingPage)
-  const visibleUpcomingMovies = getVisibleMovies(upcomingCarouselMovies, upcomingPage)
-
-  useEffect(() => {
-    if (hasLoadedMoviesRef.current) {
-      return
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
+  const [theme, setTheme] = useState<HomeTheme>(() => {
+    if (typeof window === 'undefined') {
+      return 'dark'
     }
 
-    hasLoadedMoviesRef.current = true
+    const savedTheme = window.localStorage.getItem(HOME_THEME_STORAGE_KEY)
+    return savedTheme === 'light' ? 'light' : 'dark'
+  })
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [loginId, setLoginId] = useState('')
+  const [password, setPassword] = useState('')
+  const [loginMessage, setLoginMessage] = useState('')
+  const [isLoginSubmitting, setIsLoginSubmitting] = useState(false)
+  const [query, setQuery] = useState('')
+  const [message, setMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSearchLoading, setIsSearchLoading] = useState(false)
+  const [searchMovies, setSearchMovies] = useState<SearchMovie[]>([])
+  const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+  const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
+  const [isPopularLoading, setIsPopularLoading] = useState(true)
+  const [popularPage, setPopularPage] = useState(0)
+  const [popularTransitionDirection, setPopularTransitionDirection] =
+    useState<PopularTransitionDirection>('next')
+  const [popularAnimationTick, setPopularAnimationTick] = useState(0)
 
-    // 영화 목록 통합 조회 처리
-    async function fetchMovies() {
+  useEffect(() => {
+    function handleAuthSessionChange() {
+      setAuthSession(getAuthSession())
+    }
+
+    return subscribeAuthSessionChange(handleAuthSessionChange)
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem(HOME_THEME_STORAGE_KEY, theme)
+  }, [theme])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadPopularMovies() {
+      setIsPopularLoading(true)
+
       try {
         const response = await request<MovieCollectionResponse>('/movies', {
           method: 'GET',
         })
 
-        const normalizedPopularMovies = normalizeMovies(response?.popular ?? [])
-        const normalizedNowPlayingMovies = normalizeMovies(response?.nowPlaying ?? [])
-        const normalizedUpcomingMovies = normalizeMovies(response?.upcoming ?? [])
+        if (!isMounted) {
+          return
+        }
 
-        setPopularMovies(normalizedPopularMovies)
-        setNowPlayingMovies(normalizedNowPlayingMovies)
-        setUpcomingMovies(normalizedUpcomingMovies)
-
+        setPopularMovies(normalizePopularMovies(response?.popular))
         setPopularPage(0)
-        setNowPlayingPage(0)
-        setUpcomingPage(0)
-
-        setPopularMessage(normalizedPopularMovies.length === 0 ? '인기 영화가 아직 없습니다.' : '')
-        setNowPlayingMessage(
-          normalizedNowPlayingMovies.length === 0 ? '현재 상영중인 영화가 아직 없습니다.' : '',
-        )
-        setUpcomingMessage(
-          normalizedUpcomingMovies.length === 0 ? '개봉 예정작이 아직 없습니다.' : '',
-        )
       } catch {
-        setPopularMessage('인기 영화를 불러오지 못했습니다.')
-        setNowPlayingMessage('현재 상영중인 영화를 불러오지 못했습니다.')
-        setUpcomingMessage('개봉 예정작을 불러오지 못했습니다.')
+        if (!isMounted) {
+          return
+        }
+
+        setPopularMovies([])
       } finally {
-        setIsPopularLoading(false)
-        setIsNowPlayingLoading(false)
-        setIsUpcomingLoading(false)
+        if (isMounted) {
+          setIsPopularLoading(false)
+        }
       }
     }
 
-    void fetchMovies()
+    void loadPopularMovies()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   useEffect(() => {
@@ -560,15 +197,16 @@ function HomePage() {
       setIsSearchLoading(true)
 
       try {
-        const response = await request<unknown>(`/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`, {
-          method: 'GET',
-        })
+        const response = await request<unknown>(
+          `/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`,
+          { method: 'GET' },
+        )
 
         if (!isMounted) {
           return
         }
 
-        setSearchMovies(normalizeSearchTitles(response))
+        setSearchMovies(normalizeSearchMovies(response))
         setActiveSearchIndex(-1)
         setIsSearchResultsOpen(true)
       } catch {
@@ -592,7 +230,6 @@ function HomePage() {
   }, [query])
 
   useEffect(() => {
-    // 검색 영역 바깥 클릭 닫기 처리
     function handleDocumentMouseDown(event: MouseEvent) {
       if (!searchBoxRef.current?.contains(event.target as Node)) {
         setIsSearchResultsOpen(false)
@@ -600,7 +237,6 @@ function HomePage() {
       }
     }
 
-    // ESC 입력 닫기 처리
     function handleDocumentKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsSearchResultsOpen(false)
@@ -617,42 +253,74 @@ function HomePage() {
     }
   }, [])
 
-  // 이전 인기 영화 페이지 이동 처리
-  function handlePrevPopularPage() {
-    setPopularPage((previousPage) => Math.max(previousPage - 1, 0))
+  function moveToMovieDetail(movie: SearchMovie | PopularMovie) {
+    setIsSearchResultsOpen(false)
+    setActiveSearchIndex(-1)
+    navigate(`/movies/${movie.code}`, {
+      state: {
+        movie: {
+          id: movie.code,
+          title: movie.title,
+          poster: 'poster' in movie ? movie.poster : '',
+        },
+      },
+    })
   }
 
-  // 다음 인기 영화 페이지 이동 처리
-  function handleNextPopularPage() {
-    setPopularPage((previousPage) => Math.min(previousPage + 1, popularTotalPages - 1))
+  async function handleLogout() {
+    if (isLoggingOut) {
+      return
+    }
+
+    setIsLoggingOut(true)
+
+    try {
+      await logout()
+    } finally {
+      clearAuthSession()
+      setIsLoggingOut(false)
+    }
   }
 
-  // 이전 현재 상영중 페이지 이동 처리
-  function handlePrevNowPlayingPage() {
-    setNowPlayingPage((previousPage) => Math.max(previousPage - 1, 0))
+  async function handleInlineLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (isLoginSubmitting) {
+      return
+    }
+
+    setIsLoginSubmitting(true)
+    setLoginMessage('')
+
+    try {
+      const loginResponse = await login({
+        loginId,
+        password,
+      })
+
+      if (!loginResponse) {
+        throw new Error('로그인 응답 데이터가 없습니다.')
+      }
+
+      saveAuthSession(loginResponse)
+      setLoginId('')
+      setPassword('')
+      setLoginMessage('')
+    } catch (error) {
+      if (isApiError(error) && error.status === 401) {
+        setLoginMessage(error.message)
+      } else {
+        setLoginMessage('아이디와 비밀번호를 다시 확인해주세요.')
+      }
+    } finally {
+      setIsLoginSubmitting(false)
+    }
   }
 
-  // 다음 현재 상영중 페이지 이동 처리
-  function handleNextNowPlayingPage() {
-    setNowPlayingPage((previousPage) => Math.min(previousPage + 1, nowPlayingTotalPages - 1))
-  }
-
-  // 이전 개봉 예정작 페이지 이동 처리
-  function handlePrevUpcomingPage() {
-    setUpcomingPage((previousPage) => Math.max(previousPage - 1, 0))
-  }
-
-  // 다음 개봉 예정작 페이지 이동 처리
-  function handleNextUpcomingPage() {
-    setUpcomingPage((previousPage) => Math.min(previousPage + 1, upcomingTotalPages - 1))
-  }
-
-  // 검색 버튼 즉시 실행 처리
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const trimmedQuery = query.trim()
-
     setMessage('')
 
     if (!trimmedQuery) {
@@ -661,17 +329,28 @@ function HomePage() {
       return
     }
 
+    if (activeSearchIndex >= 0 && searchMovies[activeSearchIndex]) {
+      moveToMovieDetail(searchMovies[activeSearchIndex])
+      return
+    }
+
     setIsSubmitting(true)
     setIsSearchLoading(true)
 
     try {
-      const response = await request<unknown>(`/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`, {
-        method: 'GET',
-      })
+      const response = await request<unknown>(
+        `/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`,
+        { method: 'GET' },
+      )
 
-      setSearchMovies(normalizeSearchTitles(response))
+      const normalizedMovies = normalizeSearchMovies(response)
+      setSearchMovies(normalizedMovies)
       setActiveSearchIndex(-1)
       setIsSearchResultsOpen(true)
+
+      if (normalizedMovies.length === 1) {
+        moveToMovieDetail(normalizedMovies[0])
+      }
     } catch {
       setSearchMovies([])
       setActiveSearchIndex(-1)
@@ -682,136 +361,325 @@ function HomePage() {
     }
   }
 
+  const popularPageCount = popularMovies.length
+  const visiblePopularMovie = popularMovies[popularPage] ?? null
+  const previousPopularMovie = popularPage > 0 ? popularMovies[popularPage - 1] : null
+  const nextPopularMovie = popularPage < popularPageCount - 1 ? popularMovies[popularPage + 1] : null
+
+  function moveToPreviousPopularMovie() {
+    setPopularTransitionDirection('previous')
+    setPopularAnimationTick((value) => value + 1)
+    setPopularPage((page) => Math.max(0, page - 1))
+  }
+
+  function moveToNextPopularMovie() {
+    setPopularTransitionDirection('next')
+    setPopularAnimationTick((value) => value + 1)
+    setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
+  }
+
   return (
-    <div className="app">
-      <Header showAuthActions />
+    <div className={`home-mobile-page home-mobile-page-${theme}`}>
+      <div className="home-desktop-container">
+        <main className="home-mobile-shell">
+          <section className="home-mobile-search-only">
+            <div className="search-box-shell" ref={searchBoxRef}>
+              <form className="home-mobile-search-form" onSubmit={handleSearch}>
+                <label className="sr-only" htmlFor="movie-search">
+                  영화 검색
+                </label>
+                <input
+                  id="movie-search"
+                  className="home-mobile-search-input"
+                  type="search"
+                  placeholder="영화 제목을 입력해보세요"
+                  value={query}
+                  onChange={(event) => {
+                    const nextQuery = event.target.value
+                    setQuery(nextQuery)
 
-      <main className="main-container">
-        <section className="search-section" aria-labelledby="search-title">
-          <h1 id="search-title">보고 싶은 영화를 찾아보세요.</h1>
-          <div className="search-box-shell" ref={searchBoxRef}>
-            <form className="search-form" onSubmit={handleSearch}>
-              <label className="sr-only" htmlFor="movie-search">
-                영화 검색
-              </label>
-              <input
-                id="movie-search"
-                className="search-input"
-                type="search"
-                placeholder="영화 제목, 배우, 감독을 검색해보세요."
-                value={query}
-                onChange={(event) => {
-                  const nextQuery = event.target.value
+                    if (!nextQuery.trim()) {
+                      setSearchMovies([])
+                      setIsSearchLoading(false)
+                      setIsSearchResultsOpen(false)
+                      setActiveSearchIndex(-1)
+                      return
+                    }
 
-                  setQuery(nextQuery)
-
-                  if (!nextQuery.trim()) {
-                    setSearchMovies([])
-                    setIsSearchLoading(false)
-                    setIsSearchResultsOpen(false)
                     setActiveSearchIndex(-1)
-                    return
-                  }
-
-                  setActiveSearchIndex(-1)
-                  setIsSearchResultsOpen(true)
-                }}
-                onFocus={() => {
-                  if (query.trim()) {
                     setIsSearchResultsOpen(true)
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (!query.trim() || searchMovies.length === 0) {
-                    return
-                  }
+                  }}
+                  onFocus={() => {
+                    if (query.trim()) {
+                      setIsSearchResultsOpen(true)
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (!query.trim() || searchMovies.length === 0) {
+                      return
+                    }
 
-                  if (event.key === 'ArrowDown') {
-                    event.preventDefault()
-                    setIsSearchResultsOpen(true)
-                    setActiveSearchIndex((previousIndex) =>
-                      previousIndex < searchMovies.length - 1 ? previousIndex + 1 : previousIndex,
-                    )
-                    return
-                  }
+                    if (event.key === 'ArrowDown') {
+                      event.preventDefault()
+                      setIsSearchResultsOpen(true)
+                      setActiveSearchIndex((previousIndex) =>
+                        previousIndex < searchMovies.length - 1 ? previousIndex + 1 : previousIndex,
+                      )
+                      return
+                    }
 
-                  if (event.key === 'ArrowUp') {
-                    event.preventDefault()
-                    setIsSearchResultsOpen(true)
-                    setActiveSearchIndex((previousIndex) => {
-                      if (previousIndex === -1) {
-                        return searchMovies.length - 1
-                      }
+                    if (event.key === 'ArrowUp') {
+                      event.preventDefault()
+                      setIsSearchResultsOpen(true)
+                      setActiveSearchIndex((previousIndex) => {
+                        if (previousIndex === -1) {
+                          return searchMovies.length - 1
+                        }
 
-                      return previousIndex > 0 ? previousIndex - 1 : 0
-                    })
-                    return
-                  }
+                        return previousIndex > 0 ? previousIndex - 1 : 0
+                      })
+                      return
+                    }
 
-                  if (event.key === 'Escape') {
-                    setIsSearchResultsOpen(false)
-                    setActiveSearchIndex(-1)
-                  }
-                }}
+                    if (event.key === 'Enter' && activeSearchIndex >= 0 && searchMovies[activeSearchIndex]) {
+                      event.preventDefault()
+                      moveToMovieDetail(searchMovies[activeSearchIndex])
+                      return
+                    }
+
+                    if (event.key === 'Escape') {
+                      setIsSearchResultsOpen(false)
+                      setActiveSearchIndex(-1)
+                    }
+                  }}
+                />
+                <button className="home-mobile-search-button" type="submit" disabled={isSubmitting}>
+                  <span className="sr-only">{isSubmitting ? '검색 중..' : '검색'}</span>
+                  <img className="home-mobile-search-button-icon" src={searchIcon} alt="" aria-hidden="true" />
+                </button>
+              </form>
+
+              <HomeSearchResults
+                query={query}
+                movies={searchMovies}
+                isLoading={isSearchLoading}
+                isOpen={isSearchResultsOpen}
+                activeIndex={activeSearchIndex}
               />
-              <button className="search-button" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? '검색 중...' : '검색'}
-              </button>
-            </form>
-            <HomeSearchResults
-              query={query}
-              movies={searchMovies}
-              isLoading={isSearchLoading}
-              isOpen={isSearchResultsOpen}
-              activeIndex={activeSearchIndex}
-            />
+            </div>
+
+            {message ? <p className="home-mobile-search-message">{message}</p> : null}
+          </section>
+
+          <section className="home-popular-section">
+            <div className="home-popular-section-header">
+              <h2>인기 영화</h2>
+            </div>
+
+            {isPopularLoading ? (
+              <p className="home-popular-empty">인기 영화를 불러오는 중입니다.</p>
+            ) : visiblePopularMovie ? (
+              <div className="home-popular-carousel">
+                <button
+                  className="home-popular-side-button"
+                  type="button"
+                  onClick={moveToPreviousPopularMovie}
+                  disabled={popularPage === 0}
+                  aria-label="이전 인기 영화"
+                >
+                  <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
+                </button>
+
+                <div
+                  className={`home-popular-track home-popular-track-${popularTransitionDirection}-${popularAnimationTick % 2 === 0 ? 'a' : 'b'}`}
+                >
+                  {previousPopularMovie ? (
+                    <button
+                      className="home-popular-preview-card home-popular-preview-card-previous"
+                      type="button"
+                      onClick={() => moveToMovieDetail(previousPopularMovie)}
+                      aria-label={`${previousPopularMovie.title} 미리보기`}
+                    >
+                      <div className="home-popular-preview-poster-shell">
+                        {previousPopularMovie.poster ? (
+                          <img
+                            className="home-popular-preview-poster"
+                            src={previousPopularMovie.poster}
+                            alt=""
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <div className="home-popular-preview-poster home-popular-poster-fallback">
+                            <span>{previousPopularMovie.title}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="home-popular-preview-title">{previousPopularMovie.title}</p>
+                    </button>
+                  ) : null}
+
+                  <button
+                    className="home-popular-card home-popular-card-current"
+                    type="button"
+                    key={visiblePopularMovie.code}
+                    onClick={() => moveToMovieDetail(visiblePopularMovie)}
+                  >
+                    <div className="home-popular-poster-shell">
+                      {visiblePopularMovie.poster ? (
+                        <img
+                          className="home-popular-poster"
+                          src={visiblePopularMovie.poster}
+                          alt={`${visiblePopularMovie.title} 포스터`}
+                        />
+                      ) : (
+                        <div className="home-popular-poster home-popular-poster-fallback">
+                          <span>{visiblePopularMovie.title}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="home-popular-title">{visiblePopularMovie.title}</p>
+                  </button>
+
+                  {nextPopularMovie ? (
+                    <button
+                      className="home-popular-preview-card home-popular-preview-card-next"
+                      type="button"
+                      onClick={() => moveToMovieDetail(nextPopularMovie)}
+                      aria-label={`${nextPopularMovie.title} 미리보기`}
+                    >
+                      <div className="home-popular-preview-poster-shell">
+                        {nextPopularMovie.poster ? (
+                          <img
+                            className="home-popular-preview-poster"
+                            src={nextPopularMovie.poster}
+                            alt=""
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <div className="home-popular-preview-poster home-popular-poster-fallback">
+                            <span>{nextPopularMovie.title}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="home-popular-preview-title">{nextPopularMovie.title}</p>
+                    </button>
+                  ) : null}
+                </div>
+
+                <button
+                  className="home-popular-side-button"
+                  type="button"
+                  onClick={moveToNextPopularMovie}
+                  disabled={popularPage >= popularPageCount - 1}
+                  aria-label="다음 인기 영화"
+                >
+                  <img className="home-popular-side-button-icon" src={nextIcon} alt="" aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <p className="home-popular-empty">표시할 인기 영화가 없습니다.</p>
+            )}
+          </section>
+        </main>
+      </div>
+
+      <aside className="home-mobile-sidebar" aria-label="메인 내비게이션">
+        <div className="home-mobile-brand-block">
+          <p className="home-mobile-brand-mark">MP</p>
+          <div className="home-mobile-brand-copy">
+            <strong>Movie Pedia</strong>
+            <span>당신의 영화 취향</span>
           </div>
-          {message ? <p className="search-message">{message}</p> : null}
-        </section>
+        </div>
 
-        <MovieSection
-          title="인기 영화"
-          titleId="popular-movie-title"
-          movies={popularMovies}
-          placeholderMovies={popularPlaceholderMovies}
-          isLoading={isPopularLoading}
-          message={popularMessage}
-          currentPage={popularPage}
-          totalPages={popularTotalPages}
-          visibleMovies={visiblePopularMovies}
-          onPrevPage={handlePrevPopularPage}
-          onNextPage={handleNextPopularPage}
-          showRankBadge
-        />
+        <nav className="home-mobile-nav">
+          {PRIMARY_NAV_ITEMS.map((item, index) => (
+            <button
+              className={`home-mobile-nav-item${index === 0 ? ' home-mobile-nav-item-active' : ''}`}
+              type="button"
+              key={item}
+            >
+              <span>{item}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-        <MovieSection
-          title="현재 상영중"
-          titleId="now-playing-movie-title"
-          movies={nowPlayingMovies}
-          placeholderMovies={nowPlayingPlaceholderMovies}
-          isLoading={isNowPlayingLoading}
-          message={nowPlayingMessage}
-          currentPage={nowPlayingPage}
-          totalPages={nowPlayingTotalPages}
-          visibleMovies={visibleNowPlayingMovies}
-          onPrevPage={handlePrevNowPlayingPage}
-          onNextPage={handleNextNowPlayingPage}
-        />
+      <aside className="home-mobile-auth-panel">
+        <div className="home-mobile-auth-card">
+          {authSession ? (
+            <div className="home-mobile-auth-session">
+              <p className="home-mobile-auth-session-nickname">{authSession.nickname ?? '사용자'}</p>
+              <button
+                className="home-mobile-auth-logout-button"
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? '로그아웃 중..' : '로그아웃'}
+              </button>
+            </div>
+          ) : (
+            <form className="home-mobile-inline-login" onSubmit={handleInlineLogin} noValidate>
+            <input
+              className="home-mobile-inline-login-input"
+              type="text"
+                placeholder="아이디"
+                autoComplete="username"
+                value={loginId}
+                onChange={(event) => setLoginId(event.target.value)}
+              />
+              <input
+                className="home-mobile-inline-login-input"
+                type="password"
+                placeholder="비밀번호"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            {loginMessage ? <p className="home-mobile-inline-login-message">{loginMessage}</p> : null}
+            <div className="home-mobile-inline-login-actions">
+              <button
+                className="home-mobile-signup-button"
+                type="button"
+                onClick={() => navigate('/signup')}
+              >
+                회원가입
+              </button>
+              <button className="home-mobile-auth-button" type="submit" disabled={isLoginSubmitting}>
+                {isLoginSubmitting ? '로그인 중..' : '로그인'}
+              </button>
+            </div>
+            <div className="home-mobile-social-login-divider" aria-hidden="true" />
+            <a
+              className="home-mobile-social-login-button"
+              href="http://localhost:8080/oauth2/authorization/naver"
+            >
+              <img
+                className="home-mobile-social-login-button-image"
+                src={naverLoginButtonImage}
+                alt="네이버로 로그인"
+              />
+            </a>
+          </form>
+        )}
+      </div>
+      </aside>
 
-        <MovieSection
-          title="개봉 예정작"
-          titleId="upcoming-movie-title"
-          movies={upcomingMovies}
-          placeholderMovies={upcomingPlaceholderMovies}
-          isLoading={isUpcomingLoading}
-          message={upcomingMessage}
-          currentPage={upcomingPage}
-          totalPages={upcomingTotalPages}
-          visibleMovies={visibleUpcomingMovies}
-          onPrevPage={handlePrevUpcomingPage}
-          onNextPage={handleNextUpcomingPage}
+      <button
+        className="home-theme-toggle"
+        type="button"
+        onClick={() => setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))}
+        aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+        title={theme === 'dark' ? '라이트 모드' : '다크 모드'}
+      >
+        <img
+          className="home-theme-toggle-icon"
+          src={theme === 'dark' ? lightModeIcon : darkModeIcon}
+          alt=""
+          aria-hidden="true"
         />
-      </main>
+      </button>
     </div>
   )
 }
