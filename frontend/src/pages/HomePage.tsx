@@ -379,18 +379,18 @@ function HomePage() {
   }
 
   return (
-    <div className={`home-mobile-page home-mobile-page-${theme}`}>
+    <div className={`home-page home-page-${theme}`}>
       <div className="home-desktop-container">
-        <main className="home-mobile-shell">
-          <section className="home-mobile-search-only">
+        <main className="home-main-shell">
+          <section className="home-search-section">
             <div className="search-box-shell" ref={searchBoxRef}>
-              <form className="home-mobile-search-form" onSubmit={handleSearch}>
+              <form className="home-search-form" onSubmit={handleSearch}>
                 <label className="sr-only" htmlFor="movie-search">
                   영화 검색
                 </label>
                 <input
                   id="movie-search"
-                  className="home-mobile-search-input"
+                  className="home-search-input"
                   type="search"
                   placeholder="영화 제목을 입력해보세요"
                   value={query}
@@ -453,9 +453,9 @@ function HomePage() {
                     }
                   }}
                 />
-                <button className="home-mobile-search-button" type="submit" disabled={isSubmitting}>
+                <button className="home-search-button" type="submit" disabled={isSubmitting}>
                   <span className="sr-only">{isSubmitting ? '검색 중..' : '검색'}</span>
-                  <img className="home-mobile-search-button-icon" src={searchIcon} alt="" aria-hidden="true" />
+                  <img className="home-search-button-icon" src={searchIcon} alt="" aria-hidden="true" />
                 </button>
               </form>
 
@@ -468,7 +468,7 @@ function HomePage() {
               />
             </div>
 
-            {message ? <p className="home-mobile-search-message">{message}</p> : null}
+            {message ? <p className="home-search-message">{message}</p> : null}
           </section>
 
           <section className="home-popular-section">
@@ -583,19 +583,19 @@ function HomePage() {
         </main>
       </div>
 
-      <aside className="home-mobile-sidebar" aria-label="메인 내비게이션">
-        <div className="home-mobile-brand-block">
-          <p className="home-mobile-brand-mark">MP</p>
-          <div className="home-mobile-brand-copy">
+      <aside className="home-sidebar" aria-label="메인 내비게이션">
+        <div className="home-brand-block">
+          <p className="home-brand-mark">MP</p>
+          <div className="home-brand-copy">
             <strong>Movie Pedia</strong>
             <span>당신의 영화 취향</span>
           </div>
         </div>
 
-        <nav className="home-mobile-nav">
+        <nav className="home-nav">
           {PRIMARY_NAV_ITEMS.map((item, index) => (
             <button
-              className={`home-mobile-nav-item${index === 0 ? ' home-mobile-nav-item-active' : ''}`}
+              className={`home-nav-item${index === 0 ? ' home-nav-item-active' : ''}`}
               type="button"
               key={item}
             >
@@ -605,13 +605,13 @@ function HomePage() {
         </nav>
       </aside>
 
-      <aside className="home-mobile-auth-panel">
-        <div className="home-mobile-auth-card">
+      <aside className="home-auth-panel">
+        <div className="home-auth-card">
           {authSession ? (
-            <div className="home-mobile-auth-session">
-              <p className="home-mobile-auth-session-nickname">{authSession.nickname ?? '사용자'}</p>
+            <div className="home-auth-session">
+              <p className="home-auth-session-nickname">{authSession.nickname ?? '사용자'}</p>
               <button
-                className="home-mobile-auth-logout-button"
+                className="home-auth-logout-button"
                 type="button"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
@@ -620,46 +620,46 @@ function HomePage() {
               </button>
             </div>
           ) : (
-            <form className="home-mobile-inline-login" onSubmit={handleInlineLogin} noValidate>
-            <input
-              className="home-mobile-inline-login-input"
-              type="text"
+            <form className="home-inline-login" onSubmit={handleInlineLogin} noValidate>
+              <input
+                className="home-inline-login-input"
+                type="text"
                 placeholder="아이디"
                 autoComplete="username"
                 value={loginId}
                 onChange={(event) => setLoginId(event.target.value)}
               />
               <input
-                className="home-mobile-inline-login-input"
+                className="home-inline-login-input"
                 type="password"
                 placeholder="비밀번호"
                 autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
-            {loginMessage ? <p className="home-mobile-inline-login-message">{loginMessage}</p> : null}
-            <div className="home-mobile-inline-login-actions">
-              <button
-                className="home-mobile-signup-button"
-                type="button"
-                onClick={() => navigate('/signup')}
+              {loginMessage ? <p className="home-inline-login-message">{loginMessage}</p> : null}
+              <div className="home-inline-login-actions">
+                <button
+                  className="home-signup-button"
+                  type="button"
+                  onClick={() => navigate('/signup')}
+                >
+                  회원가입
+                </button>
+                <button className="home-auth-button" type="submit" disabled={isLoginSubmitting}>
+                  {isLoginSubmitting ? '로그인 중..' : '로그인'}
+                </button>
+              </div>
+              <div className="home-social-login-divider" aria-hidden="true" />
+              <a
+                className="home-social-login-button"
+                href="http://localhost:8080/oauth2/authorization/naver"
               >
-                회원가입
-              </button>
-              <button className="home-mobile-auth-button" type="submit" disabled={isLoginSubmitting}>
-                {isLoginSubmitting ? '로그인 중..' : '로그인'}
-              </button>
-            </div>
-            <div className="home-mobile-social-login-divider" aria-hidden="true" />
-            <a
-              className="home-mobile-social-login-button"
-              href="http://localhost:8080/oauth2/authorization/naver"
-            >
-              <img
-                className="home-mobile-social-login-button-image"
-                src={naverLoginButtonImage}
-                alt="네이버로 로그인"
-              />
+                <img
+                  className="home-social-login-button-image"
+                  src={naverLoginButtonImage}
+                  alt="네이버로 로그인"
+                />
             </a>
           </form>
         )}
