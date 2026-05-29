@@ -14,15 +14,31 @@
 }
 
 .movie-detail-visual-section {
+  position: relative;
   width: 100%;
   overflow: hidden;
 }
 
 .movie-detail-content-area {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
   display: grid;
   gap: 28px;
-  padding: 24px 0 36px;
+  margin-top: -24px;
+  padding: 34px 0 36px;
   overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.movie-detail-content-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #111111;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
 }
 
 .movie-detail-detail-section {
@@ -91,7 +107,7 @@
   gap: 16px;
   align-self: end;
   margin: 0 -22px -28px;
-  padding: 132px 22px 28px;
+  padding: 132px 22px 52px;
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -623,6 +639,14 @@
   border-color: rgba(15, 23, 42, 0.08);
 }
 
+.home-page-light .movie-detail-content-area {
+  background: transparent;
+}
+
+.home-page-light .movie-detail-content-area::before {
+  background: #f7f5f1;
+}
+
 .home-page-light .movie-detail-comment-like-button,
 .home-page-light .movie-detail-comment-owner-button {
   color: #6b7280;
@@ -970,7 +994,7 @@
 
   .movie-detail-hero-copy {
     margin: 0 -16px -24px;
-    padding: 112px 16px 24px;
+    padding: 112px 16px 44px;
   }
 
   .movie-detail-title-row {
@@ -1007,7 +1031,13 @@
   }
 
   .movie-detail-content-area {
-    padding: 20px 0 28px;
+    margin-top: -18px;
+    padding: 28px 0 28px;
+  }
+
+  .movie-detail-content-area::before {
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
   }
 
   .movie-detail-cast-shell,
