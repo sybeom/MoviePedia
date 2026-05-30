@@ -1,5 +1,6 @@
 import type { MovieComment } from '../../types/movieDetail'
 import thumbsUpIcon from '../../assets/icons/thumbs_up.svg'
+import thumbsDownIcon from '../../assets/icons/thumbs_down.svg'
 
 type MovieCommentListProps = {
   comments: MovieComment[]
@@ -59,12 +60,14 @@ function MovieCommentList({
                 <div className="movie-detail-comment-card-reaction-banner">
                   <img
                     className="movie-detail-comment-card-thumb"
-                    src={thumbsUpIcon}
+                    src={comment.reactionType === 'DISLIKE' ? thumbsDownIcon : thumbsUpIcon}
                     alt=""
                     aria-hidden="true"
                   />
                   <div className="movie-detail-comment-card-reaction-copy">
-                    <p className="movie-detail-comment-card-title">추천</p>
+                    <p className="movie-detail-comment-card-title">
+                      {comment.reactionType === 'DISLIKE' ? '비추천' : '추천'}
+                    </p>
                     <p className="movie-detail-comment-card-subtitle">코멘트 기록</p>
                   </div>
                 </div>

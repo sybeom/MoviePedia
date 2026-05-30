@@ -95,6 +95,7 @@ function MovieDetailPage() {
   const isEditMode = commentModalMode === 'edit'
   const isCreateMode = commentModalMode === 'create'
   const isCommentModalOpen = isCreateMode || isEditMode
+  const selectedReactionType = selectedRating > 0 ? 'LIKE' : 'DISLIKE'
   const commentModalSubmitLabel = isEditMode ? '수정' : '저장'
 
   useEffect(() => {
@@ -352,52 +353,6 @@ function MovieDetailPage() {
     }
   }
 
-  /*
-  async function handleCommentLikeClick(comment: MovieComment, isLiked: boolean) {
-    const targetMovieId = comment.movieId || resolvedMovieRecordId
-    const targetCommentId = comment.commentId || comment.id
-    const session = getAuthSession()
-
-    if (!targetMovieId || !targetCommentId) {
-      return false
-    }
-
-    if (!session?.accessToken) {
-      alert('로그인이 필요한 기능입니다.')
-      return false
-    }
-
-    try {
-      if (isLiked) {
-        await unlikeMovieComment(targetMovieId, targetCommentId)
-        return true
-      }
-
-      await likeMovieComment(targetMovieId, targetCommentId)
-      return true
-    } catch (error) {
-      if (isLiked) {
-        return false
-      }
-
-      if (
-        error instanceof ApiError &&
-        error.status === 403 &&
-        error.code === 'CANNOT_LIKE_OWN_COMMENT'
-      ) {
-        alert('자신의 코멘트에는 좋아요를 누를 수 없습니다.')
-        return false
-      }
-
-      if (error instanceof ApiError && error.status === 409) {
-        return true
-      }
-
-      return false
-    }
-  }
-  */
-
   async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -428,7 +383,7 @@ function MovieDetailPage() {
         await updateMovieComment(resolvedMovieCode, editingCommentTarget.commentId, {
           movieId: editingCommentTarget.movieId || movieDetail.id,
           content: trimmedCommentDraft,
-          rating: selectedRating,
+          reactionType: selectedReactionType,
         })
 
         setCommentDraft('')
@@ -462,7 +417,7 @@ function MovieDetailPage() {
         movieId: resolvedMovieRecordId,
         nickname: session.nickname,
         content: trimmedCommentDraft,
-        rating: selectedRating,
+        reactionType: selectedReactionType,
       })
 
       setCommentDraft('')

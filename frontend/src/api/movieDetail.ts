@@ -80,18 +80,6 @@ export function deleteMovieComment(
   })
 }
 
-export function likeMovieComment(movieId: string, commentId: string) {
-  return authRequest<void>(`/movies/${movieId}/comments/${commentId}/like`, {
-    method: 'POST',
-  })
-}
-
-export function unlikeMovieComment(movieId: string, commentId: string) {
-  return authRequest<void>(`/movies/${movieId}/comments/${commentId}/like`, {
-    method: 'DELETE',
-  })
-}
-
 export function fetchMovieCommentForEdit(movieId: string, commentId: string) {
   return authRequest<unknown>(`/movies/${movieId}/comments/${commentId}/edit`, {
     method: 'GET',

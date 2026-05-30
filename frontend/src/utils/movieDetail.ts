@@ -283,6 +283,10 @@ export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
     .map((comment, index) => {
       const commentId =
         getStringValue(comment, ['commentId', 'id', 'code']) || `comment-${index}`
+      const reactionType: 'LIKE' | 'DISLIKE' =
+        getStringValue(comment, ['reactionType']).toUpperCase() === 'DISLIKE'
+          ? 'DISLIKE'
+          : 'LIKE'
 
       return {
         id: getStringValue(comment, ['id', 'commentId', 'code']) || commentId,
@@ -290,10 +294,8 @@ export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
         movieId: getStringValue(comment, ['movieId']) || responseMovieId,
         nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '?듬챸',
         content: getStringValue(comment, ['content', 'comment']) || '-',
-        rating: getStringValue(comment, ['rating', 'score', 'voteAverage']),
-        likeCount: getStringValue(comment, ['likeCount', 'likes', 'likeCnt']),
+        reactionType,
         writtenByMe: getBooleanValue(comment, ['writtenByMe', 'isMine']),
-        likedByMe: getBooleanValue(comment, ['likedByMe']),
       }
     })
 
@@ -324,7 +326,6 @@ export function normalizeMovieCommentDetail(data: unknown): MovieCommentDetail |
     nickname,
     content,
     rating: getNumberValue(data, ['rating', 'score', 'voteAverage']),
-    likeCount: getStringValue(data, ['likeCount', 'likes', 'likeCnt']),
   }
 }
 

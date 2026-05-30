@@ -42,14 +42,14 @@ export type CreateCommentRequest = {
   movieId: string
   nickname: string
   content: string
-  rating: number
+  reactionType: 'LIKE' | 'DISLIKE'
 }
 
 // 코멘트 수정 요청 데이터 타입 정의
 export type UpdateCommentRequest = {
   movieId: string
   content: string
-  rating: number
+  reactionType: 'LIKE' | 'DISLIKE'
 }
 
 // 코멘트 삭제 요청 데이터 타입 정의
@@ -64,7 +64,6 @@ export type MovieCommentDetail = {
   nickname: string
   content: string
   rating: number
-  likeCount: string
   isMine?: boolean
 }
 
@@ -75,10 +74,8 @@ export type MovieComment = {
   movieId: string
   nickname: string
   content: string
-  rating: string
-  likeCount: string
+  reactionType: 'LIKE' | 'DISLIKE'
   writtenByMe: boolean
-  likedByMe: boolean
 }
 
 // 코멘트 목록 응답 데이터 타입 정의

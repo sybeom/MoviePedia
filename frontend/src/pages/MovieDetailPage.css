@@ -263,7 +263,11 @@
 }
 
 .movie-detail-cast-section h2 {
-  padding-left: 12px;
+  padding-left: 22px;
+}
+
+.movie-detail-comments h2 {
+  padding-left: 0;
 }
 
 .movie-detail-cast-list-shell {
@@ -1070,6 +1074,14 @@
   .movie-detail-cast-shell,
   .movie-detail-comments-shell {
     padding: 0 16px 0;
+  }
+
+  .movie-detail-cast-section h2 {
+    padding-left: 16px;
+  }
+
+  .movie-detail-comments h2 {
+    padding-left: 0;
   }
 
   .movie-detail-section-header {
