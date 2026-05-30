@@ -435,20 +435,38 @@
 }
 
 .movie-detail-comment-open-button {
-  min-width: 160px;
-  min-height: 44px;
-  padding: 0 18px;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
-  background: #f43f5e;
+  display: inline-grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0;
+  color: transparent;
+  font-size: 0;
+  background: transparent;
   border: 0;
-  border-radius: 999px;
   cursor: pointer;
 }
 
-.movie-detail-comment-open-button:hover {
-  background: #fb7185;
+.movie-detail-comment-open-button::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  display: block;
+  background: center / contain no-repeat url('../assets/icons/write.svg');
+}
+
+.movie-detail-comment-open-button::after {
+  content: '작성하기';
+  color: #7e7e7e;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.home-page-light .movie-detail-comment-open-button::after {
+  color: #7e7e7e;
 }
 
 .movie-detail-comment-list {
@@ -667,7 +685,7 @@
 .movie-detail-comment-modal-layer {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 400;
 }
 
 .movie-detail-comment-modal-backdrop {
@@ -685,7 +703,7 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  z-index: 41;
+  z-index: 401;
   width: min(calc(100% - 48px), 860px);
   min-height: min(72vh, 620px);
   max-height: min(84vh, 700px);
@@ -795,6 +813,45 @@
   margin-top: 18px;
   display: grid;
   gap: 10px;
+}
+
+.movie-detail-comment-feedback-shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.movie-detail-comment-feedback-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: filter 180ms ease, opacity 180ms ease;
+  transform: none;
+  line-height: 0;
+  outline: none;
+}
+
+.movie-detail-comment-feedback-button.is-inactive {
+  filter: brightness(0.42);
+  opacity: 0.82;
+}
+
+.movie-detail-comment-feedback-button.is-active {
+  filter: none;
+  opacity: 1;
+}
+
+.movie-detail-comment-feedback-icon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  transform: none;
 }
 
 .movie-detail-comment-input-shell {

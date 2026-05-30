@@ -1,12 +1,12 @@
+import thumbsUpIcon from '../../assets/icons/thumbs_up.svg'
+import thumbsDownIcon from '../../assets/icons/thumbs_down.svg'
 import type { FormEvent, RefObject } from 'react'
 import type { AuthMeResponse } from '../../types/movieDetail'
-import StarRating from './StarRating'
 import { MAX_COMMENT_LENGTH } from '../../utils/movieDetail'
 
 type MovieCommentFormProps = {
   commentDraft: string
   selectedRating: number
-  hoverRating: number
   canWriteComment: boolean
   isSubmittingComment: boolean
   isCheckingCommentAuth: boolean
@@ -14,16 +14,13 @@ type MovieCommentFormProps = {
   commentInputRef: RefObject<HTMLTextAreaElement | null>
   onCommentDraftChange: (value: string) => void
   onSelectedRatingChange: (rating: number) => void
-  onHoverRatingChange: (rating: number) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onCommentFocus: () => Promise<AuthMeResponse | void>
 }
 
-// 코멘트 작성 폼 구성
 function MovieCommentForm({
   commentDraft,
   selectedRating,
-  hoverRating,
   canWriteComment,
   isSubmittingComment,
   isCheckingCommentAuth,
@@ -31,20 +28,61 @@ function MovieCommentForm({
   commentInputRef,
   onCommentDraftChange,
   onSelectedRatingChange,
-  onHoverRatingChange,
   onSubmit,
   onCommentFocus,
 }: MovieCommentFormProps) {
   const canClickCommentSubmit = canWriteComment && !isSubmittingComment
+  const isThumbsUpActive = selectedRating > 0
+  const isThumbsDownActive = selectedRating < 0
 
   return (
     <>
-      <StarRating
-        selectedRating={selectedRating}
-        hoverRating={hoverRating}
-        onHoverRatingChange={onHoverRatingChange}
-        onSelectedRatingChange={onSelectedRatingChange}
-      />
+      <div className="movie-detail-comment-feedback-shell" aria-label="코멘트 반응 선택">
+        <div
+          className={`movie-detail-comment-feedback-button${
+            isThumbsUpActive ? ' is-active' : ' is-inactive'
+          }`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={isThumbsUpActive}
+          onClick={() => onSelectedRatingChange(1)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onSelectedRatingChange(1)
+            }
+          }}
+        >
+          <img
+            className="movie-detail-comment-feedback-icon"
+            src={thumbsUpIcon}
+            alt=""
+            aria-hidden="true"
+          />
+        </div>
+        <div
+          className={`movie-detail-comment-feedback-button movie-detail-comment-feedback-button-down${
+            isThumbsDownActive ? ' is-active' : ' is-inactive'
+          }`}
+          role="button"
+          tabIndex={0}
+          aria-pressed={isThumbsDownActive}
+          onClick={() => onSelectedRatingChange(-1)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onSelectedRatingChange(-1)
+            }
+          }}
+        >
+          <img
+            className="movie-detail-comment-feedback-icon"
+            src={thumbsDownIcon}
+            alt=""
+            aria-hidden="true"
+          />
+        </div>
+      </div>
 
       <form className="movie-detail-comment-form" onSubmit={onSubmit}>
         <label className="sr-only" htmlFor="movie-detail-comment-input">

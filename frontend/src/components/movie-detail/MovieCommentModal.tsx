@@ -6,7 +6,6 @@ type MovieCommentModalProps = {
   title: string
   commentDraft: string
   selectedRating: number
-  hoverRating: number
   canWriteComment: boolean
   isSubmittingComment: boolean
   isCheckingCommentAuth: boolean
@@ -15,7 +14,6 @@ type MovieCommentModalProps = {
   onClose: () => void
   onCommentDraftChange: (value: string) => void
   onSelectedRatingChange: (rating: number) => void
-  onHoverRatingChange: (rating: number) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onCommentFocus: () => Promise<AuthMeResponse | void>
 }
@@ -25,7 +23,6 @@ function MovieCommentModal({
   title,
   commentDraft,
   selectedRating,
-  hoverRating,
   canWriteComment,
   isSubmittingComment,
   isCheckingCommentAuth,
@@ -34,7 +31,6 @@ function MovieCommentModal({
   onClose,
   onCommentDraftChange,
   onSelectedRatingChange,
-  onHoverRatingChange,
   onSubmit,
   onCommentFocus,
 }: MovieCommentModalProps) {
@@ -72,7 +68,6 @@ function MovieCommentModal({
         <MovieCommentForm
           commentDraft={commentDraft}
           selectedRating={selectedRating}
-          hoverRating={hoverRating}
           canWriteComment={canWriteComment}
           isSubmittingComment={isSubmittingComment}
           isCheckingCommentAuth={isCheckingCommentAuth}
@@ -80,7 +75,6 @@ function MovieCommentModal({
           commentInputRef={commentInputRef}
           onCommentDraftChange={onCommentDraftChange}
           onSelectedRatingChange={onSelectedRatingChange}
-          onHoverRatingChange={onHoverRatingChange}
           onSubmit={onSubmit}
           onCommentFocus={onCommentFocus}
         />

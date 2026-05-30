@@ -84,7 +84,6 @@ function MovieDetailPage() {
   const [comments, setComments] = useState<MovieComment[]>([])
   const [isCommentsLoading, setIsCommentsLoading] = useState(Boolean(resolvedMovieCode))
   const [selectedRating, setSelectedRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(0)
   const [canWriteComment, setCanWriteComment] = useState(false)
   const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
@@ -294,7 +293,6 @@ function MovieDetailPage() {
     setEditingCommentTarget(null)
     setCommentDraft('')
     setSelectedRating(0)
-    setHoverRating(0)
     setCommentModalMode('create')
   }
 
@@ -307,7 +305,6 @@ function MovieDetailPage() {
   function applyEditableComment(comment: MovieCommentDetail) {
     setCommentDraft(comment.content)
     setSelectedRating(comment.rating)
-    setHoverRating(0)
   }
 
   async function fetchTargetComment(comment: MovieComment) {
@@ -455,7 +452,7 @@ function MovieDetailPage() {
       return
     }
 
-    if (selectedRating <= 0) {
+    if (selectedRating === 0) {
       alert('평점을 선택해주세요.')
       return
     }
@@ -481,7 +478,6 @@ function MovieDetailPage() {
 
         setCommentDraft('')
         setSelectedRating(0)
-        setHoverRating(0)
         setCommentModalMode(null)
         setSelectedCommentDetail(null)
         setEditingCommentTarget(null)
@@ -517,7 +513,6 @@ function MovieDetailPage() {
 
       setCommentDraft('')
       setSelectedRating(0)
-      setHoverRating(0)
       setCommentModalMode(null)
       setIsCommentsLoading(true)
 
@@ -697,7 +692,6 @@ function MovieDetailPage() {
           title={movieDetail.title}
           commentDraft={commentDraft}
           selectedRating={selectedRating}
-          hoverRating={hoverRating}
           canWriteComment={isEditMode || canWriteComment}
           isSubmittingComment={isSubmittingComment}
           isCheckingCommentAuth={isCheckingCommentAuth}
@@ -706,7 +700,6 @@ function MovieDetailPage() {
           onClose={handleCloseCommentModal}
           onCommentDraftChange={setCommentDraft}
           onSelectedRatingChange={setSelectedRating}
-          onHoverRatingChange={setHoverRating}
           onSubmit={handleCommentSubmit}
           onCommentFocus={handleCommentInputFocus}
         />
