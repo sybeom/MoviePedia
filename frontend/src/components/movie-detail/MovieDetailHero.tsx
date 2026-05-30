@@ -1,8 +1,9 @@
+import backIcon from '../../assets/icons/back.svg'
+import thumbsUpIcon from '../../assets/icons/thumbs_up.svg'
 import rating12Icon from '../../assets/ratings/12.svg'
 import rating15Icon from '../../assets/ratings/15.svg'
 import rating19Icon from '../../assets/ratings/19.svg'
 import ratingAllIcon from '../../assets/ratings/all.svg'
-import thumbsUpIcon from '../../assets/icons/thumbs_up.svg'
 import type { MovieDetailView } from '../../types/movieDetail'
 import { getDisplayRatingWithScale } from '../../utils/movieDetail'
 
@@ -41,12 +42,7 @@ function MetaFragments({ parts }: { parts: string[] }) {
   )
 }
 
-function MovieDetailHero({
-  movieDetail,
-  isLoading,
-  message,
-  onBack,
-}: MovieDetailHeroProps) {
+function MovieDetailHero({ movieDetail, isLoading, message, onBack }: MovieDetailHeroProps) {
   const heroImage = movieDetail.poster || movieDetail.backdrop
   const certificationIcon = getCertificationIcon(movieDetail.certification)
   const firstLineParts = getMetaParts([
@@ -66,8 +62,8 @@ function MovieDetailHero({
 
       <div className="movie-detail-hero-content">
         <div className="movie-detail-action-row">
-          <button className="movie-detail-back-button" type="button" onClick={onBack}>
-            ←
+          <button className="movie-detail-back-button" type="button" onClick={onBack} aria-label="뒤로 가기">
+            <img className="movie-detail-back-button-icon" src={backIcon} alt="" aria-hidden="true" />
           </button>
         </div>
 

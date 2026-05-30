@@ -439,11 +439,12 @@
   justify-content: center;
   position: absolute;
   top: 150px;
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  background: transparent;
+  background: rgba(15, 23, 42, 0.42);
   border: 0;
+  border-radius: 999px;
   cursor: pointer;
   z-index: 2;
 }
@@ -462,9 +463,11 @@
 }
 
 .home-popular-side-button-icon {
-  width: 48px;
-  height: 48px;
+  width: 34px;
+  height: 34px;
   display: block;
+  filter: brightness(0) saturate(100%) invert(96%) sepia(0%) saturate(0%) hue-rotate(183deg)
+    brightness(103%) contrast(92%);
 }
 
 .home-popular-track {
@@ -751,6 +754,15 @@
 .home-page-light .home-theme-toggle {
   background: #ffffff;
   border: 1px solid #e5e7eb;
+}
+
+.home-page-light .home-popular-side-button {
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.home-page-light .home-popular-side-button-icon {
+  filter: brightness(0) saturate(100%) invert(96%) sepia(0%) saturate(0%) hue-rotate(183deg)
+    brightness(103%) contrast(92%);
 }
 
 @keyframes home-popular-slide-next {
