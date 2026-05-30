@@ -33,7 +33,6 @@ type MovieCollectionResponse = {
   popular?: unknown
 }
 
-type PopularTransitionDirection = 'previous' | 'next'
 type HomeTheme = 'dark' | 'light'
 
 const SEARCH_DEBOUNCE_MS = 500
@@ -108,20 +107,21 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
 function HomePage() {
   const navigate = useNavigate()
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
+
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
   const [theme, setTheme] = useState<HomeTheme>(() => {
     if (typeof window === 'undefined') {
       return 'dark'
     }
 
-    const savedTheme = window.localStorage.getItem(HOME_THEME_STORAGE_KEY)
-    return savedTheme === 'light' ? 'light' : 'dark'
+    return window.localStorage.getItem(HOME_THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark'
   })
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [loginMessage, setLoginMessage] = useState('')
   const [isLoginSubmitting, setIsLoginSubmitting] = useState(false)
+
   const [query, setQuery] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -129,12 +129,10 @@ function HomePage() {
   const [searchMovies, setSearchMovies] = useState<SearchMovie[]>([])
   const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+
   const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
   const [isPopularLoading, setIsPopularLoading] = useState(true)
   const [popularPage, setPopularPage] = useState(0)
-  const [popularTransitionDirection, setPopularTransitionDirection] =
-    useState<PopularTransitionDirection>('next')
-  const [popularAnimationTick, setPopularAnimationTick] = useState(0)
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -293,10 +291,7 @@ function HomePage() {
     setLoginMessage('')
 
     try {
-      const loginResponse = await login({
-        loginId,
-        password,
-      })
+      const loginResponse = await login({ loginId, password })
 
       if (!loginResponse) {
         throw new Error('로그인 응답 데이터가 없습니다.')
@@ -363,18 +358,15 @@ function HomePage() {
 
   const popularPageCount = popularMovies.length
   const visiblePopularMovie = popularMovies[popularPage] ?? null
-  const previousPopularMovie = popularPage > 0 ? popularMovies[popularPage - 1] : null
-  const nextPopularMovie = popularPage < popularPageCount - 1 ? popularMovies[popularPage + 1] : null
+  const visiblePopularCards = popularMovies
+    .map((movie, index) => ({ movie, offset: index - popularPage }))
+    .filter(({ offset }) => offset >= -2 && offset <= 2)
 
   function moveToPreviousPopularMovie() {
-    setPopularTransitionDirection('previous')
-    setPopularAnimationTick((value) => value + 1)
     setPopularPage((page) => Math.max(0, page - 1))
   }
 
   function moveToNextPopularMovie() {
-    setPopularTransitionDirection('next')
-    setPopularAnimationTick((value) => value + 1)
     setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
   }
 
@@ -441,7 +433,11 @@ function HomePage() {
                       return
                     }
 
-                    if (event.key === 'Enter' && activeSearchIndex >= 0 && searchMovies[activeSearchIndex]) {
+                    if (
+                      event.key === 'Enter' &&
+                      activeSearchIndex >= 0 &&
+                      searchMovies[activeSearchIndex]
+                    ) {
                       event.preventDefault()
                       moveToMovieDetail(searchMovies[activeSearchIndex])
                       return
@@ -454,7 +450,7 @@ function HomePage() {
                   }}
                 />
                 <button className="home-search-button" type="submit" disabled={isSubmitting}>
-                  <span className="sr-only">{isSubmitting ? '검색 중..' : '검색'}</span>
+                  <span className="sr-only">{isSubmitting ? '검색 중' : '검색'}</span>
                   <img className="home-search-button-icon" src={searchIcon} alt="" aria-hidden="true" />
                 </button>
               </form>
@@ -490,80 +486,54 @@ function HomePage() {
                   <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
                 </button>
 
-                <div
-                  className={`home-popular-track home-popular-track-${popularTransitionDirection}-${popularAnimationTick % 2 === 0 ? 'a' : 'b'}`}
-                >
-                  {previousPopularMovie ? (
-                    <button
-                      className="home-popular-preview-card home-popular-preview-card-previous"
-                      type="button"
-                      onClick={() => moveToMovieDetail(previousPopularMovie)}
-                      aria-label={`${previousPopularMovie.title} 미리보기`}
-                    >
-                      <div className="home-popular-preview-poster-shell">
-                        {previousPopularMovie.poster ? (
-                          <img
-                            className="home-popular-preview-poster"
-                            src={previousPopularMovie.poster}
-                            alt=""
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <div className="home-popular-preview-poster home-popular-poster-fallback">
-                            <span>{previousPopularMovie.title}</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="home-popular-preview-title">{previousPopularMovie.title}</p>
-                    </button>
-                  ) : null}
+                <div className="home-popular-track">
+                  {visiblePopularCards.map(({ movie, offset }) => {
+                    const positionClass =
+                      offset === 0
+                        ? 'home-popular-card-current'
+                        : offset === -1
+                          ? 'home-popular-card-previous'
+                          : offset === 1
+                            ? 'home-popular-card-next'
+                            : offset < 0
+                              ? 'home-popular-card-off-left'
+                              : 'home-popular-card-off-right'
 
-                  <button
-                    className="home-popular-card home-popular-card-current"
-                    type="button"
-                    key={visiblePopularMovie.code}
-                    onClick={() => moveToMovieDetail(visiblePopularMovie)}
-                  >
-                    <div className="home-popular-poster-shell">
-                      {visiblePopularMovie.poster ? (
-                        <img
-                          className="home-popular-poster"
-                          src={visiblePopularMovie.poster}
-                          alt={`${visiblePopularMovie.title} 포스터`}
-                        />
-                      ) : (
-                        <div className="home-popular-poster home-popular-poster-fallback">
-                          <span>{visiblePopularMovie.title}</span>
+                    const isCurrent = offset === 0
+                    const posterShellClass = isCurrent
+                      ? 'home-popular-poster-shell'
+                      : 'home-popular-preview-poster-shell'
+                    const posterClass = isCurrent
+                      ? 'home-popular-poster'
+                      : 'home-popular-preview-poster'
+                    const titleClass = isCurrent ? 'home-popular-title' : 'home-popular-preview-title'
+
+                    return (
+                      <button
+                        className={`home-popular-card ${positionClass}`}
+                        type="button"
+                        key={movie.code}
+                        onClick={() => moveToMovieDetail(movie)}
+                        aria-label={`${movie.title} 상세 보기`}
+                      >
+                        <div className={posterShellClass}>
+                          {movie.poster ? (
+                            <img
+                              className={posterClass}
+                              src={movie.poster}
+                              alt={isCurrent ? `${movie.title} 포스터` : ''}
+                              aria-hidden={isCurrent ? undefined : 'true'}
+                            />
+                          ) : (
+                            <div className={`${posterClass} home-popular-poster-fallback`}>
+                              <span>{movie.title}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <p className="home-popular-title">{visiblePopularMovie.title}</p>
-                  </button>
-
-                  {nextPopularMovie ? (
-                    <button
-                      className="home-popular-preview-card home-popular-preview-card-next"
-                      type="button"
-                      onClick={() => moveToMovieDetail(nextPopularMovie)}
-                      aria-label={`${nextPopularMovie.title} 미리보기`}
-                    >
-                      <div className="home-popular-preview-poster-shell">
-                        {nextPopularMovie.poster ? (
-                          <img
-                            className="home-popular-preview-poster"
-                            src={nextPopularMovie.poster}
-                            alt=""
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <div className="home-popular-preview-poster home-popular-poster-fallback">
-                            <span>{nextPopularMovie.title}</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="home-popular-preview-title">{nextPopularMovie.title}</p>
-                    </button>
-                  ) : null}
+                        <p className={titleClass}>{movie.title}</p>
+                      </button>
+                    )
+                  })}
                 </div>
 
                 <button
@@ -639,11 +609,7 @@ function HomePage() {
               />
               {loginMessage ? <p className="home-inline-login-message">{loginMessage}</p> : null}
               <div className="home-inline-login-actions">
-                <button
-                  className="home-signup-button"
-                  type="button"
-                  onClick={() => navigate('/signup')}
-                >
+                <button className="home-signup-button" type="button" onClick={() => navigate('/signup')}>
                   회원가입
                 </button>
                 <button className="home-auth-button" type="submit" disabled={isLoginSubmitting}>
@@ -651,19 +617,16 @@ function HomePage() {
                 </button>
               </div>
               <div className="home-social-login-divider" aria-hidden="true" />
-              <a
-                className="home-social-login-button"
-                href="http://localhost:8080/oauth2/authorization/naver"
-              >
+              <a className="home-social-login-button" href="http://localhost:8080/oauth2/authorization/naver">
                 <img
                   className="home-social-login-button-image"
                   src={naverLoginButtonImage}
                   alt="네이버로 로그인"
                 />
-            </a>
-          </form>
-        )}
-      </div>
+              </a>
+            </form>
+          )}
+        </div>
       </aside>
 
       <button
