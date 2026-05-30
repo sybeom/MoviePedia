@@ -8,7 +8,6 @@ import lombok.Builder;
  */
 @Builder
 public record CommentEditResponse(
-        @NotNull String content,
-        @NotNull Double rating
+        @NotNull String content
 ) {
 }

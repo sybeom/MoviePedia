@@ -9,8 +9,6 @@ import lombok.Builder;
 @Builder
 public record CommentUpdateRequest (
         @NotNull Long movieId,
-        @NotNull String content,
-        @NotNull Double rating,
-        Integer like
+        @NotNull String content
 ) {
 }

@@ -24,7 +24,7 @@ import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
 import syb.moviepedia.movie.dto.request.MovieIdRequest;
 
-@Tag(name = "Comment API", description = "Like 도메인 API")
+@Tag(name = "Comment API", description = "영화 코멘트 도메인 API")
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -148,7 +148,7 @@ public class CommentController {
             Authentication authentication
     ) {
         String loginId = authentication.getName();
-        if (dto.content() != null && dto.rating() != null) {
+        if (dto.content() != null) {
             commentService.update(mvCode, loginId, dto);
         }
         return ResponseEntity.ok().body(ApiSuccessResponse.of(("코멘트 업데이트 성공")));

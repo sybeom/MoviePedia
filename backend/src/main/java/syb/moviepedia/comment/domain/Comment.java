@@ -7,7 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.yaml.snakeyaml.comments.CommentType;
 import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
+import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.movie.domain.Movie;
 
@@ -28,9 +30,6 @@ public class Comment {
     @Column(length = 300)
     private String content;
 
-    @Nullable
-    private Double rating;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id")
     private Movie movie;
@@ -39,24 +38,11 @@ public class Comment {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @Builder.Default // Builder로 객체 생성시 like 값을 지정하지 않아도 기본값이 들어간다.
-    @Column(name = "like_count", nullable = false)
-    Integer likeCount = 0;// 시작값 0 고정
-
+    @Enumerated(EnumType.STRING)
+    private ReactionType reactionType;
 
     // 코멘트 수정
     public void update(CommentUpdateRequest dto) {
         this.content = dto.content();
-        this.rating = dto.rating();
-    }
-
-    public void increaseLike() {
-        this.likeCount++;
-    }
-
-    public void decreaseLike() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
     }
 }

@@ -12,8 +12,6 @@ import lombok.Builder;
 public record CommentDetailResponse(
         @NotBlank String nickname,
         @NotNull
-        String content,
-        @NotNull Double rating,
-        Integer likeCount
+        String content
 ) {
 }

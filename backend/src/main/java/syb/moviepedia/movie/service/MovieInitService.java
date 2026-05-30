@@ -9,6 +9,7 @@ import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.ProviderType;
+import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.common.RoleType;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
@@ -231,18 +232,14 @@ public class MovieInitService {
             Comment comment = Comment.builder()
                     .nickname(member.getNickname())
                     .content("test" + i)
-                    .rating(ThreadLocalRandom.current().nextInt(1, 11) * 0.5)
                     .movie(movie)
+                    .reactionType(Math.random() < 0.5 // 좋아요 싫어요 둘중 하나 랜덤
+                            ? ReactionType.LIKE
+                            : ReactionType.DISLIKE)
                     .member(member)
-                    .likeCount(0)
                     .build();
             list.add(comment);
         }
         commentRepository.saveAll(list);
-    }
-
-    public void calculateMovieAverage() {
-//        commentRepository
-
     }
 }
