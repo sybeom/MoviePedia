@@ -82,10 +82,10 @@ public class MovieService {
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
 
-        // 영화의 코멘트가 20개 이상이면 평점 조회
-        Double rating = movie.getDisplayRating();
+        // 영화의 코멘트가 20개 이상이면 지수 조회
+        Integer score = movie.getDisplayScore();
 
-        return toMovieDetailResponse(movie, creditDto, rating);
+        return toMovieDetailResponse(movie, creditDto, score);
     }
 
     // 출연 배우
@@ -162,13 +162,12 @@ public class MovieService {
                 .releaseDate(detail.releaseYear())
                 .country(countries)
                 .runtime(detail.runtime())
-                .globalRating(detail.globalRating())
                 .detailFetched(true)
                 .build();
     }
 
     // 영화 상세 DTO 가공
-    private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, Double rating) {
+    private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, Integer score) {
         return MovieDetailResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
@@ -180,8 +179,7 @@ public class MovieService {
                 .releaseYear(movie.getReleaseDate().getYear())
                 .country(movie.getCountry())
                 .runtime(movie.getRuntime())
-                .rating(rating)
-                .globalRating(movie.getGlobalRating())
+                .score(score)
                 .credit(dto)
                 .build();
     }

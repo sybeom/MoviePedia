@@ -15,7 +15,6 @@ import java.util.List;
  * @param releaseYear 개봉연도
  * @param country 제작 국가 (공동 제작이 있을 수 있으므로 List 형태)
  * @param runtime 러닝 타임
- * @param globalRating 글로벌 평점
  */
 @Builder
 public record MovieDetailResponse(
@@ -29,8 +28,7 @@ public record MovieDetailResponse(
         Integer releaseYear,
         List<String> country,
         Integer runtime,
-        Double rating,
-        Double globalRating,
+        Integer score, // TODO: score 계산 해야할듯
         List<MovieCreditResponse> credit
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";

@@ -159,7 +159,6 @@ public class MovieInitService {
                 .releaseDate(tmdbMovie.releaseDate())
                 .country(tmdbMovie.country())
                 .runtime(tmdbMovie.runtime())
-                .globalRating(tmdbMovie.globalRating())
                 .detailFetched(false)
                 .build();
     }

@@ -98,8 +98,6 @@ public class CommentService {
         // 내가 작성한 코멘트찾기
         Comment comment = findMyCommentWithMovie(mvCode, dto.movieId(), loginId);
 
-        Movie movie = comment.getMovie();
-
         comment.update(dto);
     }
 

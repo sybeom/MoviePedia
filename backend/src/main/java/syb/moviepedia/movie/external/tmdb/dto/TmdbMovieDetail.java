@@ -17,7 +17,6 @@ import java.util.List;
  * @param releaseYear 개봉연도
  * @param country 제작 국가 (공동 제작이 있을 수 있으므로 List 형태)
  * @param runtime 러닝 타임
- * @param globalRating 글로벌 평점
  */
 @Builder
 public record TmdbMovieDetail(
@@ -33,9 +32,7 @@ public record TmdbMovieDetail(
         LocalDate releaseYear,
         @JsonProperty("origin_country")
         List<String> country,
-        Integer runtime,
-        @JsonProperty("vote_average")
-        Double globalRating
+        Integer runtime
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
     public TmdbMovieDetail {
@@ -46,9 +43,5 @@ public record TmdbMovieDetail(
         if (backdropPath != null) {
             backdropPath = IMAGE_BASE_URL + backdropPath;
         }
-
-        // 글로벌 평점 소수점 첫째자리까지 표기
-        // 0점이면 null (아직 평점 책정이 되지 않았다는 뜻이다)
-        globalRating = globalRating==0 ? null : Math.round(globalRating * 10) / 10.0; // 소수점 둘째자리에서 반올림
     }
 }
