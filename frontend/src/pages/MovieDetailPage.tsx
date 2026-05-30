@@ -8,16 +8,12 @@ import { ApiError, isApiError } from '../api/client'
 import {
   createMovieComment,
   deleteMovieComment,
-  fetchMovieCommentDetail,
   fetchMovieCommentForEdit,
   fetchMovieComments,
   fetchMovieDetail,
-  likeMovieComment,
-  unlikeMovieComment,
   updateMovieComment,
   verifyCommentAuth,
 } from '../api/movieDetail'
-import MovieCommentDetailModal from '../components/movie-detail/MovieCommentDetailModal'
 import MovieCommentList from '../components/movie-detail/MovieCommentList'
 import MovieCommentModal from '../components/movie-detail/MovieCommentModal'
 import MovieDetailCredits from '../components/movie-detail/MovieDetailCredits'
@@ -40,7 +36,7 @@ import { MAX_COMMENT_LENGTH, createInitialMovieDetail } from '../utils/movieDeta
 import './HomePage.css'
 import './MovieDetailPage.css'
 
-type CommentModalMode = 'create' | 'edit' | 'view' | null
+type CommentModalMode = 'create' | 'edit' | null
 type HomeTheme = 'dark' | 'light'
 
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
@@ -88,8 +84,6 @@ function MovieDetailPage() {
   const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [commentModalMode, setCommentModalMode] = useState<CommentModalMode>(null)
-  const [selectedCommentDetail, setSelectedCommentDetail] =
-    useState<MovieCommentDetail | null>(null)
   const [editingCommentTarget, setEditingCommentTarget] = useState<{
     movieId: string
     commentId: string
@@ -100,7 +94,6 @@ function MovieDetailPage() {
     trimmedCommentDraft.length >= 1 && trimmedCommentDraft.length <= MAX_COMMENT_LENGTH
   const isEditMode = commentModalMode === 'edit'
   const isCreateMode = commentModalMode === 'create'
-  const isViewMode = commentModalMode === 'view'
   const isCommentModalOpen = isCreateMode || isEditMode
   const commentModalSubmitLabel = isEditMode ? '수정' : '저장'
 
@@ -289,7 +282,6 @@ function MovieDetailPage() {
   }
 
   function handleOpenCommentModal() {
-    setSelectedCommentDetail(null)
     setEditingCommentTarget(null)
     setCommentDraft('')
     setSelectedRating(0)
@@ -298,42 +290,12 @@ function MovieDetailPage() {
 
   function handleCloseCommentModal() {
     setCommentModalMode(null)
-    setSelectedCommentDetail(null)
     setEditingCommentTarget(null)
   }
 
   function applyEditableComment(comment: MovieCommentDetail) {
     setCommentDraft(comment.content)
     setSelectedRating(comment.rating)
-  }
-
-  async function fetchTargetComment(comment: MovieComment) {
-    const targetMovieId = comment.movieId || resolvedMovieRecordId
-    const targetCommentId = comment.commentId || comment.id
-
-    if (!targetMovieId || !targetCommentId) {
-      return null
-    }
-
-    return fetchMovieCommentDetail(targetMovieId, targetCommentId)
-  }
-
-  async function handleCommentClick(comment: MovieComment) {
-    try {
-      const detail = await fetchTargetComment(comment)
-
-      if (!detail) {
-        return
-      }
-
-      setSelectedCommentDetail({
-        ...detail,
-        isMine: comment.writtenByMe,
-      })
-      setCommentModalMode('view')
-    } catch {
-      // no-op
-    }
   }
 
   async function handleCommentEditClick(comment: MovieComment) {
@@ -351,10 +313,6 @@ function MovieDetailPage() {
         return
       }
 
-      setSelectedCommentDetail({
-        ...detail,
-        isMine: true,
-      })
       setEditingCommentTarget({
         movieId: targetMovieId,
         commentId: targetCommentId,
@@ -389,16 +347,12 @@ function MovieDetailPage() {
       setComments((previousComments) =>
         previousComments.filter((previousComment) => previousComment.id !== comment.id),
       )
-
-      if (selectedCommentDetail?.commentId === targetCommentId) {
-        setSelectedCommentDetail(null)
-        setCommentModalMode(null)
-      }
     } catch {
       // no-op
     }
   }
 
+  /*
   async function handleCommentLikeClick(comment: MovieComment, isLiked: boolean) {
     const targetMovieId = comment.movieId || resolvedMovieRecordId
     const targetCommentId = comment.commentId || comment.id
@@ -442,6 +396,7 @@ function MovieDetailPage() {
       return false
     }
   }
+  */
 
   async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -479,7 +434,6 @@ function MovieDetailPage() {
         setCommentDraft('')
         setSelectedRating(0)
         setCommentModalMode(null)
-        setSelectedCommentDetail(null)
         setEditingCommentTarget(null)
         setIsCommentsLoading(true)
 
@@ -599,10 +553,8 @@ function MovieDetailPage() {
                 <MovieCommentList
                   comments={comments}
                   isLoading={isCommentsLoading}
-                  onCommentClick={handleCommentClick}
                   onEditClick={handleCommentEditClick}
                   onDeleteClick={handleCommentDeleteClick}
-                  onLikeClick={handleCommentLikeClick}
                 />
               </div>
               </section>
@@ -705,13 +657,6 @@ function MovieDetailPage() {
         />
       ) : null}
 
-      {isViewMode && selectedCommentDetail ? (
-        <MovieCommentDetailModal
-          title={movieDetail.title}
-          comment={selectedCommentDetail}
-          onClose={handleCloseCommentModal}
-        />
-      ) : null}
     </div>
   )
 }
