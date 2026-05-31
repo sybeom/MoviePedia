@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -65,13 +67,14 @@ public class CommentController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getCommentList(
             @PathVariable Long movieCode,
-            Authentication authentication) {
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication auth) {
 
         // 작성자 코멘트를 찾기 위한 로그인 판별. 아이디가 있으면 로그인 상태, null이면 비로그인
         // 로그인 아이디를 바탕으로 작성자 코멘트를 찾는다.
-        String loinId = authentication != null ? authentication.getName() : null;
+        String loinId = auth != null ? auth.getName() : null;
 
-        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 목록 조회 성공", commentService.getAllComments(movieCode, loinId)));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 목록 조회 성공", commentService.getAllComments(movieCode, pageable, loinId)));
     }
 
     @Operation(summary = "코멘트 작성", description = "코멘트를 작성하여 저장한다")

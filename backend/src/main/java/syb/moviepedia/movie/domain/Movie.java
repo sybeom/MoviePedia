@@ -73,13 +73,14 @@ public class Movie {
         detailFetched = true;
     }
 
-    // 코멘트 개수 및 좋아요 수 업데이트
+    // 코멘트 개수 및 좋아요 수 상태 업데이트
     public void increaseCommentStats(ReactionType reactionType) {
         this.commentCount++;
         if (reactionType==ReactionType.LIKE)
             this.likeCount++;
     }
 
+    // 코멘트 개수 및 좋아요 수 상태 업데이트
     public void decreaseCommentStats() {
         this.commentCount--;
         this.likeCount--;
@@ -89,7 +90,6 @@ public class Movie {
         if (commentCount == 0) {
             return 0;
         }
-
         return (int) Math.round((double) likeCount / commentCount * 100);
     }
 }

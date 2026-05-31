@@ -8,7 +8,7 @@ import syb.moviepedia.common.ReactionType;
  */
 @Builder
 public record CommentResponse(
-        Long commentId,
+        Long commentId, // 코멘트 수정, 삭제시 필요
         String nickname,
         String content,
         ReactionType reactionType,

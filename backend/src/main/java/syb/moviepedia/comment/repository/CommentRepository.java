@@ -1,5 +1,7 @@
 package syb.moviepedia.comment.repository;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,17 +33,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     """)
     Optional<Member> findByCommentId(@Param("commentId")Long id);
 
-    // 코멘트 목록에서 로그인한 유저가 작성한 코멘트가 있으면 해당 코멘트를 가장 앞에 정렬하여 코멘트 목록을 반환하는 쿼리
+    // 코멘트 목록
     @Query("""
         select c
-        from Comment c
-        where c.movie.id = :movieId
-        order by 
-            case when c.member.loginId = :loginId then 0 else 1 end
+            from Comment c
+            join c.movie movie
+            join fetch c.member member
+            where movie.code = :movieCode
     """)
-    List<Comment> findByMovieIdWithMyCommentFirst(
-            @Param("movieId") Long mvId,
-            @Param("loginId") String loginId);
+    Slice<Comment> findByCommentsMovieId(@Param("movieCode") Long mvCode, Pageable pageable);
 
     // 영화에 달린 코멘트 개수
     @Query("""
@@ -65,11 +65,4 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             @Param("movieId") Long movieId,
             @Param("loginId") String loginId
     );
-
-    @Query("""
-        select count(c)
-        from Comment c
-        where c.movie.id=:movieId and c.reactionType=:reactionType
-    """)
-    long findByMovieIdAndReactionLike(@Param("movieId") Long movieId, @Param("reactionType") ReactionType reactionType);
 }

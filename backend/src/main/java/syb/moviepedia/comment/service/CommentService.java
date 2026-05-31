@@ -2,6 +2,9 @@ package syb.moviepedia.comment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
@@ -12,7 +15,6 @@ import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.dto.response.CommentResponse;
 import syb.moviepedia.comment.repository.CommentRepository;
-import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.common.exception.CommentAlreadyExistsException;
 import syb.moviepedia.common.exception.CommentNotFoundException;
 import syb.moviepedia.common.exception.MemberNotFoundException;
@@ -24,7 +26,6 @@ import syb.moviepedia.movie.repository.MovieRepository;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -54,12 +55,12 @@ public class CommentService {
 
     // 모든 코멘트 목록
     @Transactional
-    public CommentListResponse getAllComments(Long mvCode, String loginId) {
+    public CommentListResponse getAllComments(Long mvCode, Pageable pageable, String loginId) {
         Movie movie = movieRepository.findByCode(mvCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
-        // 찾은 영화에서 loginId인 사람이 작성한 코멘트를 찾고 있으면 가장 앞으로 정렬
-        List<Comment> comments = commentRepository.findByMovieIdWithMyCommentFirst(movie.getId(), loginId);
+        // 코멘트 조회
+        Slice<Comment> comments = commentRepository.findByCommentsMovieId(mvCode, pageable);
 
         return CommentListResponse.builder()
                 .movieId(movie.getId())
@@ -136,16 +137,20 @@ public class CommentService {
 
     // 엔티티 -> CommentResponseDTO로 가공 (리스트)
     private List<CommentResponse> toCommentListResponseDto(
-            List<Comment> comments,
-            String loinId) {
-        return comments.stream().map(comment ->
-                        CommentResponse.builder()
-                        .commentId(comment.getId())
-                        .nickname(comment.getNickname())
-                        .content(comment.getContent())
-                        .reactionType(comment.getReactionType())
-                        .writtenByMe(comment.getMember().getLoginId().equals(loinId)) // 로그인 유저가 코멘트 작성자면 true
-                        .build())
+            Slice<Comment> comments, String loginId
+    ) {
+        return comments.getContent().stream()
+                .map(comment -> {
+                    boolean writtenByMe = Objects.equals(comment.getMember().getLoginId(), loginId);
+
+                    return CommentResponse.builder()
+                            .commentId(comment.getId())
+                            .nickname(comment.getNickname())
+                            .content(comment.getContent())
+                            .reactionType(comment.getReactionType())
+                            .writtenByMe(writtenByMe)
+                            .build();
+                })
                 .toList();
     }
 }
