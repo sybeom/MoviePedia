@@ -226,18 +226,19 @@ public class MovieInitService {
         Movie movie = movieRepository.findByCode(350L).get();
 
         List<Comment> list = new ArrayList<>();
+
         for (int i = 7; i < 100; i++) {
             Member member = memberRepository.findByLoginId("test" + i).get();
+            ReactionType reactionType = Math.random() < 0.5 ? ReactionType.LIKE : ReactionType.DISLIKE;
             Comment comment = Comment.builder()
                     .nickname(member.getNickname())
                     .content("test" + i)
                     .movie(movie)
-                    .reactionType(Math.random() < 0.5 // 좋아요 싫어요 둘중 하나 랜덤
-                            ? ReactionType.LIKE
-                            : ReactionType.DISLIKE)
+                    .reactionType(reactionType)
                     .member(member)
                     .build();
             list.add(comment);
+            movie.update(reactionType); // 코멘트 수, 좋아요 수 업데이트
         }
         commentRepository.saveAll(list);
     }

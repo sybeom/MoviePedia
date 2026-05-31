@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import syb.moviepedia.comment.domain.Comment;
+import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.member.domain.Member;
 
 import java.util.List;
@@ -64,4 +65,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             @Param("movieId") Long movieId,
             @Param("loginId") String loginId
     );
+
+    @Query("""
+        select count(c)
+        from Comment c
+        where c.movie.id=:movieId and c.reactionType=:reactionType
+    """)
+    long findByMovieIdAndReactionLike(@Param("movieId") Long movieId, @Param("reactionType") ReactionType reactionType);
 }

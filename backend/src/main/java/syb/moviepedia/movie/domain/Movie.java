@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+@Slf4j
 @Builder
 @Entity
 @Getter
@@ -49,8 +51,11 @@ public class Movie {
     @Column(name = "detail_fetched")
     private Boolean detailFetched;
 
-    @Builder.Default
-    private Integer score = 0;  // 지수
+    @Column(name="comment_count",nullable = false)
+    private long commentCount=0;
+
+    @Column(name = "like_count", nullable = false)
+    private long likeCount=0;
 
     public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();
@@ -62,13 +67,26 @@ public class Movie {
     }
 
     // 상세 정보 업데이트
-    public void update(List<String> country, Integer runtime) {
+    public void updateCountryAndRuntime(List<String> country, Integer runtime) {
         this.country = country;
         this.runtime = runtime;
         detailFetched = true;
     }
 
-    public Integer getDisplayScore() {
-        return this.score;
+    // 코멘트 개수 및 좋아요 수 업데이트
+    public void update(ReactionType reactionType) {
+        this.commentCount++;
+        log.info("comment count: {}", commentCount);
+        if (reactionType==ReactionType.LIKE)
+            this.likeCount++;
+        log.info("like count: {}", likeCount);
+    }
+
+    public int getLikeRate() {
+        if (commentCount == 0) {
+            return 0;
+        }
+
+        return (int) Math.round((double) likeCount / commentCount * 100);
     }
 }

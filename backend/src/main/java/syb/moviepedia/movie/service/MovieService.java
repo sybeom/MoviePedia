@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
@@ -83,7 +84,10 @@ public class MovieService {
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
 
         // 영화의 코멘트가 20개 이상이면 지수 조회
-        Integer score = movie.getDisplayScore();
+        int score = 0;
+        if (movie.getCommentCount() >= 20) {
+            score = movie.getLikeRate();
+        }
 
         return toMovieDetailResponse(movie, creditDto, score);
     }
@@ -167,7 +171,7 @@ public class MovieService {
     }
 
     // 영화 상세 DTO 가공
-    private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, Integer score) {
+    private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, int score) {
         return MovieDetailResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
@@ -200,7 +204,7 @@ public class MovieService {
         List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가 코드 한국어 매핑
         Integer runtime = detail.runtime();
 
-        movie.update(countries, runtime);
+        movie.updateCountryAndRuntime(countries, runtime);
     }
 
     // 상세 영화 정보 장르 추출

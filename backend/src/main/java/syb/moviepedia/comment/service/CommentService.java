@@ -12,6 +12,7 @@ import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.dto.response.CommentResponse;
 import syb.moviepedia.comment.repository.CommentRepository;
+import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.common.exception.CommentAlreadyExistsException;
 import syb.moviepedia.common.exception.CommentNotFoundException;
 import syb.moviepedia.common.exception.MemberNotFoundException;
@@ -88,8 +89,9 @@ public class CommentService {
                 .member(member)
                 .reactionType(dto.reactionType())
                 .build();
-
         commentRepository.save(comment);
+
+        movie.update(dto.reactionType()); // 코멘트 수, 좋아요 수 업데이트
     }
 
     @Transactional
