@@ -26,6 +26,7 @@ export type MovieDetailView = {
   releaseDate: string
   originCountry: string
   runtime: string
+  score: string
   rating: string
   globalRating: string
   credits: CreditMember[]

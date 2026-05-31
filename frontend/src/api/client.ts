@@ -58,13 +58,15 @@ async function parseApiResult<T>(response: Response): Promise<ApiResult<T> | und
 // fetch 공통 요청 처리
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T | undefined> {
   const { body, headers, ...restOptions } = options
+  const normalizedHeaders = new Headers(headers)
+
+  if (body !== undefined) {
+    normalizedHeaders.set('Content-Type', 'application/json')
+  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
+    headers: normalizedHeaders,
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 

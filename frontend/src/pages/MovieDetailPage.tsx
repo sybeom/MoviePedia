@@ -149,6 +149,7 @@ function MovieDetailPage() {
           releaseDate: normalizedDetail.releaseDate,
           originCountry: normalizedDetail.originCountry,
           runtime: normalizedDetail.runtime,
+          score: normalizedDetail.score,
           rating: normalizedDetail.rating,
           globalRating: normalizedDetail.globalRating,
           credits: normalizedDetail.credits,

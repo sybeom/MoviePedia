@@ -209,6 +209,22 @@ export function getDisplayRatingWithScale(value: string, maxScore: number) {
   return `${normalizedValue} / ${maxScore}`
 }
 
+export function getDisplayScorePercent(value: string) {
+  const normalizedValue = value.trim()
+
+  if (!normalizedValue || normalizedValue.toLowerCase() === 'null') {
+    return '-'
+  }
+
+  const parsedValue = Number(normalizedValue)
+
+  if (Number.isFinite(parsedValue) && parsedValue === 0) {
+    return '-'
+  }
+
+  return `${normalizedValue}%`
+}
+
 // ?좏깮 ?됱젏 ?쒖떆 臾몄옄??諛섑솚 泥섎━
 export function getSelectedRatingLabel(value: number) {
   return value > 0 ? value.toFixed(1) : '-'
@@ -246,6 +262,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const releaseDate = getStringValue(data, ['releaseYear', 'releaseDate'])
   const originCountry = getJoinedStringArrayValue(data, ['country'])
   const runtime = getStringValue(data, ['runtime'])
+  const score = getStringValue(data, ['score'])
   const rating = getStringValue(data, ['rating'])
   const globalRating = getStringValue(data, ['globalRating'])
   const credits = getCreditValue(data)
@@ -265,6 +282,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     releaseDate,
     originCountry,
     runtime,
+    score,
     rating,
     globalRating,
     credits,
@@ -342,6 +360,7 @@ export function createInitialMovieDetail(movieId: string, movie?: MovieDetailSta
     releaseDate: '',
     originCountry: '',
     runtime: '',
+    score: '',
     rating: '',
     globalRating: '',
     credits: [],

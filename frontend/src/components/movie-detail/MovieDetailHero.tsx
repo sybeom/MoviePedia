@@ -5,7 +5,7 @@ import rating15Icon from '../../assets/ratings/15.svg'
 import rating19Icon from '../../assets/ratings/19.svg'
 import ratingAllIcon from '../../assets/ratings/all.svg'
 import type { MovieDetailView } from '../../types/movieDetail'
-import { getDisplayRatingWithScale } from '../../utils/movieDetail'
+import { getDisplayScorePercent } from '../../utils/movieDetail'
 
 type MovieDetailHeroProps = {
   movieDetail: MovieDetailView
@@ -108,10 +108,12 @@ function MovieDetailHero({ movieDetail, isLoading, message, onBack }: MovieDetai
             <div className="movie-detail-score-divider" aria-hidden="true" />
             <div className="movie-detail-score-row">
               <img className="movie-detail-score-icon" src={thumbsUpIcon} alt="" aria-hidden="true" />
-              <span className="movie-detail-score-label">피디아 지수</span>
-              <strong className="movie-detail-score-value">
-                {getDisplayRatingWithScale(movieDetail.rating, 5)}
-              </strong>
+              <div className="movie-detail-score-copy">
+                <span className="movie-detail-score-label">피디아 지수</span>
+                <strong className="movie-detail-score-value">
+                  {getDisplayScorePercent(movieDetail.score)}
+                </strong>
+              </div>
             </div>
           </div>
         </div>

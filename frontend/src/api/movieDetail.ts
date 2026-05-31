@@ -14,8 +14,6 @@ import {
   normalizeMovieDetail,
 } from '../utils/movieDetail'
 
-const commentRequestMap = new Map<string, Promise<MovieCommentsResponse>>()
-
 export async function fetchMovieDetail(movieId: string) {
   const response = await request<unknown>(`/movies/${movieId}`, {
     method: 'GET',
@@ -25,30 +23,16 @@ export async function fetchMovieDetail(movieId: string) {
 }
 
 export function fetchMovieComments(movieId: string) {
-  const existingRequest = commentRequestMap.get(movieId)
-
-  if (existingRequest) {
-    return existingRequest
-  }
-
   const session = getAuthSession()
 
-  const requestPromise = request<unknown>(`/movies/${movieId}/comments`, {
+  return request<unknown>(`/movies/${movieId}/comments`, {
     method: 'GET',
     headers: session?.accessToken
       ? {
           Authorization: `Bearer ${session.accessToken}`,
         }
       : undefined,
-  })
-    .then((response) => normalizeMovieComments(response))
-    .finally(() => {
-      commentRequestMap.delete(movieId)
-    })
-
-  commentRequestMap.set(movieId, requestPromise)
-
-  return requestPromise
+  }).then((response) => normalizeMovieComments(response))
 }
 
 export function createMovieComment(movieId: string, body: CreateCommentRequest) {
