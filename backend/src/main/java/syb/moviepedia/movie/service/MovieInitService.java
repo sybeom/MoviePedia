@@ -238,7 +238,7 @@ public class MovieInitService {
                     .member(member)
                     .build();
             list.add(comment);
-            movie.update(reactionType); // 코멘트 수, 좋아요 수 업데이트
+            movie.increaseCommentStats(reactionType); // 코멘트 수, 좋아요 수 업데이트
         }
         commentRepository.saveAll(list);
     }

@@ -91,7 +91,7 @@ public class CommentService {
                 .build();
         commentRepository.save(comment);
 
-        movie.update(dto.reactionType()); // 코멘트 수, 좋아요 수 업데이트
+        movie.increaseCommentStats(dto.reactionType()); // 코멘트 수, 좋아요 수 상태 업데이트
     }
 
     @Transactional
@@ -107,8 +107,10 @@ public class CommentService {
     public void delete(Long mvCode, Long movieId, String loginId) {
 
         Comment comment = findMyCommentWithMovie(mvCode, movieId, loginId);
-
         commentRepository.delete(comment);
+
+        Movie movie = comment.getMovie();
+        movie.decreaseCommentStats(); // 코멘트 수, 좋아요 수 상태 감소
     }
 
     // 내가 작성한 코멘트 조회시 영화도 함께 가져오기 (fetch join)

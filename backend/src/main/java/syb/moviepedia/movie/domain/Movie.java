@@ -74,12 +74,15 @@ public class Movie {
     }
 
     // 코멘트 개수 및 좋아요 수 업데이트
-    public void update(ReactionType reactionType) {
+    public void increaseCommentStats(ReactionType reactionType) {
         this.commentCount++;
-        log.info("comment count: {}", commentCount);
         if (reactionType==ReactionType.LIKE)
             this.likeCount++;
-        log.info("like count: {}", likeCount);
+    }
+
+    public void decreaseCommentStats() {
+        this.commentCount--;
+        this.likeCount--;
     }
 
     public int getLikeRate() {
