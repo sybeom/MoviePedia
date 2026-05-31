@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
@@ -41,6 +41,7 @@ type HomeTheme = 'dark' | 'light'
 
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
 const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
+const COMMENTS_PAGE_SIZE = 20
 
 function MovieDetailPage() {
   const navigate = useNavigate()
@@ -79,6 +80,9 @@ function MovieDetailPage() {
   const [commentDraft, setCommentDraft] = useState('')
   const [comments, setComments] = useState<MovieComment[]>([])
   const [isCommentsLoading, setIsCommentsLoading] = useState(Boolean(resolvedMovieCode))
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false)
+  const [commentsPage, setCommentsPage] = useState(0)
+  const [hasMoreComments, setHasMoreComments] = useState(true)
   const [selectedRating, setSelectedRating] = useState(0)
   const [canWriteComment, setCanWriteComment] = useState(false)
   const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
@@ -97,6 +101,9 @@ function MovieDetailPage() {
   const isCommentModalOpen = isCreateMode || isEditMode
   const selectedReactionType = selectedRating > 0 ? 'LIKE' : 'DISLIKE'
   const commentModalSubmitLabel = isEditMode ? '수정' : '저장'
+  const commentsPageRef = useRef(0)
+  const isLoadingMoreCommentsRef = useRef(false)
+  const hasMoreCommentsRef = useRef(true)
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -121,6 +128,37 @@ function MovieDetailPage() {
   useEffect(() => {
     hasLoadedDetailRef.current = false
   }, [resolvedMovieCode])
+
+  useEffect(() => {
+    commentsPageRef.current = commentsPage
+  }, [commentsPage])
+
+  useEffect(() => {
+    isLoadingMoreCommentsRef.current = isLoadingMoreComments
+  }, [isLoadingMoreComments])
+
+  useEffect(() => {
+    hasMoreCommentsRef.current = hasMoreComments
+  }, [hasMoreComments])
+
+  const loadMovieCommentsPage = useCallback(
+    async (page: number, append: boolean) => {
+      const response = await fetchMovieComments(resolvedMovieCode, page)
+
+      const nextComments = response.comments
+
+      setResolvedMovieRecordId(response.movieId)
+      setComments((previousComments) =>
+        append ? [...previousComments, ...nextComments] : nextComments,
+      )
+      setCommentsPage(page)
+      setHasMoreComments(nextComments.length === COMMENTS_PAGE_SIZE)
+
+      commentsPageRef.current = page
+      hasMoreCommentsRef.current = nextComments.length === COMMENTS_PAGE_SIZE
+    },
+    [resolvedMovieCode],
+  )
 
   useEffect(() => {
     if (hasLoadedDetailRef.current || !resolvedMovieCode) {
@@ -176,20 +214,24 @@ function MovieDetailPage() {
 
     async function loadMovieComments() {
       try {
-        const response = await fetchMovieComments(resolvedMovieCode)
-
         if (!isMounted) {
           return
         }
-
-        setResolvedMovieRecordId(response.movieId)
-        setComments(response.comments)
+        setComments([])
+        setCommentsPage(0)
+        setHasMoreComments(true)
+        setIsLoadingMoreComments(false)
+        commentsPageRef.current = 0
+        hasMoreCommentsRef.current = true
+        isLoadingMoreCommentsRef.current = false
+        await loadMovieCommentsPage(0, false)
       } catch {
         if (!isMounted) {
           return
         }
 
         setComments([])
+        setHasMoreComments(false)
       } finally {
         if (isMounted) {
           setIsCommentsLoading(false)
@@ -202,7 +244,88 @@ function MovieDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [resolvedMovieCode])
+  }, [loadMovieCommentsPage, resolvedMovieCode])
+
+  useEffect(() => {
+    const mainShell = mainShellRef.current
+
+    async function loadNextCommentsPage() {
+      if (
+        isCommentsLoading ||
+        isLoadingMoreCommentsRef.current ||
+        !hasMoreCommentsRef.current
+      ) {
+        return
+      }
+
+      setIsLoadingMoreComments(true)
+      isLoadingMoreCommentsRef.current = true
+
+      try {
+        await loadMovieCommentsPage(commentsPageRef.current + 1, true)
+      } catch {
+        // no-op
+      } finally {
+        setIsLoadingMoreComments(false)
+        isLoadingMoreCommentsRef.current = false
+      }
+    }
+
+    function getShellDistanceFromBottom() {
+      const currentShell = mainShellRef.current
+
+      if (!currentShell) {
+        return Number.POSITIVE_INFINITY
+      }
+
+      return currentShell.scrollHeight - (currentShell.scrollTop + currentShell.clientHeight)
+    }
+
+    function getWindowDistanceFromBottom() {
+      const scrollingElement = document.scrollingElement ?? document.documentElement
+
+      return (
+        scrollingElement.scrollHeight -
+        (window.scrollY + window.innerHeight)
+      )
+    }
+
+    function isShellActuallyScrolling() {
+      const currentShell = mainShellRef.current
+
+      if (!currentShell) {
+        return false
+      }
+
+      return currentShell.scrollHeight > currentShell.clientHeight + 1
+    }
+
+    async function handleScroll() {
+      const distanceFromBottom = isShellActuallyScrolling()
+        ? getShellDistanceFromBottom()
+        : getWindowDistanceFromBottom()
+
+      if (distanceFromBottom > 120) {
+        return
+      }
+
+      await loadNextCommentsPage()
+    }
+
+    if (mainShell) {
+      mainShell.addEventListener('scroll', handleScroll, { passive: true })
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      if (mainShell) {
+        mainShell.removeEventListener('scroll', handleScroll)
+      }
+
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [isCommentsLoading, loadMovieCommentsPage])
 
   async function handleLogout() {
     if (isLoggingOut) {
@@ -394,9 +517,7 @@ function MovieDetailPage() {
         setIsCommentsLoading(true)
 
         try {
-          const commentsResponse = await fetchMovieComments(resolvedMovieCode)
-          setResolvedMovieRecordId(commentsResponse.movieId)
-          setComments(commentsResponse.comments)
+          await loadMovieCommentsPage(0, false)
         } finally {
           setIsCommentsLoading(false)
         }
@@ -427,9 +548,7 @@ function MovieDetailPage() {
       setIsCommentsLoading(true)
 
       try {
-        const commentsResponse = await fetchMovieComments(resolvedMovieCode)
-        setResolvedMovieRecordId(commentsResponse.movieId)
-        setComments(commentsResponse.comments)
+        await loadMovieCommentsPage(0, false)
       } finally {
         setIsCommentsLoading(false)
       }
@@ -600,6 +719,7 @@ function MovieDetailPage() {
           title={movieDetail.title}
           commentDraft={commentDraft}
           selectedRating={selectedRating}
+          showReactionSelector={!isEditMode}
           canWriteComment={isEditMode || canWriteComment}
           isSubmittingComment={isSubmittingComment}
           isCheckingCommentAuth={isCheckingCommentAuth}

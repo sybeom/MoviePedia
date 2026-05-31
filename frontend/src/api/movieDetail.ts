@@ -22,10 +22,14 @@ export async function fetchMovieDetail(movieId: string) {
   return normalizeMovieDetail(response)
 }
 
-export function fetchMovieComments(movieId: string) {
+export function fetchMovieComments(movieId: string, page = 0) {
   const session = getAuthSession()
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    size: '20',
+  })
 
-  return request<unknown>(`/movies/${movieId}/comments`, {
+  return request<unknown>(`/movies/${movieId}/comments?${searchParams.toString()}`, {
     method: 'GET',
     headers: session?.accessToken
       ? {

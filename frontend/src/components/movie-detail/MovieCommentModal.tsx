@@ -6,6 +6,7 @@ type MovieCommentModalProps = {
   title: string
   commentDraft: string
   selectedRating: number
+  showReactionSelector: boolean
   canWriteComment: boolean
   isSubmittingComment: boolean
   isCheckingCommentAuth: boolean
@@ -23,6 +24,7 @@ function MovieCommentModal({
   title,
   commentDraft,
   selectedRating,
+  showReactionSelector,
   canWriteComment,
   isSubmittingComment,
   isCheckingCommentAuth,
@@ -68,6 +70,7 @@ function MovieCommentModal({
         <MovieCommentForm
           commentDraft={commentDraft}
           selectedRating={selectedRating}
+          showReactionSelector={showReactionSelector}
           canWriteComment={canWriteComment}
           isSubmittingComment={isSubmittingComment}
           isCheckingCommentAuth={isCheckingCommentAuth}
