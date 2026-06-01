@@ -40,6 +40,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             join c.movie movie
             join fetch c.member member
             where movie.code = :movieCode
+        order by c.createdDateAt desc
     """)
     Slice<Comment> findByCommentsMovieId(@Param("movieCode") Long mvCode, Pageable pageable);
 
@@ -52,6 +53,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Long findCommentsCountByMovieId(@Param("movieId") Long mvId);
 
     // 코멘트 조회시 영화도 함께 가져오기
+    // TODO: movieId나 code중 둘중하나만 필요한 것아님?
     @Query("""
         select c
         from Comment c
