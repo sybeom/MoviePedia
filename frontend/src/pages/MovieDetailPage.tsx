@@ -513,7 +513,7 @@ function MovieDetailPage() {
       return
     }
 
-    if (selectedRating === 0) {
+    if (isCreateMode && selectedRating === 0) {
       alert('평점을 선택해주세요.')
       return
     }
