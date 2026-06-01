@@ -1,6 +1,5 @@
 import type { FormEvent, RefObject } from 'react'
 import MovieCommentForm from './MovieCommentForm'
-import type { AuthMeResponse } from '../../types/movieDetail'
 
 type MovieCommentModalProps = {
   title: string
@@ -16,7 +15,6 @@ type MovieCommentModalProps = {
   onCommentDraftChange: (value: string) => void
   onSelectedRatingChange: (rating: number) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
-  onCommentFocus: () => Promise<AuthMeResponse | void>
 }
 
 // 코멘트 작성 및 수정 모달 구성
@@ -34,7 +32,6 @@ function MovieCommentModal({
   onCommentDraftChange,
   onSelectedRatingChange,
   onSubmit,
-  onCommentFocus,
 }: MovieCommentModalProps) {
   return (
     <div className="movie-detail-comment-modal-layer" role="presentation">
@@ -79,7 +76,6 @@ function MovieCommentModal({
           onCommentDraftChange={onCommentDraftChange}
           onSelectedRatingChange={onSelectedRatingChange}
           onSubmit={onSubmit}
-          onCommentFocus={onCommentFocus}
         />
       </div>
     </div>

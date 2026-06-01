@@ -1,7 +1,6 @@
 import type { FormEvent, RefObject } from 'react'
 import thumbsUpIcon from '../../assets/icons/thumbs_up.svg'
 import thumbsDownIcon from '../../assets/icons/thumbs_down.svg'
-import type { AuthMeResponse } from '../../types/movieDetail'
 import { MAX_COMMENT_LENGTH } from '../../utils/movieDetail'
 
 type MovieCommentFormProps = {
@@ -16,7 +15,6 @@ type MovieCommentFormProps = {
   onCommentDraftChange: (value: string) => void
   onSelectedRatingChange: (rating: number) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
-  onCommentFocus: () => Promise<AuthMeResponse | void>
 }
 
 function MovieCommentForm({
@@ -31,7 +29,6 @@ function MovieCommentForm({
   onCommentDraftChange,
   onSelectedRatingChange,
   onSubmit,
-  onCommentFocus,
 }: MovieCommentFormProps) {
   const canClickCommentSubmit = canWriteComment && !isSubmittingComment
   const isThumbsUpActive = selectedRating > 0
@@ -101,9 +98,6 @@ function MovieCommentForm({
             readOnly={!canWriteComment}
             value={commentDraft}
             onChange={(event) => onCommentDraftChange(event.target.value)}
-            onFocus={() => {
-              void onCommentFocus()
-            }}
             placeholder="감상한 영화에 대해 자유롭게 평가해보세요!"
           />
         </div>

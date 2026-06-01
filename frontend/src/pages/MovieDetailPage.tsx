@@ -374,7 +374,7 @@ function MovieDetailPage() {
     }
   }
 
-  async function handleCommentInputFocus() {
+  async function _handleCommentInputFocus() {
     if (isCheckingCommentAuth) {
       return
     }
@@ -411,6 +411,33 @@ function MovieDetailPage() {
     setCommentDraft('')
     setSelectedRating(0)
     setCommentModalMode('create')
+  }
+
+  async function handleOpenCommentModalWithAuth() {
+    if (isCheckingCommentAuth) {
+      return
+    }
+
+    const session = getAuthSession()
+
+    if (!session?.accessToken) {
+      setCanWriteComment(false)
+      alert('로그인이 필요한 서비스입니다.')
+      return
+    }
+
+    setIsCheckingCommentAuth(true)
+
+    try {
+      await verifyCommentAuth()
+      setCanWriteComment(true)
+      handleOpenCommentModal()
+    } catch {
+      setCanWriteComment(false)
+      alert('로그인이 필요한 서비스입니다.')
+    } finally {
+      setIsCheckingCommentAuth(false)
+    }
   }
 
   function handleCloseCommentModal() {
@@ -619,7 +646,9 @@ function MovieDetailPage() {
                   <button
                     className="movie-detail-comment-open-button"
                     type="button"
-                    onClick={handleOpenCommentModal}
+                    onClick={() => {
+                      void handleOpenCommentModalWithAuth()
+                    }}
                   >
                     코멘트 남기기
                   </button>
@@ -729,7 +758,6 @@ function MovieDetailPage() {
           onCommentDraftChange={setCommentDraft}
           onSelectedRatingChange={setSelectedRating}
           onSubmit={handleCommentSubmit}
-          onCommentFocus={handleCommentInputFocus}
         />
       ) : null}
 
