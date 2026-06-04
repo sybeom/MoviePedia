@@ -104,7 +104,7 @@ public class TmdbClient {
                     .uri(uriBuilder -> uriBuilder
                                     .path(DISCOVER_MOVIE_PATH)
                                     .queryParam("language", "ko-KR")
-                                    .queryParam("page",1)
+                                    .queryParam("page",2)
                                     .queryParam("region", "KR")
                                     .build())
                     .retrieve()

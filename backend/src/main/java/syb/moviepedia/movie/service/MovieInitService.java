@@ -11,6 +11,8 @@ import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.common.RoleType;
+import syb.moviepedia.elasticsearch.domain.MovieDocument;
+import syb.moviepedia.elasticsearch.repository.MovieDocumentRepository;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.Country;
@@ -46,6 +48,7 @@ public class MovieInitService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
+    private final MovieDocumentRepository movieDocumentRepository;
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -87,23 +90,32 @@ public class MovieInitService {
     }
 
     public void initMovies() {
-        if (movieRepository.count() > 0) {
-            return;
-        }
         log.info("initMovies() 일반 영화 초기 데이터 호출");
-        saveMovies(tmdbClient.getInitMovies());
+        TmdbMovieList response = tmdbClient.getInitMovies();
+        saveMovies(response);
     }
 
     private void saveMovies(TmdbMovieList responses) {
         List<Movie> movies = responses.results().stream()
                 .filter(tmdbMv -> !movieRepository.existsByCode(tmdbMv.code())) // DB에 없는 영화들만
+                .filter(tmdbMv ->
+                        tmdbMv.title().matches("^[0-9a-zA-Z가-힣 .,:~!?'\"/(){}\\[\\]&+\\-·]+$"))
                 .map(response ->{
                             String certification = extractCertification(response);
                             return toMovie(response, certification);
                 })
                 .toList();
-
         movieRepository.saveAll(movies);
+        saveElasticMovies(movies); // 엘라스틱 서치 저장
+    }
+
+    private void saveElasticMovies(List<Movie> movies) {
+        List<MovieDocument> movieDocs = movies.stream().map(movie ->
+                        MovieDocument.builder()
+                                .title(movie.getTitle())
+                                .build())
+                .toList();
+        movieDocumentRepository.saveAll(movieDocs);
     }
 
     // 카테고리 별 영화 목록 초기화
