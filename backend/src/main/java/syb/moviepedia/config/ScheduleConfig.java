@@ -21,6 +21,8 @@ public class ScheduleConfig {
     private final JwtRepository jwtRepository;
     private final MovieInitService movieInitService;
 
+    private int page = 60;
+
     // 새벽 3시마다 Refresh 토큰 저장소 8일 지난 토큰 삭제
     @Scheduled(cron = "0 0 3 * * *") // 기본 cron = "0 0 3 * * *" (새벽 3시 진행)
     public void JwtRefreshSchedule() {
@@ -35,5 +37,13 @@ public class ScheduleConfig {
         log.info("카테고리 영화 갱신 스케줄 호출");
 
         movieInitService.refreshAllCategoryMovies();
+    }
+
+    // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
+    @Scheduled(fixedRate = 60000, initialDelay = 15000) // 3분마다 삽입
+    public void InsertMovie() {
+        log.info("영화 삽입 스케줄 호출");
+
+        movieInitService.initMovies(page++);
     }
 }

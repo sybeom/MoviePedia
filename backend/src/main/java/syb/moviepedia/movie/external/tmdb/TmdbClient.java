@@ -36,8 +36,8 @@ public class TmdbClient {
     }
 
     // 전체 영화
-    public TmdbMovieList getInitMovies() {
-        return fetchInitMovies();
+    public TmdbMovieList getInitMovies(int page) {
+        return fetchInitMovies(page);
     }
 
     // 인기 영화
@@ -98,13 +98,13 @@ public class TmdbClient {
     }
 
     // 초기 영화 호출
-    private TmdbMovieList fetchInitMovies() {
+    private TmdbMovieList fetchInitMovies(int page) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
                                     .path(DISCOVER_MOVIE_PATH)
                                     .queryParam("language", "ko-KR")
-                                    .queryParam("page",2)
+                                    .queryParam("page",page)
                                     .queryParam("region", "KR")
                                     .build())
                     .retrieve()

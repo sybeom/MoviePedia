@@ -29,7 +29,6 @@ import syb.moviepedia.movie.repository.MovieRepository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 영화 초기 데이터 설정을 위한 클래스
@@ -43,7 +42,7 @@ public class MovieInitService {
     private final TmdbClient tmdbClient;
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;
-    private final GenreRepository tmdbGenreRepository;
+    private final GenreRepository genreRepository;
     private final CountryRepository countryRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
@@ -53,7 +52,7 @@ public class MovieInitService {
     // 장르 데이터 초기화(로드)
     public void initGenres() {
         // tmdb 장르 데이터는 총 19개
-        if (tmdbGenreRepository.count() > 0) {
+        if (genreRepository.count() > 0) {
             log.info("initGenres(): 장르 데이터 DB존재");
             return;
         }
@@ -61,14 +60,14 @@ public class MovieInitService {
         log.info("initGenres() 실행, 장르 데이터 변경 감지");
         List<Genre> genres = tmdbClient.getMovieGenres().genres().stream()
                 .filter(genre ->
-                        !tmdbGenreRepository.existsByGenreId(genre.id())) // 존재하지 않는 값들만
+                        !genreRepository.existsByGenreId(genre.id())) // 존재하지 않는 값들만
                 .map(genre ->
                         Genre.builder()
                                 .genreId(genre.id())
                                 .name(genre.name())
                                 .build())
                 .toList();
-        tmdbGenreRepository.saveAll(genres);
+        genreRepository.saveAll(genres);
     }
 
     // 국가 데이터 초기화
@@ -89,9 +88,9 @@ public class MovieInitService {
         countryRepository.saveAll(countries);
     }
 
-    public void initMovies() {
-        log.info("initMovies() 일반 영화 초기 데이터 호출");
-        TmdbMovieList response = tmdbClient.getInitMovies();
+    public void initMovies(int page) {
+        log.info("initMovies() 일반 영화 초기 데이터 호출 페이지: {}", page);
+        TmdbMovieList response = tmdbClient.getInitMovies(page);
         saveMovies(response);
     }
 
@@ -99,19 +98,22 @@ public class MovieInitService {
         List<Movie> movies = responses.results().stream()
                 .filter(tmdbMv -> !movieRepository.existsByCode(tmdbMv.code())) // DB에 없는 영화들만
                 .filter(tmdbMv ->
-                        tmdbMv.title().matches("^[0-9a-zA-Z가-힣 .,:~!?'\"/(){}\\[\\]&+\\-·]+$"))
+                        // 숫자만 와도되고 특수문자만 와도 되지만, 언어가 포함되면 한글이 반드시 최소 1개는 포함하는 정규식
+                        tmdbMv.title().matches("^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$"))
                 .map(response ->{
                             String certification = extractCertification(response);
                             return toMovie(response, certification);
                 })
                 .toList();
         movieRepository.saveAll(movies);
-        saveElasticMovies(movies); // 엘라스틱 서치 저장
+//        saveElasticMovies(movies); // 엘라스틱 서치 저장
     }
 
+    // 엘라스틱서치에 저장
     private void saveElasticMovies(List<Movie> movies) {
         List<MovieDocument> movieDocs = movies.stream().map(movie ->
                         MovieDocument.builder()
+                                .id(movie.getCode().toString())
                                 .title(movie.getTitle())
                                 .build())
                 .toList();
@@ -190,9 +192,7 @@ public class MovieInitService {
 
     // 장르 id에 대응하는 장르명 가져오기
     private List<String> getGenreNames(List<Integer> genres) {
-        return genres.stream().map(genreId ->
-                tmdbGenreRepository.findNameByGenreId(genreId)
-        ).toList();
+        return genres.stream().map(genreId -> genreRepository.findNameByGenreId(genreId)).toList();
     }
 
     // 관람 등급 추출
