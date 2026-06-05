@@ -11,24 +11,18 @@ import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.common.RoleType;
-import syb.moviepedia.movie.domain.MovieDocument;
-import syb.moviepedia.movie.repository.MovieSearchRepository;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
-import syb.moviepedia.movie.domain.Country;
-import syb.moviepedia.movie.domain.Genre;
-import syb.moviepedia.movie.domain.Movie;
-import syb.moviepedia.movie.domain.MovieCategory;
+import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
-import syb.moviepedia.movie.repository.CountryRepository;
-import syb.moviepedia.movie.repository.GenreRepository;
-import syb.moviepedia.movie.repository.MovieCategoryRepository;
-import syb.moviepedia.movie.repository.MovieRepository;
+import syb.moviepedia.movie.repository.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 영화 초기 데이터 설정을 위한 클래스
@@ -95,8 +89,12 @@ public class MovieInitService {
     }
 
     private void saveMovies(TmdbMovieList responses) {
+        List<Long> codes = responses.results().stream().map(tmdbMovie -> tmdbMovie.code()).toList();
+        // 현재 DB에 존재하는 영화 code만 걸러냄, 속도 때문에 Set을 사용
+        Set<Long> existingCodes = movieRepository.findCodesByCodeIn(codes);
+
         List<Movie> movies = responses.results().stream()
-                .filter(tmdbMv -> !movieRepository.existsByCode(tmdbMv.code())) // DB에 없는 영화들만
+                .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code())) // DB에 없는 영화들만
                 .filter(tmdbMv ->
                         // 숫자만 와도되고 특수문자만 와도 되지만, 언어가 포함되면 한글이 반드시 최소 1개는 포함하는 정규식
                         tmdbMv.title().matches("^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$"))
@@ -162,6 +160,7 @@ public class MovieInitService {
 
     // TmdbMovie -> Movie 엔티티로 가공
     private Movie toMovie(TmdbMovie tmdbMovie, String certification) {
+        log.info("영화 제목 : {}", tmdbMovie.title());
         return Movie.builder()
                 .code(tmdbMovie.code())
                 .title(tmdbMovie.title())
@@ -192,7 +191,7 @@ public class MovieInitService {
 
     // 장르 id에 대응하는 장르명 가져오기
     private List<String> getGenreNames(List<Integer> genres) {
-        return genres.stream().map(genreId -> genreRepository.findNameByGenreId(genreId)).toList();
+        return genreRepository.findGenresByGenreIds(genres);
     }
 
     // 관람 등급 추출
