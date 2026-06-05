@@ -11,8 +11,8 @@ import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.ProviderType;
 import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.common.RoleType;
-import syb.moviepedia.elasticsearch.domain.MovieDocument;
-import syb.moviepedia.elasticsearch.repository.MovieDocumentRepository;
+import syb.moviepedia.movie.domain.MovieDocument;
+import syb.moviepedia.movie.repository.MovieSearchRepository;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.Country;
@@ -47,7 +47,7 @@ public class MovieInitService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
-    private final MovieDocumentRepository movieDocumentRepository;
+    private final MovieSearchRepository mvSearchRepository;
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -117,7 +117,7 @@ public class MovieInitService {
                                 .title(movie.getTitle())
                                 .build())
                 .toList();
-        movieDocumentRepository.saveAll(movieDocs);
+        mvSearchRepository.saveAll(movieDocs);
     }
 
     // 카테고리 별 영화 목록 초기화

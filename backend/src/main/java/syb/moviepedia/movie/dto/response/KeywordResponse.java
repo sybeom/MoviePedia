@@ -1,13 +1,12 @@
 package syb.moviepedia.movie.dto.response;
 
 import lombok.Builder;
+import lombok.ToString;
 
-/**
- * 검색 결과 프론트 응답 DTO 클래스
- */
+
 @Builder
 public record KeywordResponse(
-        Long code,
+        String code,
         String title
 ) {
 }

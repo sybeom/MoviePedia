@@ -224,14 +224,4 @@ public class MovieService {
                 .map(info -> info.certification())
                 .orElse("등급 미정");
     }
-
-    // 영화 검색 목록
-    public List<KeywordResponse> getKeywords(String keyword) {
-        return tmdbClient.getKeywordList(keyword).results().stream().map(
-                tmdbKeyword -> KeywordResponse.builder()
-                        .code(tmdbKeyword.id())
-                        .title(tmdbKeyword.title())
-                        .build())
-                .toList();
-    }
 }

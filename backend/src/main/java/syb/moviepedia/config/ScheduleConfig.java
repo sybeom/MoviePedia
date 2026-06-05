@@ -40,7 +40,7 @@ public class ScheduleConfig {
     }
 
     // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
-    @Scheduled(fixedRate = 60000, initialDelay = 15000) // 3분마다 삽입
+    @Scheduled(cron = "0 0 3 * * *") // 3분마다 삽입
     public void InsertMovie() {
         log.info("영화 삽입 스케줄 호출");
 
