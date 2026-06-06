@@ -68,7 +68,9 @@ function MovieCommentList({
                     <p className="movie-detail-comment-card-title">
                       {comment.reactionType === 'DISLIKE' ? '비추천' : '추천'}
                     </p>
-                    <p className="movie-detail-comment-card-subtitle">코멘트 기록</p>
+                    <p className="movie-detail-comment-card-subtitle">
+                      {comment.createdAt || '코멘트 기록'}
+                    </p>
                   </div>
                 </div>
               </header>

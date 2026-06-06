@@ -75,6 +75,7 @@ export type MovieComment = {
   movieId: string
   nickname: string
   content: string
+  createdAt: string
   reactionType: 'LIKE' | 'DISLIKE'
   writtenByMe: boolean
 }

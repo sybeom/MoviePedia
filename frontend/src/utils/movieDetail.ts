@@ -312,6 +312,7 @@ export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
         movieId: getStringValue(comment, ['movieId']) || responseMovieId,
         nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '?듬챸',
         content: getStringValue(comment, ['content', 'comment']) || '-',
+        createdAt: getStringValue(comment, ['createdAt']),
         reactionType,
         writtenByMe: getBooleanValue(comment, ['writtenByMe', 'isMine']),
       }
