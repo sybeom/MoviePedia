@@ -40,7 +40,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             join c.movie movie
             join fetch c.member member
             where movie.code = :movieCode
-        order by c.createdDateAt desc
     """)
     Slice<Comment> findByCommentsMovieId(@Param("movieCode") Long mvCode, Pageable pageable);
 

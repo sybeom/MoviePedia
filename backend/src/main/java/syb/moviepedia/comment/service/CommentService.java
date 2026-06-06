@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
@@ -15,6 +16,7 @@ import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.dto.response.CommentResponse;
 import syb.moviepedia.comment.repository.CommentRepository;
+import syb.moviepedia.common.CommentSortType;
 import syb.moviepedia.common.exception.CommentAlreadyExistsException;
 import syb.moviepedia.common.exception.CommentNotFoundException;
 import syb.moviepedia.common.exception.MemberNotFoundException;
@@ -55,12 +57,20 @@ public class CommentService {
 
     // 모든 코멘트 목록
     @Transactional
-    public CommentListResponse getAllComments(Long mvCode, Pageable pageable, String loginId) {
+    public CommentListResponse getAllComments(Long mvCode, Pageable pageable, String loginId, CommentSortType sortType) {
         Movie movie = movieRepository.findByCode(mvCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
+        Sort sort = switch (sortType) {
+            case LATEST -> Sort.by(Sort.Direction.DESC, "createdDateAt");
+            case OLDEST -> Sort.by(Sort.Direction.ASC, "createdDateAt");
+        };
+
+        // 정렬 조건 추가된 Pageable
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
         // 코멘트 조회
-        Slice<Comment> comments = commentRepository.findByCommentsMovieId(mvCode, pageable);
+        Slice<Comment> comments = commentRepository.findByCommentsMovieId(mvCode, sortedPageable);
 
         return CommentListResponse.builder()
                 .movieId(movie.getId())

@@ -21,6 +21,7 @@ import syb.moviepedia.comment.dto.response.CommentDetailResponse;
 import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.service.CommentService;
+import syb.moviepedia.common.CommentSortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.common.swagger.SwaggerFailResponse;
@@ -68,13 +69,16 @@ public class CommentController {
     public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getCommentList(
             @PathVariable Long movieCode,
             @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(defaultValue = "LATEST") CommentSortType sort,
             Authentication auth) {
-
         // 작성자 코멘트를 찾기 위한 로그인 판별. 아이디가 있으면 로그인 상태, null이면 비로그인
         // 로그인 아이디를 바탕으로 작성자 코멘트를 찾는다.
         String loinId = auth != null ? auth.getName() : null;
 
-        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 목록 조회 성공", commentService.getAllComments(movieCode, pageable, loinId)));
+        return ResponseEntity.ok().body(
+                ApiSuccessResponse.of(
+                        "코멘트 목록 조회 성공",
+                        commentService.getAllComments(movieCode, pageable, loinId, sort)));
     }
 
     @Operation(summary = "코멘트 작성", description = "코멘트를 작성하여 저장한다")
