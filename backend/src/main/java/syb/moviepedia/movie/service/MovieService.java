@@ -64,9 +64,10 @@ public class MovieService {
         Movie movie = movieRepository.findByCode(mvCode) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
                 .orElseGet(() -> {
                     log.info("DB 영화 존재 X, DB 저장 시작");
-                    TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
-                    String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
-                    return movieRepository.save(toMovieFromDetail(detail, certification));
+                    TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode); // 상세 api 호출
+                    String certification = extractCertification(tmdbClient.getMovieCertification(mvCode)); // 등급
+                    List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가
+                    return movieRepository.save(toMovieFromDetail(detail, certification, countries));
                 });
 
         // 영화가 있더라도 기타(등급, 런타임, 국가) 채워져있지 않을 때.
@@ -75,8 +76,6 @@ public class MovieService {
             log.info("getMovieDetail(): 영화 상세 업데이트");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
 
-//            // TODO: 확인 결과 등급은 초기 데이터 설정시 카테고리에서 채우는 것같은데 중복 저장아닌지 . 확인해보기
-//            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
             updateMovie(movie, detail);
         }
 
@@ -153,8 +152,7 @@ public class MovieService {
     }
 
     // 영화 상세 정보 -> 영화 엔티티 가공
-    private Movie toMovieFromDetail(TmdbMovieDetail detail, String certification) {
-        List<String> countries = countryRepository.findNameByCodeIn(detail.country());
+    private Movie toMovieFromDetail(TmdbMovieDetail detail, String certification, List<String> countries) {
         return Movie.builder()
                 .code(detail.id())
                 .title(detail.title())

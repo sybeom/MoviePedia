@@ -82,6 +82,7 @@ public class MovieInitService {
         countryRepository.saveAll(countries);
     }
 
+    @Transactional
     public void initMovies(int page) {
         log.info("initMovies() 일반 영화 초기 데이터 호출 페이지: {}", page);
         TmdbMovieList response = tmdbClient.getInitMovies(page);
@@ -149,6 +150,7 @@ public class MovieInitService {
     }
 
     // 스케줄링에 따른 카테고리 영화 초기화
+    @Transactional
     public void refreshAllCategoryMovies() {
         log.info("카테고리 영화 전체 갱신 시작");
         refreshCategoryMovies(MovieCategoryType.POPULAR, tmdbClient.getPopularMovies());

@@ -28,7 +28,7 @@ public record MovieDetailResponse(
         Integer releaseYear,
         List<String> country,
         Integer runtime,
-        Integer score, // TODO: score 계산 해야할듯
+        Integer score,
         List<MovieCreditResponse> credit
 ) {
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
