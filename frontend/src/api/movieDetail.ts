@@ -22,11 +22,16 @@ export async function fetchMovieDetail(movieId: string) {
   return normalizeMovieDetail(response)
 }
 
-export function fetchMovieComments(movieId: string, page = 0) {
+export function fetchMovieComments(
+  movieId: string,
+  page = 0,
+  sort: 'latest' | 'oldest' = 'latest',
+) {
   const session = getAuthSession()
   const searchParams = new URLSearchParams({
     page: String(page),
     size: '20',
+    sort,
   })
 
   return request<unknown>(`/movies/${movieId}/comments?${searchParams.toString()}`, {

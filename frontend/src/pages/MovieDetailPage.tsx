@@ -38,6 +38,7 @@ import './MovieDetailPage.css'
 
 type CommentModalMode = 'create' | 'edit' | null
 type HomeTheme = 'dark' | 'light'
+type CommentSortOrder = 'latest' | 'oldest'
 
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
 const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
@@ -88,6 +89,7 @@ function MovieDetailPage() {
   const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [commentModalMode, setCommentModalMode] = useState<CommentModalMode>(null)
+  const [commentSortOrder, setCommentSortOrder] = useState<CommentSortOrder>('latest')
   const [editingCommentTarget, setEditingCommentTarget] = useState<{
     movieId: string
     commentId: string
@@ -143,7 +145,7 @@ function MovieDetailPage() {
 
   const loadMovieCommentsPage = useCallback(
     async (page: number, append: boolean) => {
-      const response = await fetchMovieComments(resolvedMovieCode, page)
+      const response = await fetchMovieComments(resolvedMovieCode, page, commentSortOrder)
 
       const nextComments = response.comments
 
@@ -157,7 +159,7 @@ function MovieDetailPage() {
       commentsPageRef.current = page
       hasMoreCommentsRef.current = nextComments.length === COMMENTS_PAGE_SIZE
     },
-    [resolvedMovieCode],
+    [commentSortOrder, resolvedMovieCode],
   )
 
   useEffect(() => {
@@ -244,7 +246,7 @@ function MovieDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [loadMovieCommentsPage, resolvedMovieCode])
+  }, [commentSortOrder, loadMovieCommentsPage, resolvedMovieCode])
 
   useEffect(() => {
     const mainShell = mainShellRef.current
@@ -643,14 +645,37 @@ function MovieDetailPage() {
               <div className="movie-detail-comments">
                 <div className="movie-detail-section-header">
                   <h2 id="movie-detail-comments-title">코멘트</h2>
+                  <div className="movie-detail-comments-header-actions">
+                    <button
+                      className="movie-detail-comment-open-button"
+                      type="button"
+                      onClick={() => {
+                        void handleOpenCommentModalWithAuth()
+                      }}
+                    >
+                      코멘트 남기기
+                    </button>
+                  </div>
+                </div>
+
+                <div className="movie-detail-comments-sort-row" aria-label="코멘트 정렬">
                   <button
-                    className="movie-detail-comment-open-button"
+                    className={`movie-detail-comments-sort-button${
+                      commentSortOrder === 'latest' ? ' is-active' : ''
+                    }`}
                     type="button"
-                    onClick={() => {
-                      void handleOpenCommentModalWithAuth()
-                    }}
+                    onClick={() => setCommentSortOrder('latest')}
                   >
-                    코멘트 남기기
+                    최신순
+                  </button>
+                  <button
+                    className={`movie-detail-comments-sort-button${
+                      commentSortOrder === 'oldest' ? ' is-active' : ''
+                    }`}
+                    type="button"
+                    onClick={() => setCommentSortOrder('oldest')}
+                  >
+                    오래된순
                   </button>
                 </div>
 
