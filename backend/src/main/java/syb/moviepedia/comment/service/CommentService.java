@@ -148,6 +148,7 @@ public class CommentService {
                             .nickname(comment.getNickname())
                             .content(comment.getContent())
                             .reactionType(comment.getReactionType())
+                            .createdAt(comment.getCreatedDateAt().toLocalDate())
                             .writtenByMe(writtenByMe)
                             .build();
                 })
