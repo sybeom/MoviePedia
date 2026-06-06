@@ -21,4 +21,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
         where m.code in :codes
     """)
     Set<Long> findCodesByCodeIn(@Param("codes") List<Long> codes);
+
+    // id가 마지막 조회 id보다 큰 영화 중에서 id 오름차순으로 최대 1000개 조회
+    List<Movie> findTop1000ByIdGreaterThanOrderByIdAsc(Long id);
 }

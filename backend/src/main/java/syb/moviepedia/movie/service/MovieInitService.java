@@ -2,6 +2,11 @@ package syb.moviepedia.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.IndexQuery;
+import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +47,9 @@ public class MovieInitService {
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
     private final MovieSearchRepository mvSearchRepository;
+
+    private final ElasticsearchOperations esOperations;
+    private static final String INDEX_NAME = "movie_search";
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -109,14 +117,58 @@ public class MovieInitService {
     }
 
     // 엘라스틱서치에 저장
-    private void saveElasticMovies(List<Movie> movies) {
-        List<MovieDocument> movieDocs = movies.stream().map(movie ->
-                        MovieDocument.builder()
-                                .id(movie.getCode().toString())
-                                .title(movie.getTitle())
-                                .build())
-                .toList();
-        mvSearchRepository.saveAll(movieDocs);
+    @Transactional
+    public void saveElasticMovies() {
+
+        Long lastId = 0L;
+        int totalIndexedCount = 0;
+
+        while (true) {
+            // 1000개씩 조회
+            List<Movie> movies = movieRepository.findTop1000ByIdGreaterThanOrderByIdAsc(lastId);
+
+            if (movies.isEmpty()) {
+                break;
+            }
+
+            List<IndexQuery> queries = movies.stream()
+                    .map(movie -> {
+                        MovieDocument doc = MovieDocument.from(movie);
+
+                        // 문서 하나를 저장하기 위한 IndexQuery 객체를 만들어주는 빌더
+                        // 문서를 ES에 저장하기 위한 요청 객체 (즉 저장 요청 정보)
+                        return new IndexQueryBuilder()
+                                .withId(doc.getId())
+                                .withObject(doc)
+                                .build();
+                    })
+                    .toList();
+
+            esOperations.bulkIndex(queries, IndexCoordinates.of(INDEX_NAME));
+
+            totalIndexedCount += movies.size();
+
+            lastId = movies.get(movies.size() - 1).getId();
+
+            log.info("Elasticsearch 영화 색인 진행 중 - lastId={}, indexedCount={}",
+                    lastId,
+                    totalIndexedCount
+            );
+        }
+    }
+
+    private void createIndexIfNotExists() {
+        // MovieDocument가 사용하는 인덱스를 조작할 수 있는 객체 가져옴
+        // MovieDocument 클래스의 애노테이션을 보고 인덱스를 알 수 있음
+        // 결국 해당 인덱스를 관리할 수 있는 도구를 꺼낸다는 의미
+        IndexOperations idxOp = esOperations.indexOps(MovieDocument.class);
+
+        if (!idxOp.exists()) {
+            idxOp.create(); // 인덱스 생성
+            idxOp.putMapping(idxOp.createMapping()); // 매핑
+
+            log.info("Elasticsearch movies 인덱스 생성 완료");
+        }
     }
 
     // 카테고리 별 영화 목록 초기화

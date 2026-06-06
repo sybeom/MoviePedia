@@ -24,5 +24,7 @@ public class DataInitializer implements CommandLineRunner {
 //        movieInitService.createComment();
 //        movieInitService.initMovies();
 //        movieInitService.initCategoryMovies(); // 스케쥴링에서 대신함
+        movieInitService.saveElasticMovies();
+
     }
 }
