@@ -17,7 +17,7 @@ function MovieCommentList({
 }: MovieCommentListProps) {
   return (
     <div className="movie-detail-comment-list">
-      {isLoading ? (
+      {isLoading && comments.length === 0 ? (
         <p className="movie-detail-comment-list-message">코멘트를 불러오는 중입니다...</p>
       ) : comments.length > 0 ? (
         comments.map((comment) => (

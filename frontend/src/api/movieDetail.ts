@@ -28,10 +28,11 @@ export function fetchMovieComments(
   sort: 'latest' | 'oldest' = 'latest',
 ) {
   const session = getAuthSession()
+  const sortParam = sort === 'oldest' ? 'OLDEST' : 'LATEST'
   const searchParams = new URLSearchParams({
     page: String(page),
     size: '20',
-    sort,
+    sort: sortParam,
   })
 
   return request<unknown>(`/movies/${movieId}/comments?${searchParams.toString()}`, {

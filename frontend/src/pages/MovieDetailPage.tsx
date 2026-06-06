@@ -54,6 +54,7 @@ function MovieDetailPage() {
   const mainShellRef = useRef<HTMLElement | null>(null)
   const hasLoadedDetailRef = useRef(false)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
+  const commentsSectionRef = useRef<HTMLElement | null>(null)
 
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
   const [theme, setTheme] = useState<HomeTheme>(() => {
@@ -106,6 +107,8 @@ function MovieDetailPage() {
   const commentsPageRef = useRef(0)
   const isLoadingMoreCommentsRef = useRef(false)
   const hasMoreCommentsRef = useRef(true)
+  const commentSortOrderRef = useRef<CommentSortOrder>('latest')
+  const shouldWaitForCommentsScrollResetRef = useRef(false)
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -143,9 +146,13 @@ function MovieDetailPage() {
     hasMoreCommentsRef.current = hasMoreComments
   }, [hasMoreComments])
 
+  useEffect(() => {
+    commentSortOrderRef.current = commentSortOrder
+  }, [commentSortOrder])
+
   const loadMovieCommentsPage = useCallback(
-    async (page: number, append: boolean) => {
-      const response = await fetchMovieComments(resolvedMovieCode, page, commentSortOrder)
+    async (page: number, append: boolean, sortOrder: CommentSortOrder) => {
+      const response = await fetchMovieComments(resolvedMovieCode, page, sortOrder)
 
       const nextComments = response.comments
 
@@ -159,7 +166,7 @@ function MovieDetailPage() {
       commentsPageRef.current = page
       hasMoreCommentsRef.current = nextComments.length === COMMENTS_PAGE_SIZE
     },
-    [commentSortOrder, resolvedMovieCode],
+    [resolvedMovieCode],
   )
 
   useEffect(() => {
@@ -226,7 +233,7 @@ function MovieDetailPage() {
         commentsPageRef.current = 0
         hasMoreCommentsRef.current = true
         isLoadingMoreCommentsRef.current = false
-        await loadMovieCommentsPage(0, false)
+        await loadMovieCommentsPage(0, false, commentSortOrderRef.current)
       } catch {
         if (!isMounted) {
           return
@@ -246,7 +253,7 @@ function MovieDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [commentSortOrder, loadMovieCommentsPage, resolvedMovieCode])
+  }, [loadMovieCommentsPage, resolvedMovieCode])
 
   useEffect(() => {
     const mainShell = mainShellRef.current
@@ -255,7 +262,8 @@ function MovieDetailPage() {
       if (
         isCommentsLoading ||
         isLoadingMoreCommentsRef.current ||
-        !hasMoreCommentsRef.current
+        !hasMoreCommentsRef.current ||
+        shouldWaitForCommentsScrollResetRef.current
       ) {
         return
       }
@@ -264,7 +272,7 @@ function MovieDetailPage() {
       isLoadingMoreCommentsRef.current = true
 
       try {
-        await loadMovieCommentsPage(commentsPageRef.current + 1, true)
+        await loadMovieCommentsPage(commentsPageRef.current + 1, true, commentSortOrder)
       } catch {
         // no-op
       } finally {
@@ -307,6 +315,14 @@ function MovieDetailPage() {
         ? getShellDistanceFromBottom()
         : getWindowDistanceFromBottom()
 
+      if (shouldWaitForCommentsScrollResetRef.current) {
+        if (distanceFromBottom > 240) {
+          shouldWaitForCommentsScrollResetRef.current = false
+        }
+
+        return
+      }
+
       if (distanceFromBottom > 120) {
         return
       }
@@ -327,7 +343,7 @@ function MovieDetailPage() {
 
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [isCommentsLoading, loadMovieCommentsPage])
+  }, [commentSortOrder, isCommentsLoading, loadMovieCommentsPage])
 
   async function handleLogout() {
     if (isLoggingOut) {
@@ -442,6 +458,33 @@ function MovieDetailPage() {
     }
   }
 
+  async function handleCommentSortChange(nextSortOrder: CommentSortOrder) {
+    if (nextSortOrder === commentSortOrder || isCommentsLoading || isLoadingMoreComments) {
+      return
+    }
+
+    shouldWaitForCommentsScrollResetRef.current = true
+    commentsSectionRef.current?.scrollIntoView({
+      behavior: 'auto',
+      block: 'start',
+    })
+
+    setCommentSortOrder(nextSortOrder)
+    setIsCommentsLoading(true)
+    setCommentsPage(0)
+    setHasMoreComments(true)
+    setIsLoadingMoreComments(false)
+    commentsPageRef.current = 0
+    hasMoreCommentsRef.current = true
+    isLoadingMoreCommentsRef.current = false
+
+    try {
+      await loadMovieCommentsPage(0, false, nextSortOrder)
+    } finally {
+      setIsCommentsLoading(false)
+    }
+  }
+
   function handleCloseCommentModal() {
     setCommentModalMode(null)
     setEditingCommentTarget(null)
@@ -546,7 +589,7 @@ function MovieDetailPage() {
         setIsCommentsLoading(true)
 
         try {
-          await loadMovieCommentsPage(0, false)
+          await loadMovieCommentsPage(0, false, commentSortOrder)
         } finally {
           setIsCommentsLoading(false)
         }
@@ -577,7 +620,7 @@ function MovieDetailPage() {
       setIsCommentsLoading(true)
 
       try {
-        await loadMovieCommentsPage(0, false)
+        await loadMovieCommentsPage(0, false, commentSortOrder)
       } finally {
         setIsCommentsLoading(false)
       }
@@ -641,6 +684,7 @@ function MovieDetailPage() {
               <section
                 className="movie-detail-comments-shell"
                 aria-labelledby="movie-detail-comments-title"
+                ref={commentsSectionRef}
               >
               <div className="movie-detail-comments">
                 <div className="movie-detail-section-header">
@@ -664,7 +708,9 @@ function MovieDetailPage() {
                       commentSortOrder === 'latest' ? ' is-active' : ''
                     }`}
                     type="button"
-                    onClick={() => setCommentSortOrder('latest')}
+                    onClick={() => {
+                      void handleCommentSortChange('latest')
+                    }}
                   >
                     최신순
                   </button>
@@ -673,7 +719,9 @@ function MovieDetailPage() {
                       commentSortOrder === 'oldest' ? ' is-active' : ''
                     }`}
                     type="button"
-                    onClick={() => setCommentSortOrder('oldest')}
+                    onClick={() => {
+                      void handleCommentSortChange('oldest')
+                    }}
                   >
                     오래된순
                   </button>
