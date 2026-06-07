@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer_title_search_analyzer": {
+        "char_filter": [],
+        "tokenizer":
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "name": {
+
+      }
+    }
+  }
+}

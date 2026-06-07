@@ -41,6 +41,8 @@ public class MovieDocument {
                 .releaseYear(releaseYear)
                 .build();
     }
+
+    // 연도 추출
     private static String extractYear(LocalDate releaseDate) {
         if (releaseDate == null) {
             return null;
@@ -49,6 +51,8 @@ public class MovieDocument {
         return String.valueOf(releaseDate.getYear());
     }
 
+    // 같은 제목의 영화가 있으므로 연도로 구분.
+    // 형식: 영화 (연도)
     private static String createDisplayTitle(String title, String releaseYear) {
         if (title == null || title.isBlank()) {
             return "";
