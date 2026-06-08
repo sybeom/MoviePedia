@@ -14,6 +14,12 @@ export type CreditMember = {
   roleLabel: string
 }
 
+export type TrailerItem = {
+  title: string
+  thumbnail: string
+  videoUrl: string
+}
+
 // 상세 화면 데이터 타입 정의
 export type MovieDetailView = {
   id: string
@@ -30,6 +36,7 @@ export type MovieDetailView = {
   rating: string
   globalRating: string
   credits: CreditMember[]
+  trailers: TrailerItem[]
 }
 
 // 로그인 확인 응답 타입 정의

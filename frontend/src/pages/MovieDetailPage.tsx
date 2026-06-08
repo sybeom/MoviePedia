@@ -11,6 +11,7 @@ import {
   fetchMovieCommentForEdit,
   fetchMovieComments,
   fetchMovieDetail,
+  fetchMovieTrailers,
   updateMovieComment,
   verifyCommentAuth,
 } from '../api/movieDetail'
@@ -18,6 +19,7 @@ import MovieCommentList from '../components/movie-detail/MovieCommentList'
 import MovieCommentModal from '../components/movie-detail/MovieCommentModal'
 import MovieDetailCredits from '../components/movie-detail/MovieDetailCredits'
 import MovieDetailHero from '../components/movie-detail/MovieDetailHero'
+import MovieDetailTrailers from '../components/movie-detail/MovieDetailTrailers'
 import type {
   MovieComment,
   MovieCommentDetail,
@@ -178,7 +180,10 @@ function MovieDetailPage() {
 
     async function loadMovieDetail() {
       try {
-        const normalizedDetail = await fetchMovieDetail(resolvedMovieCode)
+        const [normalizedDetail, trailers] = await Promise.all([
+          fetchMovieDetail(resolvedMovieCode),
+          fetchMovieTrailers(resolvedMovieCode).catch(() => []),
+        ])
 
         if (!normalizedDetail) {
           setMessage('영화 정보를 불러오지 못했습니다.')
@@ -200,6 +205,7 @@ function MovieDetailPage() {
           rating: normalizedDetail.rating,
           globalRating: normalizedDetail.globalRating,
           credits: normalizedDetail.credits,
+          trailers: trailers.length > 0 ? trailers : normalizedDetail.trailers,
         })
         setMessage('')
       } catch {
@@ -679,6 +685,7 @@ function MovieDetailPage() {
                   key={movieDetail.id || resolvedMovieCode}
                   credits={movieDetail.credits}
                 />
+                <MovieDetailTrailers trailers={movieDetail.trailers} />
               </section>
 
               <section

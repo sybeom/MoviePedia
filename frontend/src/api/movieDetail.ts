@@ -12,6 +12,7 @@ import {
   normalizeMovieCommentDetail,
   normalizeMovieComments,
   normalizeMovieDetail,
+  normalizeMovieTrailers,
 } from '../utils/movieDetail'
 
 export async function fetchMovieDetail(movieId: string) {
@@ -20,6 +21,14 @@ export async function fetchMovieDetail(movieId: string) {
   })
 
   return normalizeMovieDetail(response)
+}
+
+export async function fetchMovieTrailers(movieCode: string) {
+  const response = await request<unknown>(`/movies/${movieCode}/trailer`, {
+    method: 'GET',
+  })
+
+  return normalizeMovieTrailers(response)
 }
 
 export function fetchMovieComments(

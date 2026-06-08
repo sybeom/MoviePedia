@@ -237,23 +237,27 @@
 }
 
 .movie-detail-cast-shell,
+.movie-detail-trailer-shell,
 .movie-detail-comments-shell {
   padding: 0 22px 0;
   overflow: hidden;
 }
 
-.movie-detail-cast-shell {
+.movie-detail-cast-shell,
+.movie-detail-trailer-shell {
   padding: 0;
 }
 
 .movie-detail-cast-section,
+.movie-detail-trailer-section,
 .movie-detail-comments {
   width: 100%;
   min-width: 0;
 }
 
 .movie-detail-section-header,
-.movie-detail-cast-section h2 {
+.movie-detail-cast-section h2,
+.movie-detail-trailer-section h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -261,6 +265,7 @@
 }
 
 .movie-detail-cast-section h2,
+.movie-detail-trailer-section h2,
 .movie-detail-comments h2 {
   margin: 0;
   color: #f8fafc;
@@ -268,7 +273,8 @@
   line-height: 1.25;
 }
 
-.movie-detail-cast-section h2 {
+.movie-detail-cast-section h2,
+.movie-detail-trailer-section h2 {
   padding-left: 22px;
 }
 
@@ -281,7 +287,20 @@
   gap: 18px;
 }
 
+.movie-detail-trailer-section {
+  margin-top: 24px;
+}
+
 .movie-detail-cast-carousel {
+  position: relative;
+  padding: 0;
+  margin-top: 16px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.movie-detail-trailer-carousel {
   position: relative;
   padding: 0;
   margin-top: 16px;
@@ -304,7 +323,18 @@
   scrollbar-width: none;
 }
 
+.movie-detail-trailer-scroller {
+  padding-left: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
 .movie-detail-cast-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.movie-detail-trailer-scroller::-webkit-scrollbar {
   display: none;
 }
 
@@ -312,6 +342,13 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  width: max-content;
+}
+
+.movie-detail-trailer-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   width: max-content;
 }
 
@@ -336,6 +373,14 @@
 }
 
 .movie-detail-cast-carousel-button-next {
+  right: 0;
+}
+
+.movie-detail-trailer-carousel-button-previous {
+  left: 0;
+}
+
+.movie-detail-trailer-carousel-button-next {
   right: 0;
 }
 
@@ -385,6 +430,55 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.movie-detail-trailer-card {
+  display: grid;
+  gap: 10px;
+  width: 220px;
+  flex: 0 0 220px;
+  padding: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.movie-detail-trailer-thumbnail-shell {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.movie-detail-trailer-thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.movie-detail-trailer-thumbnail-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 18px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.movie-detail-trailer-title {
+  margin: 0;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .movie-detail-cast-profile {
   display: block;
   width: 100%;
@@ -421,6 +515,7 @@
 }
 
 .home-page-light .movie-detail-cast-section h2,
+.home-page-light .movie-detail-trailer-section h2,
 .home-page-light .movie-detail-cast-name {
   color: #111827;
 }
@@ -436,6 +531,18 @@
 
 .home-page-light .movie-detail-cast-profile-shell {
   background: rgba(15, 23, 42, 0.06);
+}
+
+.home-page-light .movie-detail-trailer-thumbnail-shell {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.home-page-light .movie-detail-trailer-title {
+  color: #111827;
+}
+
+.home-page-light .movie-detail-trailer-thumbnail-fallback {
+  color: #6b7280;
 }
 
 .movie-detail-comments {
@@ -1111,7 +1218,15 @@
     padding: 0;
   }
 
+  .movie-detail-trailer-carousel {
+    padding: 0;
+  }
+
   .movie-detail-cast-scroller {
+    padding-left: 8px;
+  }
+
+  .movie-detail-trailer-scroller {
     padding-left: 8px;
   }
 
@@ -1126,11 +1241,13 @@
   }
 
   .movie-detail-cast-shell,
+  .movie-detail-trailer-shell,
   .movie-detail-comments-shell {
     padding: 0 16px 0;
   }
 
-  .movie-detail-cast-section h2 {
+  .movie-detail-cast-section h2,
+  .movie-detail-trailer-section h2 {
     padding-left: 16px;
   }
 

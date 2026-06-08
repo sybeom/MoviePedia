@@ -1,10 +1,11 @@
-﻿import type {
+import type {
   CreditMember,
   MovieComment,
   MovieCommentsResponse,
   MovieCommentDetail,
   MovieDetailState,
   MovieDetailView,
+  TrailerItem,
 } from '../types/movieDetail'
 
 export const STAR_COUNT = 5
@@ -12,12 +13,10 @@ export const MAX_COMMENT_LENGTH = 300
 export const STAR_ICON_PATH =
   'M12 2.8c.38 0 .73.21.9.55l2.37 4.8 5.3.77c.75.11 1.05 1.03.5 1.56l-3.83 3.73.9 5.27c.13.74-.65 1.31-1.32.96L12 17.96l-4.82 2.53c-.67.35-1.45-.22-1.32-.96l.9-5.27-3.83-3.73c-.55-.53-.25-1.45.5-1.56l5.3-.77 2.37-4.8c.17-.34.52-.55.9-.55Z'
 
-// 媛앹껜 ?곗씠???щ? ?뺤씤
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-// 臾몄옄???먮뒗 ?レ옄 媛?異붿텧 泥섎━
 export function getStringValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -34,7 +33,6 @@ export function getStringValue(record: Record<string, unknown>, keys: string[]) 
   return ''
 }
 
-// 遺덈━??媛?異붿텧 泥섎━
 export function getBooleanValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -47,7 +45,6 @@ export function getBooleanValue(record: Record<string, unknown>, keys: string[])
   return false
 }
 
-// ?レ옄 媛?異붿텧 泥섎━
 export function getNumberValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -68,7 +65,6 @@ export function getNumberValue(record: Record<string, unknown>, keys: string[]) 
   return 0
 }
 
-// ?곹솕 ?앸퀎??異붿텧 泥섎━
 export function getMovieIdentifier(record: Record<string, unknown>) {
   const directIdentifier = getStringValue(record, ['movieCode', 'id', 'movieId', 'code'])
 
@@ -93,7 +89,6 @@ export function getMovieIdentifier(record: Record<string, unknown>) {
   return ''
 }
 
-// 諛곗뿴 臾몄옄??寃고빀 泥섎━
 export function getJoinedStringArrayValue(record: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = record[key]
@@ -104,7 +99,7 @@ export function getJoinedStringArrayValue(record: Record<string, unknown>, keys:
 
     const joinedValue = value
       .map((item) => {
-        if (typeof item === 'string' && item.trim()) {
+        if (typeof item === "string" && item.trim()) {
           return item
         }
 
@@ -125,7 +120,6 @@ export function getJoinedStringArrayValue(record: Record<string, unknown>, keys:
   return ''
 }
 
-// ????대?吏 URL 異붿텧 泥섎━
 export function getPrimaryImageUrl(imageUrl: string) {
   return (
     imageUrl
@@ -135,7 +129,6 @@ export function getPrimaryImageUrl(imageUrl: string) {
   )
 }
 
-// 肄붾찘??紐⑸줉 異붿텧 泥섎━
 export function getCommentListValue(data: unknown) {
   if (Array.isArray(data)) {
     return data
@@ -157,7 +150,7 @@ export function getCommentListValue(data: unknown) {
 
   return []
 }
-// 코멘트 목록 컨테이너 추출 처리
+
 export function getCommentContainerValue(data: unknown) {
   if (isRecord(data)) {
     return data
@@ -165,7 +158,7 @@ export function getCommentContainerValue(data: unknown) {
 
   return null
 }
-// ?쒖옉 諛?異쒖뿰 紐⑸줉 ?뺣━ 泥섎━
+
 export function getCreditValue(record: Record<string, unknown>) {
   const creditValue = record.credit
 
@@ -184,7 +177,9 @@ export function getCreditValue(record: Record<string, unknown>) {
 
       return {
         name: getStringValue(member, ['name']),
-        profile: getPrimaryImageUrl(getStringValue(member, ['profile', 'profileUrl', 'profilePath'])),
+        profile: getPrimaryImageUrl(
+          getStringValue(member, ['profile', 'profileUrl', 'profilePath']),
+        ),
         roleLabel: role === 'DIRECTOR' ? '감독' : '',
       }
     })
@@ -192,7 +187,80 @@ export function getCreditValue(record: Record<string, unknown>) {
     .filter((member) => member.name || member.profile)
 }
 
-// 留뚯젏 ?ы븿 ?됱젏 ?쒖떆 臾몄옄??諛섑솚 泥섎━
+function normalizeVideoUrl(value: string) {
+  const trimmedValue = value.trim()
+
+  if (!trimmedValue) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(trimmedValue)) {
+    return trimmedValue
+  }
+
+  return `https://www.youtube.com/watch?v=${trimmedValue}`
+}
+
+function getYouTubeThumbnail(videoUrl: string) {
+  const youtubeIdMatch =
+    videoUrl.match(/[?&]v=([^&]+)/i) ??
+    videoUrl.match(/youtu\.be\/([^?&/]+)/i) ??
+    videoUrl.match(/embed\/([^?&/]+)/i)
+
+  const youtubeId = youtubeIdMatch?.[1]?.trim()
+
+  if (!youtubeId) {
+    return ''
+  }
+
+  return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
+}
+
+export function getTrailerValue(record: Record<string, unknown>) {
+  const trailerCandidates = [record.trailers, record.trailer, record.videos, record.video]
+  const trailerList = trailerCandidates.find(Array.isArray)
+
+  if (!Array.isArray(trailerList)) {
+    return []
+  }
+
+  return trailerList
+    .filter(isRecord)
+    .map((item) => {
+      const title = getStringValue(item, ['title', 'name', 'videoTitle'])
+      const videoUrl = normalizeVideoUrl(
+        getStringValue(item, ['videoUrl', 'url', 'youtubeUrl', 'youtubeLink', 'key']),
+      )
+      const thumbnail =
+        getPrimaryImageUrl(
+          getStringValue(item, ['thumbnail', 'thumbnailUrl', 'imageUrl', 'poster']),
+        ) || getYouTubeThumbnail(videoUrl)
+
+      if (!title && !videoUrl && !thumbnail) {
+        return null
+      }
+
+      return {
+        title: title || '트레일러',
+        thumbnail,
+        videoUrl,
+      }
+    })
+    .filter((item): item is TrailerItem => item !== null)
+}
+
+export function normalizeMovieTrailers(data: unknown) {
+  if (Array.isArray(data)) {
+    return getTrailerValue({ trailers: data })
+  }
+
+  if (isRecord(data)) {
+    return getTrailerValue(data)
+  }
+
+  return []
+}
+
 export function getDisplayRatingWithScale(value: string, maxScore: number) {
   const normalizedValue = value.trim()
 
@@ -225,12 +293,10 @@ export function getDisplayScorePercent(value: string) {
   return `${normalizedValue}%`
 }
 
-// ?좏깮 ?됱젏 ?쒖떆 臾몄옄??諛섑솚 泥섎━
 export function getSelectedRatingLabel(value: number) {
   return value > 0 ? value.toFixed(1) : '-'
 }
 
-// 蹂?梨꾩? 鍮꾩쑉 怨꾩궛 泥섎━
 export function getStarFillPercent(starIndex: number, rating: number) {
   const starStart = starIndex
   const starEnd = starIndex + 1
@@ -246,7 +312,6 @@ export function getStarFillPercent(starIndex: number, rating: number) {
   return Math.max(0, Math.min(100, (rating - starStart) * 100))
 }
 
-// ?곸꽭 ?묐떟 ?뺢퇋??泥섎━
 export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   if (!isRecord(data)) {
     return null
@@ -254,8 +319,12 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
 
   const id = getMovieIdentifier(data)
   const title = getStringValue(data, ['title', 'movieTitle', 'name'])
-  const poster = getPrimaryImageUrl(getStringValue(data, ['poster', 'posterUrl', 'imageUrl', 'posterPath']))
-  const backdrop = getPrimaryImageUrl(getStringValue(data, ['backdrop', 'backdropUrl', 'backdropPath']))
+  const poster = getPrimaryImageUrl(
+    getStringValue(data, ['poster', 'posterUrl', 'imageUrl', 'posterPath']),
+  )
+  const backdrop = getPrimaryImageUrl(
+    getStringValue(data, ['backdrop', 'backdropUrl', 'backdropPath']),
+  )
   const certification = getStringValue(data, ['certification']).toUpperCase()
   const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
   const overview = getStringValue(data, ['overview', 'plot'])
@@ -266,6 +335,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const rating = getStringValue(data, ['rating'])
   const globalRating = getStringValue(data, ['globalRating'])
   const credits = getCreditValue(data)
+  const trailers = getTrailerValue(data)
 
   if (!id && !title && !poster && !overview) {
     return null
@@ -286,21 +356,18 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     rating,
     globalRating,
     credits,
+    trailers,
   }
 }
 
-// 肄붾찘??紐⑸줉 ?뺢퇋??泥섎━
 export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
   const commentContainer = getCommentContainerValue(data)
-  const responseMovieId = commentContainer
-    ? getStringValue(commentContainer, ['movieId'])
-    : ''
+  const responseMovieId = commentContainer ? getStringValue(commentContainer, ['movieId']) : ''
 
   const comments = getCommentListValue(data)
     .filter(isRecord)
     .map((comment, index) => {
-      const commentId =
-        getStringValue(comment, ['commentId', 'id', 'code']) || `comment-${index}`
+      const commentId = getStringValue(comment, ['commentId', 'id', 'code']) || `comment-${index}`
       const reactionType: 'LIKE' | 'DISLIKE' =
         getStringValue(comment, ['reactionType']).toUpperCase() === 'DISLIKE'
           ? 'DISLIKE'
@@ -310,7 +377,8 @@ export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
         id: getStringValue(comment, ['id', 'commentId', 'code']) || commentId,
         commentId,
         movieId: getStringValue(comment, ['movieId']) || responseMovieId,
-        nickname: getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '?듬챸',
+        nickname:
+          getStringValue(comment, ['nickname', 'writerNickname', 'author', 'writer']) || '익명',
         content: getStringValue(comment, ['content', 'comment']) || '-',
         createdAt: getStringValue(comment, ['createdAt']),
         reactionType,
@@ -324,7 +392,6 @@ export function normalizeMovieComments(data: unknown): MovieCommentsResponse {
   }
 }
 
-// ?⑥씪 肄붾찘???곸꽭 ?뺢퇋??泥섎━
 export function normalizeMovieCommentDetail(data: unknown): MovieCommentDetail | null {
   if (!isRecord(data)) {
     return null
@@ -333,7 +400,8 @@ export function normalizeMovieCommentDetail(data: unknown): MovieCommentDetail |
   const commentId = getStringValue(data, ['commentId', 'id', 'code'])
   const movieId = getStringValue(data, ['movieId'])
   const content = getStringValue(data, ['content', 'comment'])
-  const nickname = getStringValue(data, ['nickname', 'writerNickname', 'author', 'writer']) || '?듬챸'
+  const nickname =
+    getStringValue(data, ['nickname', 'writerNickname', 'author', 'writer']) || '익명'
 
   if (!commentId && !content) {
     return null
@@ -348,11 +416,13 @@ export function normalizeMovieCommentDetail(data: unknown): MovieCommentDetail |
   }
 }
 
-// 珥덇린 ?곸꽭 ?곗씠???앹꽦 泥섎━
-export function createInitialMovieDetail(movieId: string, movie?: MovieDetailState['movie']): MovieDetailView {
+export function createInitialMovieDetail(
+  movieId: string,
+  movie?: MovieDetailState['movie'],
+): MovieDetailView {
   return {
     id: movie?.id?.trim() || movieId,
-    title: movie?.title?.trim() || '?곹솕 ?곸꽭',
+    title: movie?.title?.trim() || '영화 상세',
     poster: movie?.poster?.trim() || '',
     backdrop: '',
     certification: '',
@@ -365,9 +435,6 @@ export function createInitialMovieDetail(movieId: string, movie?: MovieDetailSta
     rating: '',
     globalRating: '',
     credits: [],
+    trailers: [],
   }
 }
-
-
-
-
