@@ -1,16 +1,62 @@
 {
-  "settings": {
-    "analysis": {
-      "analyzer_title_search_analyzer": {
-        "char_filter": [],
-        "tokenizer":
-      }
-    }
+  "index": {
+    "max_ngram_diff": 18
   },
-  "mappings": {
-    "properties": {
-      "name": {
-
+  "analysis": {
+    "char_filter": {
+      "remove_spaces_and_symbols": {
+        "type": "pattern_replace",
+        "pattern": "[^\\p{L}\\p{N}]+",
+        "replacement": ""
+      }
+    },
+    "tokenizer": {
+      "movie_ngram_tokenizer": {
+        "type": "ngram",
+        "min_gram": 2,
+        "max_gram": 20,
+        "token_chars": [
+          "letter",
+          "digit"
+        ]
+      }
+    },
+    "analyzer": {
+      "ngram_index_analyzer": {
+        "type": "custom",
+        "char_filter": [],
+        "tokenizer": "movie_ngram_tokenizer",
+        "filter": [
+          "lowercase", "nori_part_of_speech"
+        ]
+      },
+      "ngram_search_analyzer": {
+        "type": "custom",
+        "char_filter": [],
+        "tokenizer": "keyword",
+        "filter": [
+          "lowercase", "nori_part_of_speech"
+        ]
+      },
+      "no_space_ngram_analyzer": {
+        "type": "custom",
+        "char_filter": [
+          "remove_spaces_and_symbols"
+        ],
+        "tokenizer": "movie_ngram_tokenizer",
+        "filter": [
+          "lowercase", "nori_part_of_speech"
+        ]
+      },
+      "no_space_ngram_search_analyzer": {
+        "type": "custom",
+        "char_filter": [
+          "remove_spaces_and_symbols"
+        ],
+        "tokenizer": "keyword",
+        "filter": [
+          "lowercase", "nori_part_of_speech"
+        ]
       }
     }
   }

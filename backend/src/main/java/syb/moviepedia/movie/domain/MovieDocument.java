@@ -2,10 +2,7 @@ package syb.moviepedia.movie.domain;
 
 import jakarta.persistence.Id;
 import lombok.*;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
 
@@ -13,14 +10,35 @@ import java.time.LocalDate;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Setting(settingPath = "elasticsearch/movie-settings.json")
 @Document(indexName = "movie_search")
 public class MovieDocument {
     @Id
     private String id;
 
-    @Field(
-            type = FieldType.Text,
-            analyzer = "nori"
+    @MultiField(
+            mainField = @Field(
+                    type = FieldType.Text,
+                    analyzer = "nori"
+            ),
+            otherFields = {
+                    @InnerField(
+                            suffix = "space_ngram",
+                            type = FieldType.Text,
+                            analyzer = "ngram_index_analyzer",
+                            searchAnalyzer = "nori"
+                    ),
+                    @InnerField(
+                            suffix ="no_space_ngram",
+                            type = FieldType.Text,
+                            analyzer = "no_space_ngram_analyzer",
+                            searchAnalyzer = "no_space_ngram_search_analyzer"
+                    ),
+                    @InnerField(
+                            suffix = "keyword",
+                            type = FieldType.Keyword
+                    )
+            }
     )
     private String title;
 

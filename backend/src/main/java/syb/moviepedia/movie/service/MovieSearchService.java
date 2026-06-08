@@ -2,6 +2,7 @@ package syb.moviepedia.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
 import syb.moviepedia.movie.domain.MovieDocument;
 import syb.moviepedia.movie.dto.response.KeywordResponse;
@@ -36,8 +37,9 @@ public class MovieSearchService {
         return results.stream().map(doc ->
                         KeywordResponse.builder()
                                 .code(doc.getId())
-                                .title(doc.getTitle())
+                                .title(doc.getDisplayTitle())
                                 .build())
                 .toList();
     }
+
 }
