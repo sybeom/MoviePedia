@@ -28,12 +28,7 @@ public class TmdbClient {
     private static final String RELEASE_DATE_PATH = "/movie/{movieId}/release_dates";
     private static final String DETAIL_PATH = "/movie/{movieId}";
     private static final String CREDIT_PATH = "/movie/{movieId}/credits";
-    private static final String SEARCH_MOVIE_LIST_PATH= "/search/movie";
-
-    // 영화 검색어 목록
-    public TmdbKeywordList getKeywordList(String keyword) {
-        return fetchKeywordList(keyword);
-    }
+    private static final String TRAILER_PATH = "/movie/{movie_id}/videos";
 
     // 전체 영화
     public TmdbMovieList getInitMovies(int page) {
@@ -81,20 +76,9 @@ public class TmdbClient {
         return fetchCredit(movieId);
     }
 
-    // 영화 검색어 목록 Api 리스트
-    private TmdbKeywordList fetchKeywordList(String keyword) {
-        try {
-            return tmdbWebClient.get().uri(uriBuilder -> uriBuilder
-                            .path(SEARCH_MOVIE_LIST_PATH)
-                            .queryParam("query", keyword)
-                            .queryParam("language", "ko-KR")
-                            .build())
-                    .retrieve()
-                    .bodyToMono(TmdbKeywordList.class)
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 영화 초기화 API 호출 실패. 경로= " + SEARCH_MOVIE_LIST_PATH, e);
-        }
+    // 비디오(트레일러) 정보
+    public TmdbTrailerResult getMovieTrailer(Long movieId) {
+        return fetchMovieTrailer(movieId);
     }
 
     // 초기 영화 호출
@@ -213,7 +197,23 @@ public class TmdbClient {
                     .bodyToMono(TmdbCredit.class)
                     .block();
         } catch (Exception e) {
-            throw new TmdbApiException("TMDB 크레딧 API 호출 실패. 경로 = " + CREDIT_PATH, e);
+            throw new TmdbApiException("TMDB 크레딧 API 호출 실패. 경로= " + CREDIT_PATH, e);
+        }
+    }
+
+    // 영화 트레일러 api
+    private TmdbTrailerResult fetchMovieTrailer(Long movieId) {
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path(TRAILER_PATH)
+                            .queryParam("language", "ko-KR")
+                            .build(movieId))
+                    .retrieve()
+                    .bodyToMono(TmdbTrailerResult.class)
+                    .block();
+        } catch (Exception e) {
+            throw new TmdbApiException("TMDB 트레일러 API 호출 실패. 경로= " + TRAILER_PATH, e);
         }
     }
 }

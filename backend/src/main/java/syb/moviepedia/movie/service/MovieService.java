@@ -7,11 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
-import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.dto.response.*;
+import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
+import syb.moviepedia.movie.dto.response.MovieCreditResponse;
+import syb.moviepedia.movie.dto.response.MovieDetailResponse;
+import syb.moviepedia.movie.dto.response.MovieSummaryResponse;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.CountryRepository;
@@ -31,7 +33,6 @@ public class MovieService {
     private final MovieCategoryRepository movieCategoryRepository;
     private final CountryRepository countryRepository;
     private final MovieCreditRepository movieCreditRepository;
-    private final CommentRepository commentRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
@@ -137,6 +138,12 @@ public class MovieService {
         return movieCreditRepository.saveAll(credits);
     }
 
+    @Transactional
+    public void getTrailer(Long movieCode) {
+        TmdbTrailerResult movieTrailer = tmdbClient.getMovieTrailer(movieCode);
+        log.info("트레일러 : {}", movieTrailer);
+    }
+
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
     private MovieSummaryResponse toMovieSummaryDto(MovieCategory mc) {
@@ -194,6 +201,10 @@ public class MovieService {
                         .profile(credit.getProfile())
                         .build())
                 .toList();
+    }
+
+    private void toMovieTrailer() {
+
     }
 
     // 영화 추가 정보(국가, 런타임 등) 업데이트

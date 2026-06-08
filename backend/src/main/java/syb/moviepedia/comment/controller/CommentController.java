@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.comment.dto.request.CommentSaveRequest;
 import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
-import syb.moviepedia.comment.dto.response.CommentDetailResponse;
 import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.service.CommentService;
@@ -35,24 +34,6 @@ import syb.moviepedia.movie.dto.request.MovieIdRequest;
 public class CommentController {
 
     private final CommentService commentService;
-
-    @Operation(summary = "상세 코멘트 조회", description = "코멘트 상세보기 화면의 정보를 조회한다")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "코멘트 조회 성공"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "DB 코멘트 조회 실패",
-                    content = @Content(
-                            schema = @Schema(implementation = SwaggerApiResponse.class)
-                    )
-            )
-    })
-    @GetMapping("/{commentId}")
-    public ResponseEntity<ApiSuccessResponse<CommentDetailResponse>> getComment(
-            @PathVariable Long commentId
-    ) {
-        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 조회 성공", commentService.getComment(commentId)));
-    }
 
     @Operation(summary = "코멘트 목록 조회", description = "영화 상세페이지 코멘트 목록을 조회한다")
     @ApiResponses(value = {

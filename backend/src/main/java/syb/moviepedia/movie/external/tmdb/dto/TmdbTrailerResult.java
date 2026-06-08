@@ -1,4 +1,8 @@
 package syb.moviepedia.movie.external.tmdb.dto;
 
-public record TmdbTrailerResult() {
+import java.util.List;
+
+public record TmdbTrailerResult(
+        List<TmdbTrailer> results
+) {
 }

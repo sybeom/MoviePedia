@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.dto.request.CommentSaveRequest;
 import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
-import syb.moviepedia.comment.dto.response.CommentDetailResponse;
 import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.dto.response.CommentResponse;
@@ -37,14 +36,6 @@ public class CommentService {
     private final MemberRepository memberRepository;
     private final CommentRepository commentRepository;
 
-    // 상세 보기
-    @Transactional
-    public CommentDetailResponse getComment(Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow(
-                () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
-
-        return toCommentDto(comment);
-    }
 
     // 수정 코멘트 조회
     @Transactional
@@ -128,14 +119,6 @@ public class CommentService {
     private Comment findMyCommentWithMovie(Long mvCode, Long movieId, String loginId) {
         return commentRepository.findMyCommentWithMovie(mvCode, movieId, loginId)
                 .orElseThrow(() -> new CommentNotFoundException("코멘트를 찾을 수 없습니다."));
-    }
-
-    // 엔티티 -> Comment Dto로 가공
-    private CommentDetailResponse toCommentDto(Comment comment) {
-        return CommentDetailResponse.builder()
-                .nickname(comment.getNickname())
-                .content(comment.getContent())
-                .build();
     }
 
     // 엔티티 -> 수정 Comment Dto로 가공

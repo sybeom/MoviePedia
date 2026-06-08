@@ -59,4 +59,18 @@ public class MovieController {
     public ResponseEntity<ApiSuccessResponse<MovieDetailResponse>> getMovieDetail(@PathVariable Long movieCode) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 상세 정보", movieService.getMovieDetail(movieCode)));
     }
+
+    @Operation(summary = "영화 트레일러", description = "영화 트레일러를 조회한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "영화 트레일러 조회 성공"),
+            @ApiResponse(responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    ))
+    })
+    @GetMapping("/{movieCode}/trailer")
+    public void getTrailer(@PathVariable Long movieCode) {
+        log.info("트레일러 호출");
+        movieService.getTrailer(movieCode);
+    }
 }

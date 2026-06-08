@@ -1,6 +1,9 @@
 package syb.moviepedia.movie.external.tmdb.dto;
 
-public record TmdbVideo(
+import lombok.ToString;
 
+public record TmdbTrailer(
+        String key,
+        String type
 ) {
 }
