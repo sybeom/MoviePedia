@@ -73,7 +73,6 @@ public class MovieController {
     })
     @GetMapping("/{movieCode}/videos")
     public ResponseEntity<ApiSuccessResponse<List<VideoResponse>>> getTrailer(@PathVariable Long movieCode) {
-        log.info("트레일러 호출");
         return ResponseEntity.ok().body(ApiSuccessResponse.of("트레일러 조회 성공", movieService.getVideos(movieCode)));
     }
 }

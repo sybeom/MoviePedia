@@ -137,13 +137,30 @@ public class MovieService {
 
     @Transactional
     public List<VideoResponse> getVideos(Long movieCode) {
-
         Movie movie = movieRepository.findByCode(movieCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드 :" + movieCode));
+
+        // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
+        if(videoRepository.existsByMovie(movie)) {
+            List<Video> videos = videoRepository.findByMovie(movie);
+            log.info("비디오 그대로 반환");
+            return toTrailerResponse(videos);
+        }
+
+        // 없으면 api 호출 후 DB 저장후 반환
+        log.info("비디오 api 호출후 반환");
         TmdbVideoResponse movieTrailer = tmdbClient.getMovieTrailer(movieCode);
-        log.info("트레일러 저장전");
         saveTrailer(movieTrailer, movie);
         return toTrailerResponse(movieTrailer);
+    }
+
+    private List<VideoResponse> toTrailerResponse(List<Video> videos) {
+        return videos.stream().map(video ->
+                        VideoResponse.builder()
+                                .key(video.getKey())
+                                .type(video.getType())
+                                .build())
+                .toList();
     }
 
     private void saveTrailer(TmdbVideoResponse response, Movie movie) {
@@ -152,11 +169,12 @@ public class MovieService {
                         result.official()
                                 && (result.type()== VideoType.TRAILER || result.type() == VideoType.TEASER)
                                 && result.site().equals("YouTube"))
-                .map(result -> Video.builder()
-                        .key(result.key())
-                        .movie(movie)
-                        .type(result.type())
-                        .build())
+                .map(result ->
+                        Video.builder()
+                                .key(result.key())
+                                .movie(movie)
+                                .type(result.type())
+                                .build())
                 .toList();
         videoRepository.saveAll(trailerList);
     }

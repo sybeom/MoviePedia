@@ -23,6 +23,7 @@ public class Video {
     @JoinColumn(name = "movie_id")
     String key;
 
+    @Enumerated(EnumType.STRING)
     VideoType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
