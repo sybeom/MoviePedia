@@ -4,22 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.common.VideoType;
+import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
-import syb.moviepedia.movie.dto.response.MovieCreditResponse;
-import syb.moviepedia.movie.dto.response.MovieDetailResponse;
-import syb.moviepedia.movie.dto.response.MovieSummaryResponse;
+import syb.moviepedia.movie.domain.Video;
+import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
-import syb.moviepedia.movie.repository.CountryRepository;
-import syb.moviepedia.movie.repository.MovieCategoryRepository;
-import syb.moviepedia.movie.repository.MovieCreditRepository;
-import syb.moviepedia.movie.repository.MovieRepository;
+import syb.moviepedia.movie.repository.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +29,7 @@ public class MovieService {
     private final MovieCategoryRepository movieCategoryRepository;
     private final CountryRepository countryRepository;
     private final MovieCreditRepository movieCreditRepository;
+    private final VideoRepository videoRepository;
 
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
@@ -139,9 +136,29 @@ public class MovieService {
     }
 
     @Transactional
-    public void getTrailer(Long movieCode) {
-        TmdbTrailerResult movieTrailer = tmdbClient.getMovieTrailer(movieCode);
-        log.info("트레일러 : {}", movieTrailer);
+    public List<VideoResponse> getVideos(Long movieCode) {
+
+        Movie movie = movieRepository.findByCode(movieCode)
+                .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드 :" + movieCode));
+        TmdbVideoResponse movieTrailer = tmdbClient.getMovieTrailer(movieCode);
+        log.info("트레일러 저장전");
+        saveTrailer(movieTrailer, movie);
+        return toTrailerResponse(movieTrailer);
+    }
+
+    private void saveTrailer(TmdbVideoResponse response, Movie movie) {
+        List<Video> trailerList = response.results().stream()
+                .filter(result -> // 공식이고 트레일러 또는 티저 영상만. 사이트는 유튜브인 곳만.
+                        result.official()
+                                && (result.type()== VideoType.TRAILER || result.type() == VideoType.TEASER)
+                                && result.site().equals("YouTube"))
+                .map(result -> Video.builder()
+                        .key(result.key())
+                        .movie(movie)
+                        .type(result.type())
+                        .build())
+                .toList();
+        videoRepository.saveAll(trailerList);
     }
 
 
@@ -203,8 +220,14 @@ public class MovieService {
                 .toList();
     }
 
-    private void toMovieTrailer() {
-
+    private List<VideoResponse> toTrailerResponse(TmdbVideoResponse response) {
+        log.info("응답 변환 성공");
+        return response.results().stream().map(result ->
+                        VideoResponse.builder()
+                                .key(result.key())
+                                .type(result.type())
+                                .build())
+                .toList();
     }
 
     // 영화 추가 정보(국가, 런타임 등) 업데이트

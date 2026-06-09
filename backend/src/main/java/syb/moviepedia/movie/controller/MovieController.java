@@ -17,7 +17,10 @@ import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
 import syb.moviepedia.movie.dto.response.MovieDetailResponse;
+import syb.moviepedia.movie.dto.response.VideoResponse;
 import syb.moviepedia.movie.service.MovieService;
+
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -68,9 +71,9 @@ public class MovieController {
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     ))
     })
-    @GetMapping("/{movieCode}/trailer")
-    public void getTrailer(@PathVariable Long movieCode) {
+    @GetMapping("/{movieCode}/videos")
+    public ResponseEntity<ApiSuccessResponse<List<VideoResponse>>> getTrailer(@PathVariable Long movieCode) {
         log.info("트레일러 호출");
-        movieService.getTrailer(movieCode);
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("트레일러 조회 성공", movieService.getVideos(movieCode)));
     }
 }

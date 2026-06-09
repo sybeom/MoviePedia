@@ -6,20 +6,24 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import syb.moviepedia.common.VideoType;
 
 @Builder
 @Getter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Trailer {
+public class Video {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "video_key")
+    @JoinColumn(name = "movie_id")
     String key;
+
+    VideoType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     Movie movie;

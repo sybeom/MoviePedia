@@ -1,8 +1,11 @@
 package syb.moviepedia.movie.external.tmdb.dto;
 
-public record TmdbTrailer(
+import syb.moviepedia.common.VideoType;
+
+public record TmdbVideo(
         String key,
-        String type,
+        String site,
+        VideoType type,
         boolean official
 ) {
 }

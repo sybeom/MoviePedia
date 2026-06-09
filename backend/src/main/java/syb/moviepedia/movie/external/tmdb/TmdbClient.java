@@ -77,8 +77,8 @@ public class TmdbClient {
     }
 
     // 비디오(트레일러) 정보
-    public TmdbTrailerResult getMovieTrailer(Long movieId) {
-        return fetchMovieTrailer(movieId);
+    public TmdbVideoResponse getMovieTrailer(Long movieId) {
+        return fetchMovieVideos(movieId);
     }
 
     // 초기 영화 호출
@@ -202,7 +202,7 @@ public class TmdbClient {
     }
 
     // 영화 트레일러 api
-    private TmdbTrailerResult fetchMovieTrailer(Long movieId) {
+    private TmdbVideoResponse fetchMovieVideos(Long movieId) {
         try {
             return tmdbWebClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -210,7 +210,7 @@ public class TmdbClient {
                             .queryParam("language", "ko-KR")
                             .build(movieId))
                     .retrieve()
-                    .bodyToMono(TmdbTrailerResult.class)
+                    .bodyToMono(TmdbVideoResponse.class)
                     .block();
         } catch (Exception e) {
             throw new TmdbApiException("TMDB 트레일러 API 호출 실패. 경로= " + TRAILER_PATH, e);
