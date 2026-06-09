@@ -18,6 +18,7 @@ export type TrailerItem = {
   title: string
   thumbnail: string
   videoUrl: string
+  typeLabel: string
 }
 
 // 상세 화면 데이터 타입 정의

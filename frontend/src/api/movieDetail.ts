@@ -24,7 +24,7 @@ export async function fetchMovieDetail(movieId: string) {
 }
 
 export async function fetchMovieTrailers(movieCode: string) {
-  const response = await request<unknown>(`/movies/${movieCode}/trailer`, {
+  const response = await request<unknown>(`/movies/${movieCode}/videos`, {
     method: 'GET',
   })
 

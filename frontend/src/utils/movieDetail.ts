@@ -231,6 +231,7 @@ export function getTrailerValue(record: Record<string, unknown>) {
       const videoUrl = normalizeVideoUrl(
         getStringValue(item, ['videoUrl', 'url', 'youtubeUrl', 'youtubeLink', 'key']),
       )
+      const type = getStringValue(item, ['type', 'videoType']).toUpperCase()
       const thumbnail =
         getPrimaryImageUrl(
           getStringValue(item, ['thumbnail', 'thumbnailUrl', 'imageUrl', 'poster']),
@@ -244,6 +245,7 @@ export function getTrailerValue(record: Record<string, unknown>) {
         title: title || '트레일러',
         thumbnail,
         videoUrl,
+        typeLabel: type === 'TEASER' ? '티저' : type === 'TRAILER' ? '예고편' : '',
       }
     })
     .filter((item): item is TrailerItem => item !== null)

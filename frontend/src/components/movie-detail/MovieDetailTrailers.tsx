@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import nextIcon from '../../assets/icons/next.svg'
+import playIcon from '../../assets/icons/play.svg'
 import previousIcon from '../../assets/icons/previous.svg'
 import type { TrailerItem } from '../../types/movieDetail'
 
@@ -12,7 +13,10 @@ const TRAILER_CARD_GAP = 10
 const TRAILER_SCROLL_STEP = TRAILER_CARD_WIDTH + TRAILER_CARD_GAP
 
 function MovieDetailTrailers({ trailers }: MovieDetailTrailersProps) {
-  const orderedTrailers = useMemo(() => trailers.filter((trailer) => trailer.title || trailer.thumbnail), [trailers])
+  const orderedTrailers = useMemo(
+    () => trailers.filter((trailer) => trailer.title || trailer.thumbnail),
+    [trailers],
+  )
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const [canScrollPrevious, setCanScrollPrevious] = useState(false)
   const [canScrollNext, setCanScrollNext] = useState(false)
@@ -84,6 +88,7 @@ function MovieDetailTrailers({ trailers }: MovieDetailTrailersProps) {
             <div className="movie-detail-trailer-scroller" ref={viewportRef}>
               <div className="movie-detail-trailer-track">
                 {orderedTrailers.map((trailer, index) => {
+                  const primaryLabel = trailer.typeLabel || trailer.title || '트레일러'
                   const cardContent = (
                     <>
                       <div className="movie-detail-trailer-thumbnail-shell">
@@ -91,15 +96,22 @@ function MovieDetailTrailers({ trailers }: MovieDetailTrailersProps) {
                           <img
                             className="movie-detail-trailer-thumbnail"
                             src={trailer.thumbnail}
-                            alt={trailer.title}
+                            alt={trailer.title || primaryLabel}
                           />
                         ) : (
                           <div className="movie-detail-trailer-thumbnail movie-detail-trailer-thumbnail-fallback">
-                            <span>{trailer.title}</span>
+                            <span>{trailer.title || primaryLabel}</span>
                           </div>
                         )}
+                        <span className="movie-detail-trailer-play-badge" aria-hidden="true">
+                          <img
+                            className="movie-detail-trailer-play-icon"
+                            src={playIcon}
+                            alt=""
+                          />
+                        </span>
                       </div>
-                      <p className="movie-detail-trailer-title">{trailer.title || '트레일러'}</p>
+                      <p className="movie-detail-trailer-title">{primaryLabel}</p>
                     </>
                   )
 
