@@ -28,7 +28,7 @@ import java.util.List;
 @RequestMapping("/movies")
 public class MovieController {
     private final MovieService movieService;
-
+    //
     /**
      * 엘라스틱 도입 커밋
      */
