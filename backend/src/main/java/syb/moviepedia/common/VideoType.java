@@ -1,7 +1,6 @@
 package syb.moviepedia.common;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum VideoType {
     TRAILER("Trailer"),

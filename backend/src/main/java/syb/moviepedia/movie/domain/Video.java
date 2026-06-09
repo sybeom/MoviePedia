@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import syb.moviepedia.common.VideoType;
 
+import java.time.Instant;
+
 @Builder
 @Getter
 @Entity
@@ -19,12 +21,16 @@ public class Video {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "video_key")
+    @Column(name = "video_key", nullable = false, unique = true)
     @JoinColumn(name = "movie_id")
-    String key;
+    private String key;
 
+    @Column(nullable = false, unique = true)
     @Enumerated(EnumType.STRING)
-    VideoType type;
+    private VideoType type;
+
+    @Column(name = "published_at")
+    private Instant publishedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     Movie movie;

@@ -140,18 +140,16 @@ public class MovieService {
         Movie movie = movieRepository.findByCode(movieCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드 :" + movieCode));
 
-        // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
-        if(videoRepository.existsByMovie(movie)) {
-            List<Video> videos = videoRepository.findByMovie(movie);
-            log.info("비디오 그대로 반환");
-            return toTrailerResponse(videos);
+        // 없으면 api 호출 후 DB 저장후 반환
+        if(!videoRepository.existsByMovie(movie)) {
+            log.info("비디오 api 호출후 반환");
+            TmdbVideoResponse movieTrailer = tmdbClient.getMovieTrailer(movieCode);
+            saveTrailer(movieTrailer, movie);
         }
 
-        // 없으면 api 호출 후 DB 저장후 반환
-        log.info("비디오 api 호출후 반환");
-        TmdbVideoResponse movieTrailer = tmdbClient.getMovieTrailer(movieCode);
-        saveTrailer(movieTrailer, movie);
-        return toTrailerResponse(movieTrailer);
+        // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
+        List<Video> videos = videoRepository.findByVideo(movie);
+        return toTrailerResponse(videos);
     }
 
     private List<VideoResponse> toTrailerResponse(List<Video> videos) {
@@ -174,6 +172,7 @@ public class MovieService {
                                 .key(result.key())
                                 .movie(movie)
                                 .type(result.type())
+                                .publishedAt(result.publishedAt())
                                 .build())
                 .toList();
         videoRepository.saveAll(trailerList);
@@ -235,15 +234,6 @@ public class MovieService {
                         .name(credit.getName())
                         .profile(credit.getProfile())
                         .build())
-                .toList();
-    }
-
-    private List<VideoResponse> toTrailerResponse(TmdbVideoResponse response) {
-        return response.results().stream().map(result ->
-                        VideoResponse.builder()
-                                .key(result.key())
-                                .type(result.type())
-                                .build())
                 .toList();
     }
 
