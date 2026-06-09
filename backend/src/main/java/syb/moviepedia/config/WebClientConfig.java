@@ -47,6 +47,9 @@ public class WebClientConfig {
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + token)
+                .codecs(configurer -> // 메모리 제한 증가 256kb-> 2MB (아바타의 크레딧 응답 크기가 너무 커서 늘림)
+                        configurer.defaultCodecs().maxInMemorySize(2 * 1024 * 1024)
+                )
                 .build();
     }
 }

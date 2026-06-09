@@ -239,7 +239,6 @@ public class MovieService {
     }
 
     private List<VideoResponse> toTrailerResponse(TmdbVideoResponse response) {
-        log.info("응답 변환 성공");
         return response.results().stream().map(result ->
                         VideoResponse.builder()
                                 .key(result.key())
