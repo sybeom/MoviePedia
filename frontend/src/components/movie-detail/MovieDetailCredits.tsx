@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import loadingIcon from '../../assets/icons/loading.svg'
 import nextIcon from '../../assets/icons/next.svg'
 import previousIcon from '../../assets/icons/previous.svg'
 import type { CreditMember } from '../../types/movieDetail'
 
 type MovieDetailCreditsProps = {
   credits: CreditMember[]
+  isLoading: boolean
 }
 
 const CAST_CARD_WIDTH = 112
 const CAST_CARD_GAP = 2
 const CAST_SCROLL_STEP = CAST_CARD_WIDTH + CAST_CARD_GAP
 
-function MovieDetailCredits({ credits }: MovieDetailCreditsProps) {
+function MovieDetailCredits({ credits, isLoading }: MovieDetailCreditsProps) {
   const orderedCredits = useMemo(() => {
     const directorCredits = credits.filter((member) => member.roleLabel === '감독')
     const actorCredits = credits.filter((member) => member.roleLabel !== '감독')
@@ -46,6 +48,24 @@ function MovieDetailCredits({ credits }: MovieDetailCreditsProps) {
       window.removeEventListener('resize', updateScrollState)
     }
   }, [orderedCredits])
+
+  if (isLoading) {
+    return (
+      <section className="movie-detail-cast-shell" aria-label="제작 및 출연">
+        <div className="movie-detail-cast-section">
+          <h2>제작/출연</h2>
+          <div className="movie-detail-section-loading">
+            <img
+              className="movie-detail-section-loading-icon"
+              src={loadingIcon}
+              alt=""
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (orderedCredits.length === 0) {
     return null

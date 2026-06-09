@@ -77,6 +77,7 @@ function MovieDetailPage() {
   )
   const [resolvedMovieRecordId, setResolvedMovieRecordId] = useState('')
   const [isLoading, setIsLoading] = useState(Boolean(resolvedMovieCode))
+  const [isTrailersLoading, setIsTrailersLoading] = useState(Boolean(resolvedMovieCode))
   const [message, setMessage] = useState(
     resolvedMovieCode ? '' : '영화 정보를 찾을 수 없습니다.',
   )
@@ -179,11 +180,12 @@ function MovieDetailPage() {
     hasLoadedDetailRef.current = true
 
     async function loadMovieDetail() {
+      setMovieDetail(createInitialMovieDetail(resolvedMovieCode, initialMovie))
+      setIsLoading(Boolean(resolvedMovieCode))
+      setMessage(resolvedMovieCode ? '' : '?곹솕 ?뺣낫瑜?李얠쓣 ???놁뒿?덈떎.')
+
       try {
-        const [normalizedDetail, trailers] = await Promise.all([
-          fetchMovieDetail(resolvedMovieCode),
-          fetchMovieTrailers(resolvedMovieCode).catch(() => []),
-        ])
+        const normalizedDetail = await fetchMovieDetail(resolvedMovieCode)
 
         if (!normalizedDetail) {
           setMessage('영화 정보를 불러오지 못했습니다.')
@@ -205,7 +207,7 @@ function MovieDetailPage() {
           rating: normalizedDetail.rating,
           globalRating: normalizedDetail.globalRating,
           credits: normalizedDetail.credits,
-          trailers: trailers.length > 0 ? trailers : normalizedDetail.trailers,
+          trailers: normalizedDetail.trailers,
         })
         setMessage('')
       } catch {
@@ -215,8 +217,29 @@ function MovieDetailPage() {
       }
     }
 
+    async function loadMovieTrailersData() {
+      setIsTrailersLoading(Boolean(resolvedMovieCode))
+
+      try {
+        const trailers = await fetchMovieTrailers(resolvedMovieCode)
+
+        setMovieDetail((previousMovieDetail) => ({
+          ...previousMovieDetail,
+          trailers,
+        }))
+      } catch {
+        setMovieDetail((previousMovieDetail) => ({
+          ...previousMovieDetail,
+          trailers: [],
+        }))
+      } finally {
+        setIsTrailersLoading(false)
+      }
+    }
+
     void loadMovieDetail()
-  }, [initialMovie?.poster, initialMovie?.title, resolvedMovieCode])
+    void loadMovieTrailersData()
+  }, [initialMovie, resolvedMovieCode])
 
   useEffect(() => {
     let isMounted = true
@@ -684,8 +707,9 @@ function MovieDetailPage() {
                 <MovieDetailCredits
                   key={movieDetail.id || resolvedMovieCode}
                   credits={movieDetail.credits}
+                  isLoading={isLoading}
                 />
-                <MovieDetailTrailers trailers={movieDetail.trailers} />
+                <MovieDetailTrailers trailers={movieDetail.trailers} isLoading={isTrailersLoading} />
               </section>
 
               <section

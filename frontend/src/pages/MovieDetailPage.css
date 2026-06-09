@@ -287,6 +287,35 @@
   gap: 18px;
 }
 
+.movie-detail-section-loading {
+  display: grid;
+  place-items: center;
+  min-height: 164px;
+}
+
+.movie-detail-section-loading-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  animation: movie-detail-section-loading-spin 0.9s linear infinite;
+}
+
+.home-page-light .movie-detail-section-loading-icon {
+  filter: brightness(0) saturate(100%) invert(15%) sepia(10%) saturate(747%)
+    hue-rotate(176deg) brightness(94%) contrast(92%);
+}
+
+@keyframes movie-detail-section-loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .movie-detail-trailer-section {
   margin-top: 24px;
 }

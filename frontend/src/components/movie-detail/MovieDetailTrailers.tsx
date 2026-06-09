@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import loadingIcon from '../../assets/icons/loading.svg'
 import nextIcon from '../../assets/icons/next.svg'
 import playIcon from '../../assets/icons/play.svg'
 import previousIcon from '../../assets/icons/previous.svg'
@@ -6,13 +7,14 @@ import type { TrailerItem } from '../../types/movieDetail'
 
 type MovieDetailTrailersProps = {
   trailers: TrailerItem[]
+  isLoading: boolean
 }
 
 const TRAILER_CARD_WIDTH = 220
 const TRAILER_CARD_GAP = 10
 const TRAILER_SCROLL_STEP = TRAILER_CARD_WIDTH + TRAILER_CARD_GAP
 
-function MovieDetailTrailers({ trailers }: MovieDetailTrailersProps) {
+function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) {
   const orderedTrailers = useMemo(
     () => trailers.filter((trailer) => trailer.title || trailer.thumbnail),
     [trailers],
@@ -44,6 +46,24 @@ function MovieDetailTrailers({ trailers }: MovieDetailTrailersProps) {
       window.removeEventListener('resize', updateScrollState)
     }
   }, [orderedTrailers])
+
+  if (isLoading) {
+    return (
+      <section className="movie-detail-trailer-shell" aria-label="트레일러">
+        <div className="movie-detail-trailer-section">
+          <h2>트레일러</h2>
+          <div className="movie-detail-section-loading">
+            <img
+              className="movie-detail-section-loading-icon"
+              src={loadingIcon}
+              alt=""
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (orderedTrailers.length === 0) {
     return null
