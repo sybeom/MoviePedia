@@ -1,4 +1,4 @@
-.movie-detail-screen {
+﻿.movie-detail-screen {
   min-height: 100vh;
 }
 
@@ -293,6 +293,22 @@
   min-height: 164px;
 }
 
+.movie-detail-section-empty {
+  display: grid;
+  place-items: center;
+  min-height: 164px;
+  padding: 0 22px;
+}
+
+.movie-detail-section-empty p {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.58);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  word-break: keep-all;
+}
+
 .movie-detail-section-loading-icon {
   display: block;
   width: 32px;
@@ -304,6 +320,10 @@
 .home-page-light .movie-detail-section-loading-icon {
   filter: brightness(0) saturate(100%) invert(15%) sepia(10%) saturate(747%)
     hue-rotate(176deg) brightness(94%) contrast(92%);
+}
+
+.home-page-light .movie-detail-section-empty p {
+  color: #6b7280;
 }
 
 @keyframes movie-detail-section-loading-spin {
@@ -703,7 +723,7 @@
 .movie-detail-comment-list-message {
   grid-column: 1 / -1;
   margin: 0;
-  color: rgba(255, 255, 255, 0.64);
+  color: rgba(226, 232, 240, 0.58);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -863,9 +883,12 @@
 }
 
 .home-page-light .movie-detail-comments h2,
-.home-page-light .movie-detail-comment-list-message,
 .home-page-light .movie-detail-comment-card-side-name {
   color: #111827;
+}
+
+.home-page-light .movie-detail-comment-list-message {
+  color: #6b7280;
 }
 
 .home-page-light .movie-detail-comment-card-content {
@@ -1320,3 +1343,5 @@
     gap: 12px;
   }
 }
+
+

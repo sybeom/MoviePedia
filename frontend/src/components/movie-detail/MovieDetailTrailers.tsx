@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import loadingIcon from '../../assets/icons/loading.svg'
 import nextIcon from '../../assets/icons/next.svg'
 import playIcon from '../../assets/icons/play.svg'
@@ -49,9 +49,9 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
 
   if (isLoading) {
     return (
-      <section className="movie-detail-trailer-shell" aria-label="트레일러">
+      <section className="movie-detail-trailer-shell" aria-label="동영상">
         <div className="movie-detail-trailer-section">
-          <h2>트레일러</h2>
+          <h2>동영상</h2>
           <div className="movie-detail-section-loading">
             <img
               className="movie-detail-section-loading-icon"
@@ -66,7 +66,16 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
   }
 
   if (orderedTrailers.length === 0) {
-    return null
+    return (
+      <section className="movie-detail-trailer-shell" aria-label="동영상">
+        <div className="movie-detail-trailer-section">
+          <h2>동영상</h2>
+          <div className="movie-detail-section-empty">
+            <p>등록된 동영상이 없습니다.</p>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   function moveToPrevious() {
@@ -84,9 +93,9 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
   }
 
   return (
-    <section className="movie-detail-trailer-shell" aria-label="트레일러">
+    <section className="movie-detail-trailer-shell" aria-label="동영상">
       <div className="movie-detail-trailer-section">
-        <h2>트레일러</h2>
+        <h2>동영상</h2>
 
         <div className="movie-detail-trailer-carousel">
           <button
@@ -94,7 +103,7 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
             type="button"
             onClick={moveToPrevious}
             disabled={!canScrollPrevious}
-            aria-label="이전 트레일러"
+            aria-label="이전 동영상"
           >
             <img
               className="movie-detail-cast-carousel-button-icon"
@@ -108,7 +117,7 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
             <div className="movie-detail-trailer-scroller" ref={viewportRef}>
               <div className="movie-detail-trailer-track">
                 {orderedTrailers.map((trailer, index) => {
-                  const primaryLabel = trailer.typeLabel || trailer.title || '트레일러'
+                  const primaryLabel = trailer.typeLabel || trailer.title || '동영상'
                   const cardContent = (
                     <>
                       <div className="movie-detail-trailer-thumbnail-shell">
@@ -160,7 +169,7 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
             type="button"
             onClick={moveToNext}
             disabled={!canScrollNext}
-            aria-label="다음 트레일러"
+            aria-label="다음 동영상"
           >
             <img
               className="movie-detail-cast-carousel-button-icon"
@@ -176,3 +185,5 @@ function MovieDetailTrailers({ trailers, isLoading }: MovieDetailTrailersProps) 
 }
 
 export default MovieDetailTrailers
+
+

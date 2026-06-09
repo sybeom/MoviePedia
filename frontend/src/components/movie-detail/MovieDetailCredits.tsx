@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import loadingIcon from '../../assets/icons/loading.svg'
 import nextIcon from '../../assets/icons/next.svg'
 import previousIcon from '../../assets/icons/previous.svg'
@@ -68,7 +68,16 @@ function MovieDetailCredits({ credits, isLoading }: MovieDetailCreditsProps) {
   }
 
   if (orderedCredits.length === 0) {
-    return null
+    return (
+      <section className="movie-detail-cast-shell" aria-label="제작 및 출연">
+        <div className="movie-detail-cast-section">
+          <h2>제작/출연</h2>
+          <div className="movie-detail-section-empty">
+            <p>등록된 제작, 출연 정보가 없습니다.</p>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   function moveToPrevious() {
@@ -145,3 +154,5 @@ function MovieDetailCredits({ credits, isLoading }: MovieDetailCreditsProps) {
 }
 
 export default MovieDetailCredits
+
+
