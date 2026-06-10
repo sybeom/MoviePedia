@@ -46,10 +46,9 @@ public class MovieInitService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
-    private final MovieSearchRepository mvSearchRepository;
-
     private final ElasticsearchOperations esOperations;
     private static final String INDEX_NAME = "movie_search";
+    private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -106,7 +105,7 @@ public class MovieInitService {
                 .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code())) // DB에 없는 영화들만
                 .filter(tmdbMv ->
                         // 숫자만 와도되고 특수문자만 와도 되지만, 언어가 포함되면 한글이 반드시 최소 1개는 포함하는 정규식
-                        tmdbMv.title().matches("^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$"))
+                        tmdbMv.title().matches(TITLE_PATTERN))
                 .map(response ->{
                             String certification = extractCertification(response);
                             return toMovie(response, certification);
@@ -188,6 +187,9 @@ public class MovieInitService {
 
         // 카테고리별 영화 새로 갱신
         for (TmdbMovie response: responses.results()) {
+            if (!response.title().matches(TITLE_PATTERN))
+                continue;
+
             log.info("refreshCategoryMovies 초기화 시작 : {}", category);
             Movie movie = saveOrUpdateMovie(response); // 영화 DB에 영화가 존재하면 갱신, 없다면 저장
 
@@ -238,8 +240,7 @@ public class MovieInitService {
                 .map(movie -> {
                     log.info("saveOrUpdateMovie(): 영화 정보 갱신");
                     movie.updateFrom(tmdbMovie, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
-                    return movie;
-                })
+                    return movie;})
                 .orElseGet(() -> movieRepository.save(toMovie(tmdbMovie, certification))); // 존재하지 않으면 db 저장
     }
 

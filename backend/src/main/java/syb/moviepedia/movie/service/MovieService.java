@@ -16,7 +16,6 @@ import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
