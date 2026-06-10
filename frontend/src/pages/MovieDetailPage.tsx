@@ -192,7 +192,8 @@ function MovieDetailPage() {
           return
         }
 
-        setMovieDetail({
+        setMovieDetail((previousMovieDetail) => ({
+          ...previousMovieDetail,
           id: normalizedDetail.id || resolvedMovieCode,
           title: normalizedDetail.title || initialMovie?.title?.trim() || '영화 상세',
           poster: normalizedDetail.poster || initialMovie?.poster?.trim() || '',
@@ -207,8 +208,7 @@ function MovieDetailPage() {
           rating: normalizedDetail.rating,
           globalRating: normalizedDetail.globalRating,
           credits: normalizedDetail.credits,
-          trailers: normalizedDetail.trailers,
-        })
+        }))
         setMessage('')
       } catch {
         setMessage('영화 정보를 불러오지 못했습니다.')

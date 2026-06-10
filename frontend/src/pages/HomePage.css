@@ -1,4 +1,4 @@
-.home-page {
+﻿.home-page {
   min-height: 100vh;
   background: #0b0b0b;
   overflow-x: hidden;
@@ -621,6 +621,30 @@
   line-height: 1.6;
 }
 
+.home-popular-loading {
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+}
+
+.home-popular-loading-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  animation: home-popular-loading-spin 0.9s linear infinite;
+}
+
+@keyframes home-popular-loading-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .home-page-light {
   background: #ffffff;
 }
@@ -752,6 +776,11 @@
     brightness(103%) contrast(92%);
 }
 
+.home-page-light .home-popular-loading-icon {
+  filter: brightness(0) saturate(100%) invert(15%) sepia(10%) saturate(747%)
+    hue-rotate(176deg) brightness(94%) contrast(92%);
+}
+
 .home-auth-button:focus-visible,
 .home-search-button:focus-visible,
 .home-search-input:focus-visible,
@@ -835,3 +864,4 @@
     transform: translate3d(calc(125px + 10px + 188px + 10px), 16px, 0) scale(0.92);
   }
 }
+

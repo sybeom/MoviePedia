@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
+import loadingIcon from '../assets/icons/loading.svg'
 import naverLoginButtonImage from '../assets/icons/NAVER_login.png'
 import nextIcon from '../assets/icons/next.svg'
 import previousIcon from '../assets/icons/previous.svg'
@@ -473,7 +474,14 @@ function HomePage() {
             </div>
 
             {isPopularLoading ? (
-              <p className="home-popular-empty">인기 영화를 불러오는 중입니다.</p>
+              <div className="home-popular-loading" aria-live="polite">
+                <img
+                  className="home-popular-loading-icon"
+                  src={loadingIcon}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
             ) : visiblePopularMovie ? (
               <div className="home-popular-carousel">
                 <button
@@ -547,7 +555,7 @@ function HomePage() {
                 </button>
               </div>
             ) : (
-              <p className="home-popular-empty">표시할 인기 영화가 없습니다.</p>
+              <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
             )}
           </section>
         </main>
