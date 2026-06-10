@@ -1,6 +1,8 @@
 package syb.moviepedia.movie.dto.response;
 
 import lombok.Builder;
+import syb.moviepedia.movie.domain.Movie;
+import syb.moviepedia.movie.domain.MovieCategory;
 
 import java.util.List;
 
@@ -22,5 +24,15 @@ public record MovieSummaryResponse(
         if (poster != null && !poster.isBlank()) {
             poster = IMAGE_BASE_URL + SIZE + poster;
         }
+    }
+
+    public static MovieSummaryResponse from(Movie m) {
+        return MovieSummaryResponse.builder()
+                .code(m.getCode())
+                .title(m.getTitle())
+                .poster(m.getPosterPath())
+                .genre(m.getGenres())
+                .certification(m.getCertification())
+                .build();
     }
 }

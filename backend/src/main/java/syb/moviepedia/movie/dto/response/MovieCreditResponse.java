@@ -2,6 +2,7 @@ package syb.moviepedia.movie.dto.response;
 
 import lombok.Builder;
 import syb.moviepedia.common.CreditRole;
+import syb.moviepedia.movie.domain.Credit;
 
 /**
  * 영화 출연진 정보 응답 Dto.
@@ -17,5 +18,13 @@ public record MovieCreditResponse(
 
     public MovieCreditResponse {
         profile = profile != null ? IMAGE_BASE_URL + profile : "";
+    }
+
+    public static MovieCreditResponse from(Credit credit) {
+        return MovieCreditResponse.builder()
+                .role(credit.getRole())
+                .name(credit.getName())
+                .profile(credit.getProfile())
+                .build();
     }
 }

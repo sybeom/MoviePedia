@@ -58,17 +58,16 @@ public class MovieService {
      */
     @Transactional
     public MovieDetailResponse getMovieDetail(Long mvCode) {
-        // 영화 상세
-        Movie movie = movieRepository.findByCode(mvCode) // DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
-                .orElseGet(() -> {
-                    log.info("DB 영화 존재 X, DB 저장 시작");
-                    TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode); // 상세 api 호출
-                    String certification = extractCertification(tmdbClient.getMovieCertification(mvCode)); // 등급
-                    List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가
-                    return movieRepository.save(toMovieFromDetail(detail, certification, countries));
-                });
+        // 영화 상세, DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
+        Movie movie = movieRepository.findByCode(mvCode).orElseGet(() -> {
+            log.info("DB 영화 존재 X, DB 저장");
+            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode); // 상세 api 호출
+            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode)); // 등급
+            List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가
+            return movieRepository.save(toMovieFromDetail(detail, certification, countries));
+        });
 
-        // 영화가 있더라도 기타(등급, 런타임, 국가) 채워져있지 않을 때.
+        // 영화가 있더라도 기타(등급, 런타임, 국가) 정보 채워져있지 않을 때.
         // 보통 카테고리 영화 저장시 기타 정보는 저장되지 않아 상세 페이지 조회시 실행됨
         if(!movie.getDetailFetched()) {
             log.info("getMovieDetail(): 영화 상세 업데이트");
@@ -143,26 +142,18 @@ public class MovieService {
         // 없으면 api 호출 후 DB 저장후 반환
         if(!videoRepository.existsByMovie(movie)) {
             log.info("비디오 api 호출후 반환");
-            TmdbVideoResponse movieTrailer = tmdbClient.getMovieTrailer(movieCode);
-            saveTrailer(movieTrailer, movie);
+            TmdbVideoResponse tmdbVideoResponse = tmdbClient.getVideos(movieCode);
+            saveVideo(tmdbVideoResponse, movie);
         }
 
         // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
         List<Video> videos = videoRepository.findByVideo(movie);
-        return toTrailerResponse(videos);
+        return toVideoResponse(videos);
     }
 
-    private List<VideoResponse> toTrailerResponse(List<Video> videos) {
-        return videos.stream().map(video ->
-                        VideoResponse.builder()
-                                .key(video.getKey())
-                                .type(video.getType())
-                                .build())
-                .toList();
-    }
-
-    private void saveTrailer(TmdbVideoResponse response, Movie movie) {
-        List<Video> trailerList = response.results().stream()
+    // 영상 저장
+    private void saveVideo(TmdbVideoResponse response, Movie movie) {
+        List<Video> videoList = response.results().stream()
                 .filter(result -> // 공식이고 트레일러 또는 티저 영상만. 사이트는 유튜브인 곳만.
                         result.official()
                                 && (result.type()== VideoType.TRAILER || result.type() == VideoType.TEASER)
@@ -175,21 +166,18 @@ public class MovieService {
                                 .publishedAt(result.publishedAt())
                                 .build())
                 .toList();
-        videoRepository.saveAll(trailerList);
+        videoRepository.saveAll(videoList);
+    }
+
+    // 응답  가공
+    private List<VideoResponse> toVideoResponse(List<Video> videos) {
+        return videos.stream().map(video -> VideoResponse.from(video)).toList();
     }
 
 
     // 카테고리 영화 -> 영화 요약 DTO 가공
     private MovieSummaryResponse toMovieSummaryDto(MovieCategory mc) {
-        Movie movie = mc.getMovie();
-
-        return MovieSummaryResponse.builder()
-                .code(movie.getCode())
-                .title(movie.getTitle())
-                .poster(movie.getPosterPath())
-                .certification(movie.getCertification())
-                .genre(movie.getGenres())
-                .build();
+        return MovieSummaryResponse.from(mc.getMovie());
     }
 
     // 영화 상세 정보 -> 영화 엔티티 가공
@@ -209,32 +197,14 @@ public class MovieService {
                 .build();
     }
 
-    // 영화 상세 DTO 가공
+    // 영화 상세 DTO로 변환
     private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, int score) {
-        return MovieDetailResponse.builder()
-                .code(movie.getCode())
-                .title(movie.getTitle())
-                .posterPath(movie.getPosterPath())
-                .backdropPath(movie.getBackdropPath())
-                .genres(movie.getGenres())
-                .certification(movie.getCertification())
-                .overview(movie.getOverview())
-                .releaseYear(movie.getReleaseDate().getYear())
-                .country(movie.getCountry())
-                .runtime(movie.getRuntime())
-                .score(score)
-                .credit(dto)
-                .build();
+        return MovieDetailResponse.from(movie, dto, score);
     }
 
     // Credit 엔티티 영화 크레딧 DTO로 가공
     private List<MovieCreditResponse> toMovieCreditDto(List<Credit> list) {
-        return list.stream().map(credit -> MovieCreditResponse.builder()
-                        .role(credit.getRole())
-                        .name(credit.getName())
-                        .profile(credit.getProfile())
-                        .build())
-                .toList();
+        return list.stream().map(credit -> MovieCreditResponse.from(credit)).toList();
     }
 
     // 영화 추가 정보(국가, 런타임 등) 업데이트

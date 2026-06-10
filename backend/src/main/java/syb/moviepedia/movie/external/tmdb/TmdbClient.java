@@ -77,7 +77,7 @@ public class TmdbClient {
     }
 
     // 비디오(트레일러) 정보
-    public TmdbVideoResponse getMovieTrailer(Long movieId) {
+    public TmdbVideoResponse getVideos(Long movieId) {
         return fetchMovieVideos(movieId);
     }
 

@@ -1,6 +1,7 @@
 package syb.moviepedia.movie.dto.response;
 
 import lombok.Builder;
+import syb.moviepedia.movie.domain.Movie;
 
 import java.util.List;
 
@@ -41,5 +42,22 @@ public record MovieDetailResponse(
         if (backdropPath != null) {
             backdropPath = IMAGE_BASE_URL + backdropPath;
         }
+    }
+
+    public static MovieDetailResponse from(Movie movie, List<MovieCreditResponse> dto, int score) {
+        return MovieDetailResponse.builder()
+                .code(movie.getCode())
+                .title(movie.getTitle())
+                .posterPath(movie.getPosterPath())
+                .backdropPath(movie.getBackdropPath())
+                .genres(movie.getGenres())
+                .certification(movie.getCertification())
+                .overview(movie.getOverview())
+                .releaseYear(movie.getReleaseDate().getYear())
+                .country(movie.getCountry())
+                .runtime(movie.getRuntime())
+                .score(score)
+                .credit(dto)
+                .build();
     }
 }
