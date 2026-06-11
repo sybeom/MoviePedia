@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * TMDB API 호출하는 클라이언트 클래스
@@ -83,137 +85,156 @@ public class TmdbClient {
 
     // 초기 영화 호출
     private TmdbMovieList fetchInitMovies(int page) {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                                    .path(DISCOVER_MOVIE_PATH)
-                                    .queryParam("language", "ko-KR")
-                                    .queryParam("page",page)
-                                    .queryParam("region", "KR")
-                                    .build())
-                    .retrieve()
-                    .bodyToMono(TmdbMovieList.class)
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 영화 초기화 API 호출 실패. 경로= " + DISCOVER_MOVIE_PATH, e);
-        }
+        return get(
+                DISCOVER_MOVIE_PATH,
+                TmdbMovieList.class,
+                "TMDB 영화 초기화 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
+                        .queryParam("page",page)
+                        .queryParam("region", "KR")
+        );
     }
 
     // 카테고리 영화 목록 api 호출
     private TmdbMovieList fetchCategoryMovieList(String path) {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(path)
-                            .queryParam("language", "ko-KR")
-                            .queryParam("page", 1)
-                            .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
-                            .build())
-                    .retrieve()
-                    .bodyToMono(TmdbMovieList .class) // 응답 json에서 해당 필드에 맞게 데이터가 자동 매핑된다.
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 영화 목록 API 호출 실패. 경로= " + path, e);
-        }
+        return get(
+                path,
+                TmdbMovieList.class,
+                "TMDB 영화 목록 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
+                        .queryParam("page", 1)
+                        .queryParam("region", "KR") // 한국 지역 기준으로 개봉일, 공개 여부, 결과 순서 등을 맞춘다.
+        );
     }
 
     // 장르 api 호출
     private TmdbGenreList fetchMovieGenres() {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(GENRE_PATH)
-                            .queryParam("language", "ko-KR")
-                            .build())
-                    .retrieve()
-                    .bodyToMono(TmdbGenreList.class)
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 장르 목록 API 호출 실패. 경로= " + GENRE_PATH, e);
-        }
+        return get(
+                GENRE_PATH,
+                TmdbGenreList.class,
+                "TMDB 장르 목록 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
+        );
     }
 
     // 국가 코드 정보 API 호출
     private List<TmdbCountry> fetchCountries() {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(COUNTRY_PATH)
-                            .queryParam("language", "ko-KR")
-                            .build())
-                    .retrieve()
-                    .bodyToFlux(TmdbCountry.class) // 응답의 최상위 구조가 객체가 아니라 배열이기때문에 List로 곧바로 받아야한다.
-                    .collectList()
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 국가 코드 API 호출 실패. 경로= " + COUNTRY_PATH, e);
-        }
+        return getList(
+                COUNTRY_PATH,
+                TmdbCountry.class,
+                "TMDB 국가 코드 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
+        );
     }
 
     // 개봉일 api 호출 - 연령 등급 얻기(개봉일 api에서 영화 연령 등급을 얻을 수 있기때문)
     private TmdbMovieCertification fetchMovieReleaseDate(Long movieId) {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(RELEASE_DATE_PATH)
-                            .queryParam("language", "ko-KR")
-                            .queryParam("region", "KR")
-                            .build(movieId))
-                    .retrieve()
-                    .bodyToMono(TmdbMovieCertification.class)
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 개봉 날짜 API 호출 실패. 경로= " + RELEASE_DATE_PATH, e);
-        }
+        return get(
+                RELEASE_DATE_PATH,
+                TmdbMovieCertification.class,
+                "TMDB 개봉 날짜 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
+                        .queryParam("region", "KR"),
+                movieId
+        );
     }
 
     // 영화 상세 api 호출 (영화 상세는 변환할 데이터가 크게 없기 때문에 Dto 클래스로 받고 그대로 반환)
     private TmdbMovieDetail fetchMovieDetail(Long movieId) {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(DETAIL_PATH)
-                            .queryParam("language", "ko-KR")
-                            .queryParam("region", "KR")
-                            .build(movieId))
-                    .retrieve()
-                    .bodyToMono(TmdbMovieDetail.class)
-                    .block();
-        } catch (Exception e) {
-            log.error("TMDB 개봉 날짜 API 호출 실패. movieId={}", movieId, e);
-            throw new TmdbApiException("TMDB 영화 상세 API 호출 실패. 경로= " + DETAIL_PATH, e);
-        }
+        return get(
+                DETAIL_PATH,
+                TmdbMovieDetail.class,
+                "TMDB 영화 상세 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
+                        .queryParam("region", "KR"),
+                movieId
+        );
     }
 
     // 크레딧(감독 및 출연진) api
     private TmdbCredit fetchCredit(Long movieId) {
-        try {
-            return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(CREDIT_PATH)
-                            .queryParam("language", "ko-KR")
-                            .build(movieId))
-                    .retrieve()
-                    .bodyToMono(TmdbCredit.class)
-                    .block();
-        } catch (Exception e) {
-            throw new TmdbApiException("TMDB 크레딧 API 호출 실패. 경로= " + CREDIT_PATH, e);
-        }
+        return get(
+                CREDIT_PATH,
+                TmdbCredit.class,
+                "TMDB 크레딧 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                movieId
+        );
     }
 
     // 영화 트레일러 api
     private TmdbVideoResponse fetchMovieVideos(Long movieId) {
+        return get(
+                TRAILER_PATH,
+                TmdbVideoResponse.class,
+                "TMDB 트레일러 API 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                movieId
+        );
+    }
+
+    // api 호출 메서드 공통화
+    private <T> T get(
+            String path,
+            Class<T> responseType,
+            String errorMessage,
+            Consumer<UriBuilder> queryParams,
+            Object... uriVariables // movieId가 없는 경우도 있으므로 가변 인자로 설정
+    ) {
         try {
             return tmdbWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(TRAILER_PATH)
-                            .queryParam("language", "ko-KR")
-                            .build(movieId))
+                    .uri(uriBuilder -> {
+                        uriBuilder.path(path);
+
+                        if (queryParams != null) {
+                            queryParams.accept(uriBuilder);
+                        }
+
+                        return uriBuilder.build(uriVariables);
+                    })
                     .retrieve()
-                    .bodyToMono(TmdbVideoResponse.class)
+                    .bodyToMono(responseType)
                     .block();
+
         } catch (Exception e) {
-            throw new TmdbApiException("TMDB 트레일러 API 호출 실패. 경로= " + TRAILER_PATH, e);
+            throw new TmdbApiException(errorMessage + ". 경로= " + path, e);
+        }
+    }
+
+    // api 호출 메서드 공통화(응답이 배열일 경우)
+    private <T> List<T> getList(
+            String path,
+            Class<T> elementType,
+            String errorMessage,
+            Consumer<UriBuilder> queryParams,
+            Object... uriVariables
+    ) {
+        try {
+            return tmdbWebClient.get()
+                    .uri(uriBuilder -> {
+                        uriBuilder.path(path);
+
+                        if (queryParams != null) {
+                            queryParams.accept(uriBuilder);
+                        }
+
+                        return uriBuilder.build(uriVariables);
+                    })
+                    .retrieve()
+                    .bodyToFlux(elementType)
+                    .collectList()
+                    .block();
+
+        } catch (Exception e) {
+            throw new TmdbApiException(errorMessage + ". 경로= " + path, e);
         }
     }
 }
