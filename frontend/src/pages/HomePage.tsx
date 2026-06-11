@@ -32,6 +32,8 @@ type PopularMovie = {
 
 type MovieCollectionResponse = {
   popular?: unknown
+  nowPlaying?: unknown
+  upcoming?: unknown
 }
 
 type HomeTheme = 'dark' | 'light'
@@ -132,8 +134,12 @@ function HomePage() {
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
 
   const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
+  const [nowPlayingMovies, setNowPlayingMovies] = useState<PopularMovie[]>([])
+  const [upcomingMovies, setUpcomingMovies] = useState<PopularMovie[]>([])
   const [isPopularLoading, setIsPopularLoading] = useState(true)
   const [popularPage, setPopularPage] = useState(0)
+  const [nowPlayingPage, setNowPlayingPage] = useState(0)
+  const [upcomingPage, setUpcomingPage] = useState(0)
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -163,13 +169,19 @@ function HomePage() {
         }
 
         setPopularMovies(normalizePopularMovies(response?.popular))
+        setNowPlayingMovies(normalizePopularMovies(response?.nowPlaying))
+        setUpcomingMovies(normalizePopularMovies(response?.upcoming))
         setPopularPage(0)
+        setNowPlayingPage(0)
+        setUpcomingPage(0)
       } catch {
         if (!isMounted) {
           return
         }
 
         setPopularMovies([])
+        setNowPlayingMovies([])
+        setUpcomingMovies([])
       } finally {
         if (isMounted) {
           setIsPopularLoading(false)
@@ -362,6 +374,16 @@ function HomePage() {
   const visiblePopularCards = popularMovies
     .map((movie, index) => ({ movie, offset: index - popularPage }))
     .filter(({ offset }) => offset >= -2 && offset <= 2)
+  const nowPlayingPageCount = nowPlayingMovies.length
+  const visibleNowPlayingMovie = nowPlayingMovies[nowPlayingPage] ?? null
+  const visibleNowPlayingCards = nowPlayingMovies
+    .map((movie, index) => ({ movie, offset: index - nowPlayingPage }))
+    .filter(({ offset }) => offset >= -2 && offset <= 2)
+  const upcomingPageCount = upcomingMovies.length
+  const visibleUpcomingMovie = upcomingMovies[upcomingPage] ?? null
+  const visibleUpcomingCards = upcomingMovies
+    .map((movie, index) => ({ movie, offset: index - upcomingPage }))
+    .filter(({ offset }) => offset >= -2 && offset <= 2)
 
   function moveToPreviousPopularMovie() {
     setPopularPage((page) => Math.max(0, page - 1))
@@ -369,6 +391,133 @@ function HomePage() {
 
   function moveToNextPopularMovie() {
     setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
+  }
+
+  function moveToPreviousNowPlayingMovie() {
+    setNowPlayingPage((page) => Math.max(0, page - 1))
+  }
+
+  function moveToNextNowPlayingMovie() {
+    setNowPlayingPage((page) => Math.min(nowPlayingPageCount - 1, page + 1))
+  }
+
+  function moveToPreviousUpcomingMovie() {
+    setUpcomingPage((page) => Math.max(0, page - 1))
+  }
+
+  function moveToNextUpcomingMovie() {
+    setUpcomingPage((page) => Math.min(upcomingPageCount - 1, page + 1))
+  }
+
+  function renderMovieSection({
+    title,
+    visibleMovie,
+    visibleCards,
+    page,
+    pageCount,
+    onPrevious,
+    onNext,
+  }: {
+    title: string
+    visibleMovie: PopularMovie | null
+    visibleCards: Array<{ movie: PopularMovie; offset: number }>
+    page: number
+    pageCount: number
+    onPrevious: () => void
+    onNext: () => void
+  }) {
+    return (
+      <section className="home-popular-section">
+        <div className="home-popular-section-header">
+          <h2>{title}</h2>
+        </div>
+
+        {isPopularLoading ? (
+          <div className="home-popular-loading" aria-live="polite">
+            <img
+              className="home-popular-loading-icon"
+              src={loadingIcon}
+              alt=""
+              aria-hidden="true"
+            />
+          </div>
+        ) : visibleMovie ? (
+          <div className="home-popular-carousel">
+            <button
+              className="home-popular-side-button"
+              type="button"
+              onClick={onPrevious}
+              disabled={page === 0}
+              aria-label={`이전 ${title}`}
+            >
+              <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
+            </button>
+
+            <div className="home-popular-track">
+              {visibleCards.map(({ movie, offset }) => {
+                const positionClass =
+                  offset === 0
+                    ? 'home-popular-card-current'
+                    : offset === -1
+                      ? 'home-popular-card-previous'
+                      : offset === 1
+                        ? 'home-popular-card-next'
+                        : offset < 0
+                          ? 'home-popular-card-off-left'
+                          : 'home-popular-card-off-right'
+
+                const isCurrent = offset === 0
+                const posterShellClass = isCurrent
+                  ? 'home-popular-poster-shell'
+                  : 'home-popular-preview-poster-shell'
+                const posterClass = isCurrent
+                  ? 'home-popular-poster'
+                  : 'home-popular-preview-poster'
+                const titleClass = isCurrent ? 'home-popular-title' : 'home-popular-preview-title'
+
+                return (
+                  <button
+                    className={`home-popular-card ${positionClass}`}
+                    type="button"
+                    key={`${title}-${movie.code}`}
+                    onClick={() => moveToMovieDetail(movie)}
+                    aria-label={`${movie.title} 상세 보기`}
+                  >
+                    <div className={posterShellClass}>
+                      {movie.poster ? (
+                        <img
+                          className={posterClass}
+                          src={movie.poster}
+                          alt={isCurrent ? `${movie.title} 포스터` : ''}
+                          aria-hidden={isCurrent ? undefined : 'true'}
+                        />
+                      ) : (
+                        <div className={`${posterClass} home-popular-poster-fallback`}>
+                          <span>{movie.title}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className={titleClass}>{movie.title}</p>
+                  </button>
+                )
+              })}
+            </div>
+
+            <button
+              className="home-popular-side-button"
+              type="button"
+              onClick={onNext}
+              disabled={page >= pageCount - 1}
+              aria-label={`다음 ${title}`}
+            >
+              <img className="home-popular-side-button-icon" src={nextIcon} alt="" aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
+        )}
+      </section>
+    )
   }
 
   return (
@@ -468,96 +617,35 @@ function HomePage() {
             {message ? <p className="home-search-message">{message}</p> : null}
           </section>
 
-          <section className="home-popular-section">
-            <div className="home-popular-section-header">
-              <h2>인기 영화</h2>
-            </div>
+          {renderMovieSection({
+            title: '인기 영화',
+            visibleMovie: visiblePopularMovie,
+            visibleCards: visiblePopularCards,
+            page: popularPage,
+            pageCount: popularPageCount,
+            onPrevious: moveToPreviousPopularMovie,
+            onNext: moveToNextPopularMovie,
+          })}
 
-            {isPopularLoading ? (
-              <div className="home-popular-loading" aria-live="polite">
-                <img
-                  className="home-popular-loading-icon"
-                  src={loadingIcon}
-                  alt=""
-                  aria-hidden="true"
-                />
-              </div>
-            ) : visiblePopularMovie ? (
-              <div className="home-popular-carousel">
-                <button
-                  className="home-popular-side-button"
-                  type="button"
-                  onClick={moveToPreviousPopularMovie}
-                  disabled={popularPage === 0}
-                  aria-label="이전 인기 영화"
-                >
-                  <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
-                </button>
+          {renderMovieSection({
+            title: '현재 상영중인 영화',
+            visibleMovie: visibleNowPlayingMovie,
+            visibleCards: visibleNowPlayingCards,
+            page: nowPlayingPage,
+            pageCount: nowPlayingPageCount,
+            onPrevious: moveToPreviousNowPlayingMovie,
+            onNext: moveToNextNowPlayingMovie,
+          })}
 
-                <div className="home-popular-track">
-                  {visiblePopularCards.map(({ movie, offset }) => {
-                    const positionClass =
-                      offset === 0
-                        ? 'home-popular-card-current'
-                        : offset === -1
-                          ? 'home-popular-card-previous'
-                          : offset === 1
-                            ? 'home-popular-card-next'
-                            : offset < 0
-                              ? 'home-popular-card-off-left'
-                              : 'home-popular-card-off-right'
-
-                    const isCurrent = offset === 0
-                    const posterShellClass = isCurrent
-                      ? 'home-popular-poster-shell'
-                      : 'home-popular-preview-poster-shell'
-                    const posterClass = isCurrent
-                      ? 'home-popular-poster'
-                      : 'home-popular-preview-poster'
-                    const titleClass = isCurrent ? 'home-popular-title' : 'home-popular-preview-title'
-
-                    return (
-                      <button
-                        className={`home-popular-card ${positionClass}`}
-                        type="button"
-                        key={movie.code}
-                        onClick={() => moveToMovieDetail(movie)}
-                        aria-label={`${movie.title} 상세 보기`}
-                      >
-                        <div className={posterShellClass}>
-                          {movie.poster ? (
-                            <img
-                              className={posterClass}
-                              src={movie.poster}
-                              alt={isCurrent ? `${movie.title} 포스터` : ''}
-                              aria-hidden={isCurrent ? undefined : 'true'}
-                            />
-                          ) : (
-                            <div className={`${posterClass} home-popular-poster-fallback`}>
-                              <span>{movie.title}</span>
-                            </div>
-                          )}
-                        </div>
-                        <p className={titleClass}>{movie.title}</p>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <button
-                  className="home-popular-side-button"
-                  type="button"
-                  onClick={moveToNextPopularMovie}
-                  disabled={popularPage >= popularPageCount - 1}
-                  aria-label="다음 인기 영화"
-                >
-                  <img className="home-popular-side-button-icon" src={nextIcon} alt="" aria-hidden="true" />
-                </button>
-              </div>
-            ) : (
-              <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
-            )}
-          </section>
+          {renderMovieSection({
+            title: '개봉 예정 영화',
+            visibleMovie: visibleUpcomingMovie,
+            visibleCards: visibleUpcomingCards,
+            page: upcomingPage,
+            pageCount: upcomingPageCount,
+            onPrevious: moveToPreviousUpcomingMovie,
+            onNext: moveToNextUpcomingMovie,
+          })}
         </main>
       </div>
 
