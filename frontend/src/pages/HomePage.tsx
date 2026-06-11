@@ -41,6 +41,7 @@ type HomeTheme = 'dark' | 'light'
 const SEARCH_DEBOUNCE_MS = 500
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
 const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
+const BANNER_AUTOPLAY_MS = 5000
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -137,6 +138,8 @@ function HomePage() {
   const [nowPlayingMovies, setNowPlayingMovies] = useState<PopularMovie[]>([])
   const [upcomingMovies, setUpcomingMovies] = useState<PopularMovie[]>([])
   const [isPopularLoading, setIsPopularLoading] = useState(true)
+  const [bannerPage, setBannerPage] = useState(0)
+  const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [popularPage, setPopularPage] = useState(0)
   const [nowPlayingPage, setNowPlayingPage] = useState(0)
   const [upcomingPage, setUpcomingPage] = useState(0)
@@ -171,6 +174,7 @@ function HomePage() {
         setPopularMovies(normalizePopularMovies(response?.popular))
         setNowPlayingMovies(normalizePopularMovies(response?.nowPlaying))
         setUpcomingMovies(normalizePopularMovies(response?.upcoming))
+        setBannerPage(0)
         setPopularPage(0)
         setNowPlayingPage(0)
         setUpcomingPage(0)
@@ -182,6 +186,7 @@ function HomePage() {
         setPopularMovies([])
         setNowPlayingMovies([])
         setUpcomingMovies([])
+        setBannerPage(0)
       } finally {
         if (isMounted) {
           setIsPopularLoading(false)
@@ -370,6 +375,8 @@ function HomePage() {
   }
 
   const popularPageCount = popularMovies.length
+  const bannerPageCount = nowPlayingMovies.length
+  const visibleBannerMovie = nowPlayingMovies[bannerPage] ?? null
   const visiblePopularMovie = popularMovies[popularPage] ?? null
   const visiblePopularCards = popularMovies
     .map((movie, index) => ({ movie, offset: index - popularPage }))
@@ -393,6 +400,16 @@ function HomePage() {
     setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
   }
 
+  function moveToPreviousBannerMovie() {
+    setBannerDirection('previous')
+    setBannerPage((page) => Math.max(0, page - 1))
+  }
+
+  function moveToNextBannerMovie() {
+    setBannerDirection('next')
+    setBannerPage((page) => Math.min(bannerPageCount - 1, page + 1))
+  }
+
   function moveToPreviousNowPlayingMovie() {
     setNowPlayingPage((page) => Math.max(0, page - 1))
   }
@@ -408,6 +425,21 @@ function HomePage() {
   function moveToNextUpcomingMovie() {
     setUpcomingPage((page) => Math.min(upcomingPageCount - 1, page + 1))
   }
+
+  useEffect(() => {
+    if (isPopularLoading || bannerPageCount <= 1) {
+      return
+    }
+
+    const autoplayTimer = window.setInterval(() => {
+      setBannerDirection('next')
+      setBannerPage((page) => (page >= bannerPageCount - 1 ? 0 : page + 1))
+    }, BANNER_AUTOPLAY_MS)
+
+    return () => {
+      window.clearInterval(autoplayTimer)
+    }
+  }, [bannerPageCount, isPopularLoading])
 
   function renderMovieSection({
     title,
@@ -615,6 +647,89 @@ function HomePage() {
             </div>
 
             {message ? <p className="home-search-message">{message}</p> : null}
+          </section>
+
+          <section className="home-banner-section" aria-label="현재 상영중인 영화 배너">
+            {isPopularLoading ? (
+              <div className="home-popular-loading" aria-live="polite">
+                <img
+                  className="home-popular-loading-icon"
+                  src={loadingIcon}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
+            ) : visibleBannerMovie ? (
+              <div className="home-banner-carousel">
+                <button
+                  className="home-banner-side-button home-banner-side-button-previous"
+                  type="button"
+                  onClick={moveToPreviousBannerMovie}
+                  disabled={bannerPage === 0}
+                  aria-label="이전 현재 상영중인 영화"
+                >
+                  <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
+                </button>
+
+                <button
+                  key={`banner-${visibleBannerMovie.code}-${bannerPage}`}
+                  className={`home-banner-card home-banner-card-${bannerDirection}`}
+                  type="button"
+                  onClick={() => moveToMovieDetail(visibleBannerMovie)}
+                  aria-label={`${visibleBannerMovie.title} 상세 보기`}
+                >
+                  <div className="home-banner-poster-shell">
+                    {visibleBannerMovie.poster ? (
+                      <img
+                        className="home-banner-poster"
+                        src={visibleBannerMovie.poster}
+                        alt={`${visibleBannerMovie.title} 배너`}
+                      />
+                    ) : (
+                      <div className="home-banner-poster home-popular-poster-fallback">
+                        <span>{visibleBannerMovie.title}</span>
+                      </div>
+                    )}
+                    <div className="home-banner-overlay" aria-hidden="true" />
+                    <div className="home-banner-copy">
+                      <h2>{visibleBannerMovie.title}</h2>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  className="home-banner-side-button home-banner-side-button-next"
+                  type="button"
+                  onClick={moveToNextBannerMovie}
+                  disabled={bannerPage >= bannerPageCount - 1}
+                  aria-label="다음 현재 상영중인 영화"
+                >
+                  <img className="home-popular-side-button-icon" src={nextIcon} alt="" aria-hidden="true" />
+                </button>
+
+                {bannerPageCount > 1 ? (
+                  <div className="home-banner-indicators" aria-label="배너 위치">
+                    {nowPlayingMovies.map((movie, index) => (
+                      <button
+                        key={`banner-indicator-${movie.code}`}
+                        className={`home-banner-indicator${
+                          index === bannerPage ? ' home-banner-indicator-active' : ''
+                        }`}
+                        type="button"
+                        onClick={() => {
+                          setBannerDirection(index < bannerPage ? 'previous' : 'next')
+                          setBannerPage(index)
+                        }}
+                        aria-label={`${movie.title} 배너로 이동`}
+                        aria-pressed={index === bannerPage}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
+            )}
           </section>
 
           {renderMovieSection({

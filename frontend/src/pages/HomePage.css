@@ -418,6 +418,177 @@
   line-height: 1.6;
 }
 
+.home-banner-section {
+  display: grid;
+  gap: 0;
+  padding: 0 24px 32px;
+}
+
+.home-banner-carousel {
+  position: relative;
+}
+
+.home-banner-card {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.home-banner-card-next {
+  animation: home-banner-card-slide-next 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-banner-card-previous {
+  animation: home-banner-card-slide-previous 460ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-banner-poster-shell {
+  position: relative;
+  width: 100%;
+  min-height: 236px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.home-banner-poster {
+  display: block;
+  width: 100%;
+  height: 236px;
+  object-fit: cover;
+  object-position: center 24%;
+}
+
+.home-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.92) 0%,
+    rgba(15, 23, 42, 0.72) 26%,
+    rgba(15, 23, 42, 0.26) 58%,
+    rgba(15, 23, 42, 0.1) 100%
+  );
+}
+
+.home-banner-copy {
+  position: absolute;
+  inset: auto auto 0 0;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+  max-width: 62%;
+  padding: 24px;
+}
+
+.home-banner-eyebrow {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.home-banner-copy h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.15;
+  word-break: keep-all;
+}
+
+.home-banner-link {
+  color: rgba(248, 250, 252, 0.82);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.home-banner-side-button {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.42);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.home-banner-side-button-previous {
+  left: 12px;
+}
+
+.home-banner-side-button-next {
+  right: 12px;
+}
+
+.home-banner-side-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.home-banner-indicators {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+
+.home-banner-indicator {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  background: rgba(248, 250, 252, 0.34);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.home-banner-indicator-active {
+  width: 18px;
+  background: rgba(248, 250, 252, 0.92);
+}
+
+@keyframes home-banner-card-slide-next {
+  from {
+    opacity: 0.2;
+    transform: translateX(40px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes home-banner-card-slide-previous {
+  from {
+    opacity: 0.2;
+    transform: translateX(-40px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
 .home-popular-section {
   display: grid;
   gap: 18px;
@@ -758,6 +929,29 @@
   background: #eef2f7;
 }
 
+.home-page-light .home-banner-poster-shell {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.home-page-light .home-banner-overlay {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.76) 0%,
+    rgba(15, 23, 42, 0.48) 26%,
+    rgba(15, 23, 42, 0.16) 58%,
+    rgba(15, 23, 42, 0.04) 100%
+  );
+}
+
+.home-page-light .home-banner-eyebrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.home-page-light .home-banner-copy h2,
+.home-page-light .home-banner-link {
+  color: #f8fafc;
+}
+
 .home-page-light .home-popular-poster-fallback {
   background: #e5e7eb;
 }
@@ -834,6 +1028,27 @@
 
   .home-search-section {
     padding: 20px 16px 32px;
+  }
+
+  .home-banner-section {
+    padding: 0 16px 28px;
+  }
+
+  .home-banner-poster-shell {
+    min-height: 208px;
+  }
+
+  .home-banner-poster {
+    height: 208px;
+  }
+
+  .home-banner-copy {
+    max-width: 74%;
+    padding: 18px;
+  }
+
+  .home-banner-copy h2 {
+    font-size: 24px;
   }
 
   .home-popular-section {
