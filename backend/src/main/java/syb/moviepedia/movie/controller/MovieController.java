@@ -7,18 +7,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import syb.moviepedia.common.CommentSortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
-import syb.moviepedia.movie.dto.response.MovieBannerResponse;
-import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
-import syb.moviepedia.movie.dto.response.MovieDetailResponse;
-import syb.moviepedia.movie.dto.response.VideoResponse;
+import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.service.MovieService;
 
 import java.util.List;
@@ -31,6 +28,25 @@ public class MovieController {
     private final MovieService movieService;
 
     @Operation(
+            summary = "홈 화면 전체 영화", description = "홈 화면 전체 영화 목록 10개씩 가져온다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "전체 영화 목록 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "전체 영화 목록 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping
+    public ResponseEntity<ApiSuccessResponse<List<AllMoviesResponse>>> allMovies(
+            @PageableDefault(size = 10) Pageable pageable,
+            @RequestParam(defaultValue = "LATEST") CommentSortType sort) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of(
+                "전체 영화 목록 조회 성공", movieService.getAllMovies(pageable,sort)));
+    }
+
+    @Operation(
             summary = "홈화면 배너 영화", description = "홈 화면 배너에 보여질 인기영화 목록의 back_drop 경로를 가져온다")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "배너 영화 목록 조회 성공"),
@@ -41,12 +57,10 @@ public class MovieController {
                     )
             )
     })
-    @GetMapping("/banner")
+    @GetMapping("/banners")
     public ResponseEntity<ApiSuccessResponse<List<MovieBannerResponse>>> getBannerMovies() {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 배너 목록 조회 성공", movieService.getBannerMovies()));
     }
-
-
 
     /**
      * 엘라스틱 도입 커밋
@@ -62,8 +76,8 @@ public class MovieController {
                     )
             )
     })
-    @GetMapping
-    public ResponseEntity<ApiSuccessResponse<MovieCategoriesResponse>> home() {
+    @GetMapping("/categories")
+    public ResponseEntity<ApiSuccessResponse<MovieCategoriesResponse>> getCategoryMovies() {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("카테고리 별 영화 목록 조회 성공", movieService.getCategoryMovies()));
     }
 

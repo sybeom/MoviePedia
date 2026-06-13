@@ -36,10 +36,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     // 코멘트 목록
     @Query("""
         select c
-            from Comment c
-            join c.movie movie
-            join fetch c.member member
-            where movie.code = :movieCode
+        from Comment c
+        join c.movie movie
+        join fetch c.member member
+        where movie.code = :movieCode
     """)
     Slice<Comment> findByCommentsMovieId(@Param("movieCode") Long mvCode, Pageable pageable);
 

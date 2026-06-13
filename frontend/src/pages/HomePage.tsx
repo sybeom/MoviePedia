@@ -28,6 +28,7 @@ type PopularMovie = {
   code: string
   title: string
   poster: string
+  genres: string[]
 }
 
 type BannerMovie = {
@@ -36,13 +37,22 @@ type BannerMovie = {
   backdrop: string
 }
 
-type MovieCollectionResponse = {
-  popular?: unknown
+type CategoryMoviesResponse = {
   nowPlaying?: unknown
-  upcoming?: unknown
+}
+
+type MovieListPage = {
+  movies: PopularMovie[]
+  hasMore: boolean
 }
 
 type HomeTheme = 'dark' | 'light'
+type GenreFilter = '전체' | '액션' | '코미디' | '드라마' | '스릴러' | '애니메이션'
+type MovieSortFilter = '최신순' | '오래된순'
+type GenreOption = {
+  label: string
+  value: string
+}
 
 const SEARCH_DEBOUNCE_MS = 500
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
@@ -50,6 +60,7 @@ const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
 const BANNER_AUTOPLAY_MS = 5000
 const BANNER_TRANSITION_MS = 520
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
+const HOME_SORT_FILTERS: MovieSortFilter[] = ['최신순', '오래된순']
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -81,6 +92,190 @@ function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   }
 
   return ''
+}
+
+function getStringArrayValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (Array.isArray(value)) {
+      const nextValue = value
+        .map((item) => {
+          if (typeof item === 'string' && item.trim()) {
+            return item.trim()
+          }
+
+          if (isRecord(item)) {
+            return getStringValue(item, ['name', 'genre'])
+          }
+
+          return ''
+        })
+        .filter(Boolean)
+
+      if (nextValue.length > 0) {
+        return nextValue
+      }
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+      const nextValue = value
+        .split(/[,/|]/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+
+      if (nextValue.length > 0) {
+        return nextValue
+      }
+    }
+  }
+
+  return []
+}
+
+function getMovieListValue(data: unknown) {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (!isRecord(data)) {
+    return []
+  }
+
+  const candidateKeys = ['movies', 'content', 'items', 'list', 'data']
+
+  for (const key of candidateKeys) {
+    const value = data[key]
+
+    if (Array.isArray(value)) {
+      return value
+    }
+  }
+
+  const nestedKeys = ['data', 'result', 'payload', 'page']
+
+  for (const key of nestedKeys) {
+    const value = data[key]
+
+    if (!isRecord(value)) {
+      continue
+    }
+
+    for (const candidateKey of candidateKeys) {
+      const nestedValue = value[candidateKey]
+
+      if (Array.isArray(nestedValue)) {
+        return nestedValue
+      }
+    }
+  }
+
+  return []
+}
+
+function normalizeMovieListPage(data: unknown): MovieListPage {
+  const movies = normalizePopularMovies(getMovieListValue(data))
+
+  if (isRecord(data)) {
+    const hasNextKeys = ['hasNext', 'hasMore', 'next', 'isNext']
+
+    for (const key of hasNextKeys) {
+      if (typeof data[key] === 'boolean') {
+        return { movies, hasMore: data[key] as boolean }
+      }
+    }
+
+    const lastKeys = ['last', 'isLast']
+
+    for (const key of lastKeys) {
+      if (typeof data[key] === 'boolean') {
+        return { movies, hasMore: !(data[key] as boolean) }
+      }
+    }
+
+    const pageValue = data.page
+
+    if (isRecord(pageValue)) {
+      if (typeof pageValue.hasNext === 'boolean') {
+        return { movies, hasMore: pageValue.hasNext }
+      }
+
+      if (typeof pageValue.last === 'boolean') {
+        return { movies, hasMore: !pageValue.last }
+      }
+
+      const currentPage = Number(pageValue.number)
+      const totalPages = Number(pageValue.totalPages)
+
+      if (Number.isFinite(currentPage) && Number.isFinite(totalPages) && totalPages > 0) {
+        return {
+          movies,
+          hasMore: currentPage + 1 < totalPages,
+        }
+      }
+    }
+  }
+
+  return {
+    movies,
+    hasMore: movies.length > 0,
+  }
+}
+
+function getGenreQueryValue(filter: GenreFilter) {
+  if (filter === '전체') {
+    return ''
+  }
+
+  const genreMap: Record<Exclude<GenreFilter, '전체'>, string> = {
+    액션: 'ACTION',
+    코미디: 'COMEDY',
+    드라마: 'DRAMA',
+    스릴러: 'THRILLER',
+    애니메이션: 'ANIMATION',
+  }
+
+  return genreMap[filter]
+}
+
+function getSortQueryValue(filter: MovieSortFilter) {
+  return filter === '오래된순' ? 'OLDEST' : 'LATEST'
+}
+
+function normalizeGenreOptions(data: unknown): GenreOption[] {
+  const source = Array.isArray(data)
+    ? data
+    : isRecord(data) && Array.isArray(data.genres)
+      ? data.genres
+      : isRecord(data) && Array.isArray(data.data)
+        ? data.data
+        : []
+
+  const normalizedOptions = source
+    .map((item) => {
+      if (typeof item === 'string' && item.trim()) {
+        return {
+          label: item.trim(),
+          value: item.trim(),
+        }
+      }
+
+      if (!isRecord(item)) {
+        return null
+      }
+
+      const label = getStringValue(item, ['label', 'name', 'text'])
+      const value = getStringValue(item, ['value', 'code', 'id'])
+
+      if (!label || !value) {
+        return null
+      }
+
+      return { label, value }
+    })
+    .filter((option): option is GenreOption => option !== null)
+
+  return [{ label: '전체', value: 'ALL' }, ...normalizedOptions.filter((option) => option.value !== 'ALL')]
 }
 
 function getImageSource(value: string) {
@@ -136,8 +331,9 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
       const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
       const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
+      const genres = getStringArrayValue(value, ['genres', 'genre'])
 
-      return { code, title, poster }
+      return { code, title, poster, genres }
     })
     .filter((value) => value.code && value.title)
 }
@@ -178,6 +374,7 @@ function normalizeBannerMovies(data: unknown): BannerMovie[] {
 function HomePage() {
   const navigate = useNavigate()
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
+  const mainShellRef = useRef<HTMLElement | null>(null)
 
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
   const [theme, setTheme] = useState<HomeTheme>(() => {
@@ -201,19 +398,27 @@ function HomePage() {
   const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
 
-  const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
+  const [genreOptions, setGenreOptions] = useState<GenreOption[]>([{ label: '전체', value: 'ALL' }])
   const [bannerMovies, setBannerMovies] = useState<BannerMovie[]>([])
   const [nowPlayingMovies, setNowPlayingMovies] = useState<PopularMovie[]>([])
-  const [upcomingMovies, setUpcomingMovies] = useState<PopularMovie[]>([])
-  const [isPopularLoading, setIsPopularLoading] = useState(true)
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
   const [isBannerLoading, setIsBannerLoading] = useState(true)
+  const [isGenresLoading, setIsGenresLoading] = useState(true)
   const [bannerPage, setBannerPage] = useState(0)
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [isBannerSliding, setIsBannerSliding] = useState(false)
-  const [popularPage, setPopularPage] = useState(0)
   const [nowPlayingPage, setNowPlayingPage] = useState(0)
-  const [upcomingPage, setUpcomingPage] = useState(0)
+  const [selectedGenreFilter, setSelectedGenreFilter] = useState<GenreFilter>('전체')
+  const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
+  const [allMovies, setAllMovies] = useState<PopularMovie[]>([])
+  const [allMoviesPage, setAllMoviesPage] = useState(0)
+  const [hasMoreAllMovies, setHasMoreAllMovies] = useState(true)
+  const [isAllMoviesLoading, setIsAllMoviesLoading] = useState(true)
+  const [isLoadingMoreAllMovies, setIsLoadingMoreAllMovies] = useState(false)
   const bannerTransitionTimeoutRef = useRef<number | null>(null)
+  const allMoviesPageRef = useRef(0)
+  const hasMoreAllMoviesRef = useRef(true)
+  const isLoadingMoreAllMoviesRef = useRef(false)
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -228,13 +433,25 @@ function HomePage() {
   }, [theme])
 
   useEffect(() => {
+    allMoviesPageRef.current = allMoviesPage
+  }, [allMoviesPage])
+
+  useEffect(() => {
+    hasMoreAllMoviesRef.current = hasMoreAllMovies
+  }, [hasMoreAllMovies])
+
+  useEffect(() => {
+    isLoadingMoreAllMoviesRef.current = isLoadingMoreAllMovies
+  }, [isLoadingMoreAllMovies])
+
+  useEffect(() => {
     let isMounted = true
 
-    async function loadMovieCollections() {
-      setIsPopularLoading(true)
+    async function loadCategoryMovies() {
+      setIsCategoriesLoading(true)
 
       try {
-        const response = await request<MovieCollectionResponse>('/movies', {
+        const response = await request<CategoryMoviesResponse>('/moveis/categories', {
           method: 'GET',
         })
 
@@ -242,28 +459,22 @@ function HomePage() {
           return
         }
 
-        setPopularMovies(normalizePopularMovies(response?.popular))
         setNowPlayingMovies(normalizePopularMovies(response?.nowPlaying))
-        setUpcomingMovies(normalizePopularMovies(response?.upcoming))
-        setPopularPage(0)
         setNowPlayingPage(0)
-        setUpcomingPage(0)
       } catch {
         if (!isMounted) {
           return
         }
 
-        setPopularMovies([])
         setNowPlayingMovies([])
-        setUpcomingMovies([])
       } finally {
         if (isMounted) {
-          setIsPopularLoading(false)
+          setIsCategoriesLoading(false)
         }
       }
     }
 
-    void loadMovieCollections()
+    void loadCategoryMovies()
 
     return () => {
       isMounted = false
@@ -277,7 +488,7 @@ function HomePage() {
       setIsBannerLoading(true)
 
       try {
-        const response = await request<unknown>('/movies/banner', {
+        const response = await request<unknown>('/movies/banners', {
           method: 'GET',
         })
 
@@ -309,6 +520,107 @@ function HomePage() {
       isMounted = false
     }
   }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadGenreOptions() {
+      setIsGenresLoading(true)
+
+      try {
+        const response = await request<unknown>('/movies/genres', {
+          method: 'GET',
+        })
+
+        if (!isMounted) {
+          return
+        }
+
+        setGenreOptions(normalizeGenreOptions(response))
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setGenreOptions([{ label: '전체', value: 'ALL' }])
+      } finally {
+        if (isMounted) {
+          setIsGenresLoading(false)
+        }
+      }
+    }
+
+    void loadGenreOptions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const loadAllMoviesPage = useCallback(
+    async (page: number, append: boolean, genreFilter: GenreFilter, sortFilter: MovieSortFilter) => {
+      const searchParams = new URLSearchParams({
+        page: String(page),
+        sort: getSortQueryValue(sortFilter),
+      })
+
+      const genreValue = getGenreQueryValue(genreFilter)
+
+      if (genreValue) {
+        searchParams.set('genre', genreValue)
+      }
+
+      const response = await request<unknown>(`/movies?${searchParams.toString()}`, {
+        method: 'GET',
+      })
+      const normalizedPage = normalizeMovieListPage(response)
+
+      setAllMovies((previousMovies) =>
+        append ? [...previousMovies, ...normalizedPage.movies] : normalizedPage.movies,
+      )
+      setAllMoviesPage(page)
+      setHasMoreAllMovies(normalizedPage.hasMore)
+
+      allMoviesPageRef.current = page
+      hasMoreAllMoviesRef.current = normalizedPage.hasMore
+    },
+    [],
+  )
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadInitialAllMovies() {
+      setIsAllMoviesLoading(true)
+      setAllMovies([])
+      setAllMoviesPage(0)
+      setHasMoreAllMovies(true)
+
+      allMoviesPageRef.current = 0
+      hasMoreAllMoviesRef.current = true
+
+      try {
+        await loadAllMoviesPage(0, false, selectedGenreFilter, selectedSortFilter)
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setAllMovies([])
+        setHasMoreAllMovies(false)
+      } finally {
+        if (isMounted) {
+          setIsAllMoviesLoading(false)
+        }
+      }
+    }
+
+    void loadInitialAllMovies()
+
+    return () => {
+      isMounted = false
+    }
+  }, [loadAllMoviesPage, selectedGenreFilter, selectedSortFilter])
 
   useEffect(() => {
     const trimmedQuery = query.trim()
@@ -483,7 +795,6 @@ function HomePage() {
     }
   }
 
-  const popularPageCount = popularMovies.length
   const bannerPageCount = bannerMovies.length
   const visibleBannerMovie = bannerMovies[bannerPage] ?? null
   const previousBannerIndex =
@@ -499,28 +810,11 @@ function HomePage() {
       : visibleBannerMovie
         ? [visibleBannerMovie]
         : []
-  const visiblePopularMovie = popularMovies[popularPage] ?? null
-  const visiblePopularCards = popularMovies
-    .map((movie, index) => ({ movie, offset: index - popularPage }))
-    .filter(({ offset }) => offset >= -2 && offset <= 2)
   const nowPlayingPageCount = nowPlayingMovies.length
   const visibleNowPlayingMovie = nowPlayingMovies[nowPlayingPage] ?? null
   const visibleNowPlayingCards = nowPlayingMovies
     .map((movie, index) => ({ movie, offset: index - nowPlayingPage }))
     .filter(({ offset }) => offset >= -2 && offset <= 2)
-  const upcomingPageCount = upcomingMovies.length
-  const visibleUpcomingMovie = upcomingMovies[upcomingPage] ?? null
-  const visibleUpcomingCards = upcomingMovies
-    .map((movie, index) => ({ movie, offset: index - upcomingPage }))
-    .filter(({ offset }) => offset >= -2 && offset <= 2)
-
-  function moveToPreviousPopularMovie() {
-    setPopularPage((page) => Math.max(0, page - 1))
-  }
-
-  function moveToNextPopularMovie() {
-    setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
-  }
 
   const startBannerTransition = useCallback(
     (direction: 'next' | 'previous', allowWrap = false) => {
@@ -577,13 +871,52 @@ function HomePage() {
     setNowPlayingPage((page) => Math.min(nowPlayingPageCount - 1, page + 1))
   }
 
-  function moveToPreviousUpcomingMovie() {
-    setUpcomingPage((page) => Math.max(0, page - 1))
-  }
+  useEffect(() => {
+    const mainShellElement = mainShellRef.current
 
-  function moveToNextUpcomingMovie() {
-    setUpcomingPage((page) => Math.min(upcomingPageCount - 1, page + 1))
-  }
+    if (!mainShellElement) {
+      return
+    }
+
+    const scrollTarget = mainShellElement
+
+    async function handleScroll() {
+      const remainingScroll =
+        scrollTarget.scrollHeight - scrollTarget.scrollTop - scrollTarget.clientHeight
+
+      if (remainingScroll > 240) {
+        return
+      }
+
+      if (isAllMoviesLoading || isLoadingMoreAllMoviesRef.current || !hasMoreAllMoviesRef.current) {
+        return
+      }
+
+      setIsLoadingMoreAllMovies(true)
+      isLoadingMoreAllMoviesRef.current = true
+
+      try {
+        await loadAllMoviesPage(
+          allMoviesPageRef.current + 1,
+          true,
+          selectedGenreFilter,
+          selectedSortFilter,
+        )
+      } catch {
+        setHasMoreAllMovies(false)
+        hasMoreAllMoviesRef.current = false
+      } finally {
+        setIsLoadingMoreAllMovies(false)
+        isLoadingMoreAllMoviesRef.current = false
+      }
+    }
+
+    scrollTarget.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      scrollTarget.removeEventListener('scroll', handleScroll)
+    }
+  }, [isAllMoviesLoading, loadAllMoviesPage, selectedGenreFilter, selectedSortFilter])
 
   useEffect(() => {
     if (isBannerLoading || bannerPageCount <= 1 || isBannerSliding) {
@@ -665,7 +998,7 @@ function HomePage() {
           <h2>{title}</h2>
         </div>
 
-        {isPopularLoading ? (
+        {isCategoriesLoading ? (
           <div className="home-popular-loading" aria-live="polite">
             <img
               className="home-popular-loading-icon"
@@ -756,7 +1089,7 @@ function HomePage() {
   return (
     <div className={`home-page home-page-${theme}`}>
       <div className="home-desktop-container">
-        <main className="home-main-shell">
+        <main className="home-main-shell" ref={mainShellRef}>
           <section className="home-search-section">
             <div className="search-box-shell" ref={searchBoxRef}>
               <form className="home-search-form" onSubmit={handleSearch}>
@@ -931,16 +1264,6 @@ function HomePage() {
           </section>
 
           {renderMovieSection({
-            title: '인기 영화',
-            visibleMovie: visiblePopularMovie,
-            visibleCards: visiblePopularCards,
-            page: popularPage,
-            pageCount: popularPageCount,
-            onPrevious: moveToPreviousPopularMovie,
-            onNext: moveToNextPopularMovie,
-          })}
-
-          {renderMovieSection({
             title: '현재 상영중인 영화',
             visibleMovie: visibleNowPlayingMovie,
             visibleCards: visibleNowPlayingCards,
@@ -950,15 +1273,105 @@ function HomePage() {
             onNext: moveToNextNowPlayingMovie,
           })}
 
-          {renderMovieSection({
-            title: '개봉 예정 영화',
-            visibleMovie: visibleUpcomingMovie,
-            visibleCards: visibleUpcomingCards,
-            page: upcomingPage,
-            pageCount: upcomingPageCount,
-            onPrevious: moveToPreviousUpcomingMovie,
-            onNext: moveToNextUpcomingMovie,
-          })}
+          <section className="home-movie-grid-section" aria-labelledby="home-all-movies-title">
+            <div className="home-popular-section-header">
+              <h2 id="home-all-movies-title">전체 영화</h2>
+            </div>
+
+            <div className="home-filter-panel">
+              <div className="home-filter-group">
+                <span className="home-filter-group-label">장르</span>
+                <div className="home-genre-filter-row" role="tablist" aria-label="장르 필터">
+                  {genreOptions.map((genre) => (
+                    <button
+                      key={genre.value}
+                      className={`home-genre-filter-button${
+                        genre.label === selectedGenreFilter ? ' home-genre-filter-button-active' : ''
+                      }`}
+                      type="button"
+                      onClick={() => setSelectedGenreFilter(genre.label as GenreFilter)}
+                      aria-pressed={genre.label === selectedGenreFilter}
+                    >
+                      {genre.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="home-filter-group">
+                <span className="home-filter-group-label">정렬</span>
+                <div className="home-genre-filter-row" role="tablist" aria-label="정렬 필터">
+                  {HOME_SORT_FILTERS.map((sort) => (
+                    <button
+                      key={sort}
+                      className={`home-genre-filter-button${
+                        sort === selectedSortFilter ? ' home-genre-filter-button-active' : ''
+                      }`}
+                      type="button"
+                      onClick={() => setSelectedSortFilter(sort)}
+                      aria-pressed={sort === selectedSortFilter}
+                    >
+                      {sort}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {isAllMoviesLoading || isGenresLoading ? (
+              <div className="home-popular-loading" aria-live="polite">
+                <img
+                  className="home-popular-loading-icon"
+                  src={loadingIcon}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
+            ) : allMovies.length > 0 ? (
+              <div className="home-movie-grid">
+                {allMovies.map((movie) => (
+                  <button
+                    key={`all-movie-${movie.code}`}
+                    className="home-movie-grid-card"
+                    type="button"
+                    onClick={() => moveToMovieDetail(movie)}
+                    aria-label={`${movie.title} 상세 보기`}
+                  >
+                    <div className="home-movie-grid-poster-shell">
+                      {movie.poster ? (
+                        <img
+                          className="home-movie-grid-poster"
+                          src={movie.poster}
+                          alt={`${movie.title} 포스터`}
+                        />
+                      ) : (
+                        <div className="home-movie-grid-poster home-popular-poster-fallback">
+                          <span>{movie.title}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="home-movie-grid-title">{movie.title}</p>
+                    {movie.genres.length > 0 ? (
+                      <p className="home-movie-grid-genres">{movie.genres.join(' / ')}</p>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
+            )}
+
+            {isLoadingMoreAllMovies ? (
+              <div className="home-movie-grid-loading-more" aria-live="polite">
+                <img
+                  className="home-popular-loading-icon"
+                  src={loadingIcon}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
+            ) : null}
+          </section>
         </main>
       </div>
 

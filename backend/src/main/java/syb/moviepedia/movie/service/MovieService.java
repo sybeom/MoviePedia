@@ -2,8 +2,11 @@ package syb.moviepedia.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.*;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.CommentSortType;
 import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.VideoType;
@@ -29,6 +32,27 @@ public class MovieService {
     private final CountryRepository countryRepository;
     private final MovieCreditRepository movieCreditRepository;
     private final VideoRepository videoRepository;
+
+    @Transactional(readOnly = true)
+    public List<AllMoviesResponse> getAllMovies(Pageable pageable, CommentSortType sortType) {
+
+        Sort sort = switch (sortType) {
+            case LATEST -> Sort.by(Sort.Direction.DESC, "releaseDate");
+            case OLDEST -> Sort.by(Sort.Direction.ASC, "releaseDate");
+        };
+
+        // 정렬 조건 추가된 Pageable
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        Slice<Movie> movies = movieRepository.findAllMovies(sortedPageable);
+
+        return movies.stream().map(mv -> AllMoviesResponse.builder()
+                        .code(mv.getCode())
+                        .title(mv.getTitle())
+                        .posterPath(mv.getPosterPath())
+                        .certification(mv.getCertification())
+                        .build())
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public List<MovieBannerResponse> getBannerMovies() {
