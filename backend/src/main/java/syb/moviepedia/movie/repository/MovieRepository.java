@@ -22,6 +22,13 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     """)
     Slice<Movie> findAllMovies(Pageable pageable);
 
+//    @Query("""
+//        select m
+//        from Movie m
+//        fetch join
+//    """)
+//    Slice<Movie> findFilteredMovies();
+
     // codes에 존재하는 영화 코드들 찾기
     @Query("""
         select m.code

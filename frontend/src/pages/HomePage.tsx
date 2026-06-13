@@ -53,6 +53,7 @@ type MovieListPage = {
 
 type HomeTheme = 'dark' | 'light'
 type MovieSortFilter = '최신순' | '오래된순'
+type MovieReleaseFilter = '전체' | '개봉' | '미개봉'
 type GenreOption = {
   label: string
   value: string
@@ -65,6 +66,7 @@ const BANNER_AUTOPLAY_MS = 5000
 const BANNER_TRANSITION_MS = 520
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 const HOME_SORT_FILTERS: MovieSortFilter[] = ['최신순', '오래된순']
+const HOME_RELEASE_FILTERS: MovieReleaseFilter[] = ['전체', '개봉', '미개봉']
 const HOME_CERTIFICATION_ICON_MAP: Record<string, string> = {
   '12': rating12Icon,
   '15': rating15Icon,
@@ -237,11 +239,23 @@ function normalizeMovieListPage(data: unknown): MovieListPage {
 }
 
 function getGenreQueryValues(filters: string[]) {
-  return filters.filter((filter) => filter !== '전체')
+  return filters.filter((filter) => filter !== 'ALL')
 }
 
 function getSortQueryValue(filter: MovieSortFilter) {
   return filter === '오래된순' ? 'OLDEST' : 'LATEST'
+}
+
+function getReleaseQueryValue(filter: MovieReleaseFilter) {
+  if (filter === '개봉') {
+    return 'RELEASED'
+  }
+
+  if (filter === '미개봉') {
+    return 'UNRELEASED'
+  }
+
+  return ''
 }
 
 function normalizeGenreOptions(data: unknown): GenreOption[] {
@@ -267,7 +281,7 @@ function normalizeGenreOptions(data: unknown): GenreOption[] {
       }
 
       const label = getStringValue(item, ['label', 'name', 'text'])
-      const value = getStringValue(item, ['value', 'code', 'id']) || label
+      const value = getScalarStringValue(item, ['genreId', 'value', 'code', 'id']) || label
 
       if (!label || !value) {
         return null
@@ -412,8 +426,9 @@ function HomePage() {
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [isBannerSliding, setIsBannerSliding] = useState(false)
   const [nowPlayingPage, setNowPlayingPage] = useState(0)
-  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['전체'])
+  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['ALL'])
   const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
+  const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MovieReleaseFilter>('전체')
   const [allMovies, setAllMovies] = useState<PopularMovie[]>([])
   const [allMoviesPage, setAllMoviesPage] = useState(0)
   const [hasMoreAllMovies, setHasMoreAllMovies] = useState(true)
@@ -424,20 +439,20 @@ function HomePage() {
   const hasMoreAllMoviesRef = useRef(true)
   const isLoadingMoreAllMoviesRef = useRef(false)
 
-  function toggleGenreFilter(genreLabel: string) {
+  function toggleGenreFilter(genreValue: string) {
     setSelectedGenreFilters((previousFilters) => {
-      if (genreLabel === '전체') {
-        return ['전체']
+      if (genreValue === 'ALL') {
+        return ['ALL']
       }
 
-      const nextFilters = previousFilters.filter((filter) => filter !== '전체')
+      const nextFilters = previousFilters.filter((filter) => filter !== 'ALL')
 
-      if (nextFilters.includes(genreLabel)) {
-        const removedFilters = nextFilters.filter((filter) => filter !== genreLabel)
-        return removedFilters.length > 0 ? removedFilters : ['전체']
+      if (nextFilters.includes(genreValue)) {
+        const removedFilters = nextFilters.filter((filter) => filter !== genreValue)
+        return removedFilters.length > 0 ? removedFilters : ['ALL']
       }
 
-      return [...nextFilters, genreLabel]
+      return [...nextFilters, genreValue]
     })
   }
 
@@ -579,7 +594,13 @@ function HomePage() {
   }, [])
 
   const loadAllMoviesPage = useCallback(
-    async (page: number, append: boolean, genreFilters: string[], sortFilter: MovieSortFilter) => {
+    async (
+      page: number,
+      append: boolean,
+      genreFilters: string[],
+      sortFilter: MovieSortFilter,
+      releaseFilter: MovieReleaseFilter,
+    ) => {
       const searchParams = new URLSearchParams({
         page: String(page),
         size: '10',
@@ -591,6 +612,12 @@ function HomePage() {
       genreValues.forEach((genreValue) => {
         searchParams.append('genre', genreValue)
       })
+
+      const releaseValue = getReleaseQueryValue(releaseFilter)
+
+      if (releaseValue) {
+        searchParams.set('releaseStatus', releaseValue)
+      }
 
       const response = await request<unknown>(`/movies?${searchParams.toString()}`, {
         method: 'GET',
@@ -622,7 +649,13 @@ function HomePage() {
       hasMoreAllMoviesRef.current = true
 
       try {
-        await loadAllMoviesPage(0, false, selectedGenreFilters, selectedSortFilter)
+        await loadAllMoviesPage(
+          0,
+          false,
+          selectedGenreFilters,
+          selectedSortFilter,
+          selectedReleaseFilter,
+        )
       } catch {
         if (!isMounted) {
           return
@@ -642,7 +675,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [loadAllMoviesPage, selectedGenreFilters, selectedSortFilter])
+  }, [loadAllMoviesPage, selectedGenreFilters, selectedReleaseFilter, selectedSortFilter])
 
   useEffect(() => {
     const trimmedQuery = query.trim()
@@ -926,6 +959,7 @@ function HomePage() {
           true,
           selectedGenreFilters,
           selectedSortFilter,
+          selectedReleaseFilter,
         )
           .catch(() => {
             setHasMoreAllMovies(false)
@@ -948,7 +982,13 @@ function HomePage() {
     return () => {
       observer.disconnect()
     }
-  }, [isAllMoviesLoading, loadAllMoviesPage, selectedGenreFilters, selectedSortFilter])
+  }, [
+    isAllMoviesLoading,
+    loadAllMoviesPage,
+    selectedGenreFilters,
+    selectedReleaseFilter,
+    selectedSortFilter,
+  ])
 
   useEffect(() => {
     if (isBannerLoading || bannerPageCount <= 1 || isBannerSliding) {
@@ -1318,13 +1358,13 @@ function HomePage() {
                     <button
                       key={genre.value}
                       className={`home-genre-filter-button${
-                        selectedGenreFilters.includes(genre.label)
+                        selectedGenreFilters.includes(genre.value)
                           ? ' home-genre-filter-button-active'
                           : ''
                       }`}
                       type="button"
-                      onClick={() => toggleGenreFilter(genre.label)}
-                      aria-pressed={selectedGenreFilters.includes(genre.label)}
+                      onClick={() => toggleGenreFilter(genre.value)}
+                      aria-pressed={selectedGenreFilters.includes(genre.value)}
                     >
                       {genre.label}
                     </button>
@@ -1346,6 +1386,25 @@ function HomePage() {
                       aria-pressed={sort === selectedSortFilter}
                     >
                       {sort}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="home-filter-group">
+                <span className="home-filter-group-label">개봉 상태</span>
+                <div className="home-genre-filter-row" role="tablist" aria-label="개봉 상태 필터">
+                  {HOME_RELEASE_FILTERS.map((filter) => (
+                    <button
+                      key={filter}
+                      className={`home-genre-filter-button${
+                        filter === selectedReleaseFilter ? ' home-genre-filter-button-active' : ''
+                      }`}
+                      type="button"
+                      onClick={() => setSelectedReleaseFilter(filter)}
+                      aria-pressed={filter === selectedReleaseFilter}
+                    >
+                      {filter}
                     </button>
                   ))}
                 </div>

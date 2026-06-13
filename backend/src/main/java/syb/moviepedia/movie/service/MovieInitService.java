@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.repository.CommentRepository;
-import syb.moviepedia.common.MovieCategoryType;
-import syb.moviepedia.common.ProviderType;
-import syb.moviepedia.common.ReactionType;
-import syb.moviepedia.common.RoleType;
+import syb.moviepedia.common.*;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.*;
@@ -222,7 +219,7 @@ public class MovieInitService {
                 .title(tmdbMovie.title())
                 .backdropPath(tmdbMovie.backdropPath())
                 .posterPath(tmdbMovie.posterPath())
-                .genres(getGenreNames(tmdbMovie.genres()))
+                .genreIds(tmdbMovie.genres())
                 .certification(certification)
                 .overview(tmdbMovie.overview())
                 .releaseDate(tmdbMovie.releaseDate())
@@ -242,11 +239,6 @@ public class MovieInitService {
                     movie.updateFrom(tmdbMovie, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
                     return movie;})
                 .orElseGet(() -> movieRepository.save(toMovie(tmdbMovie, certification))); // 존재하지 않으면 db 저장
-    }
-
-    // 장르 id에 대응하는 장르명 가져오기
-    private List<String> getGenreNames(List<Integer> genres) {
-        return genreRepository.findGenresByGenreIds(genres);
     }
 
     // 관람 등급 추출

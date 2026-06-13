@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.common.CommentSortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.service.MovieService;
 
@@ -41,7 +42,10 @@ public class MovieController {
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<List<AllMoviesResponse>>> allMovies(
             @PageableDefault(size = 10) Pageable pageable,
+            @ModelAttribute FilterRequest filter,
             @RequestParam(defaultValue = "LATEST") CommentSortType sort) {
+        log.info("필터 목록: {}, 개봉 상태 : {}",filter.toString(), filter.releaseStatus());
+        movieService.getAllMoviesTest();
         return ResponseEntity.ok().body(ApiSuccessResponse.of(
                 "전체 영화 목록 조회 성공", movieService.getAllMovies(pageable,sort)));
     }
@@ -62,9 +66,6 @@ public class MovieController {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 배너 목록 조회 성공", movieService.getBannerMovies()));
     }
 
-    /**
-     * 엘라스틱 도입 커밋
-     */
     @Operation(
             summary = "카테고리 별 영화 목록", description = "홈 화면 카테고리 별 영화 목록을 가져온다.")
     @ApiResponses({

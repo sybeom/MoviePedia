@@ -6,10 +6,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import syb.moviepedia.common.CommentSortType;
-import syb.moviepedia.common.CreditRole;
-import syb.moviepedia.common.MovieCategoryType;
-import syb.moviepedia.common.VideoType;
+import syb.moviepedia.common.*;
 import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.dto.response.*;
@@ -18,6 +15,7 @@ import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -86,10 +84,15 @@ public class MovieService {
                 .build();
     }
 
+    // 장르 목록 조회 (필터 목록에 보여질 데이터들)
     @Transactional(readOnly = true)
     public List<GenreResponse> getGenres() {
         log.info("장르 목록 조회 성공");
-        return genreRepository.findAll().stream().map(genre -> GenreResponse.builder().name(genre.getName()).build()).toList();
+        return genreRepository.findAll().stream().map(genre ->
+                GenreResponse.builder()
+                        .genreId(genre.getGenreId())
+                        .name(genre.getName()).build())
+                .toList();
     }
 
     /**
@@ -215,10 +218,9 @@ public class MovieService {
         return videos.stream().map(video -> VideoResponse.from(video)).toList();
     }
 
-
     // 카테고리 영화 -> 영화 요약 DTO 가공
-    private MovieSummaryResponse toMovieSummaryDto(MovieCategory mc) {
-        return MovieSummaryResponse.from(mc.getMovie());
+    private MovieSummaryResponse toMovieSummaryDto(MovieCategory mc) {Movie m = mc.getMovie();
+        return MovieSummaryResponse.from(m);
     }
 
     // 영화 상세 정보 -> 영화 엔티티 가공
@@ -228,7 +230,7 @@ public class MovieService {
                 .title(detail.title())
                 .posterPath(detail.posterPath())
                 .backdropPath(detail.backdropPath())
-                .genres(extractGenresFromDetail(detail.genres()))
+                .genreIds(extractGenresFromDetail(detail.genres()))
                 .certification(certification)
                 .overview(detail.overview())
                 .releaseDate(detail.releaseYear())
@@ -239,8 +241,8 @@ public class MovieService {
     }
 
     // 영화 상세 DTO로 변환
-    private MovieDetailResponse toMovieDetailResponse(Movie movie, List<MovieCreditResponse> dto, int score) {
-        return MovieDetailResponse.from(movie, dto, score);
+    private MovieDetailResponse toMovieDetailResponse(Movie m, List<MovieCreditResponse> dto, int score) {
+        return MovieDetailResponse.from(m, dto, score);
     }
 
     // Credit 엔티티 영화 크레딧 DTO로 가공
@@ -258,8 +260,8 @@ public class MovieService {
     }
 
     // 상세 영화 정보 장르 추출
-    private List<String> extractGenresFromDetail(List<TmdbGenre> genres) {
-        return genres.stream().map(genre -> genre.name()).toList();
+    private List<Integer> extractGenresFromDetail(List<TmdbGenre> genres) {
+        return genres.stream().map(genre -> genre.id()).toList();
     }
 
     // 관람 등급 추출
@@ -273,5 +275,9 @@ public class MovieService {
                 .findFirst()
                 .map(info -> info.certification())
                 .orElse("등급 미정");
+    }
+
+    public void getAllMoviesTest() {
+
     }
 }

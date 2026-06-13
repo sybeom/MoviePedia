@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import syb.moviepedia.common.MovieGenre;
 import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 
@@ -33,8 +36,9 @@ public class Movie {
     @Column(name = "poster_path")
     private String posterPath;
 
-    @Column(columnDefinition = "json")
-    private List<String> genres;
+    @JdbcTypeCode(SqlTypes.JSON) // List를 JSON으로 넣고 빼는 방법을 알림(List와 json 사이 매핑 힌트)
+    @Column(name = "genre_ids", columnDefinition = "json") // json 타입으로 지정
+    private List<Integer> genreIds;
 
     private String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
 
@@ -56,6 +60,17 @@ public class Movie {
 
     @Column(name = "like_count", nullable = false)
     private long likeCount=0;
+
+    // 장르 id -> 장르 이름 매핑
+    public List<String> getGenreNames() {
+        if (genreIds == null || genreIds.isEmpty()) {
+            return List.of();
+        }
+
+        return genreIds.stream()
+                .map(MovieGenre::getNameById)
+                .toList();
+    }
 
     public void updateFrom(TmdbMovie movie, String certification) {
         this.title = movie.title();

@@ -50,7 +50,7 @@ public record MovieDetailResponse(
                 .title(movie.getTitle())
                 .posterPath(movie.getPosterPath())
                 .backdropPath(movie.getBackdropPath())
-                .genres(movie.getGenres())
+                .genres(movie.getGenreNames())
                 .certification(movie.getCertification())
                 .overview(movie.getOverview())
                 .releaseYear(movie.getReleaseDate().getYear())
