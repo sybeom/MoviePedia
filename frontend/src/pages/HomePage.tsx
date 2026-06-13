@@ -455,7 +455,7 @@ function HomePage() {
       setIsCategoriesLoading(true)
 
       try {
-        const response = await request<CategoryMoviesResponse>('/moveis/categories', {
+        const response = await request<CategoryMoviesResponse>('/movies/categories', {
           method: 'GET',
         })
 
