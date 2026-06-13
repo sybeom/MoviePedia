@@ -378,6 +378,7 @@ function HomePage() {
   const navigate = useNavigate()
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
   const mainShellRef = useRef<HTMLElement | null>(null)
+  const allMoviesLoadTriggerRef = useRef<HTMLDivElement | null>(null)
 
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
   const [theme, setTheme] = useState<HomeTheme>(() => {
@@ -581,6 +582,7 @@ function HomePage() {
     async (page: number, append: boolean, genreFilters: string[], sortFilter: MovieSortFilter) => {
       const searchParams = new URLSearchParams({
         page: String(page),
+        size: '10',
         sort: getSortQueryValue(sortFilter),
       })
 
@@ -892,49 +894,59 @@ function HomePage() {
   }
 
   useEffect(() => {
-    const mainShellElement = mainShellRef.current
+    const triggerElement = allMoviesLoadTriggerRef.current
 
-    if (!mainShellElement) {
+    if (!triggerElement) {
       return
     }
 
-    const scrollTarget = mainShellElement
+    const mainShellElement = mainShellRef.current
+    const observerRoot =
+      mainShellElement && mainShellElement.scrollHeight > mainShellElement.clientHeight + 4
+        ? mainShellElement
+        : null
 
-    async function handleScroll() {
-      const remainingScroll =
-        scrollTarget.scrollHeight - scrollTarget.scrollTop - scrollTarget.clientHeight
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0]
 
-      if (remainingScroll > 240) {
-        return
-      }
+        if (!firstEntry?.isIntersecting) {
+          return
+        }
 
-      if (isAllMoviesLoading || isLoadingMoreAllMoviesRef.current || !hasMoreAllMoviesRef.current) {
-        return
-      }
+        if (isAllMoviesLoading || isLoadingMoreAllMoviesRef.current || !hasMoreAllMoviesRef.current) {
+          return
+        }
 
-      setIsLoadingMoreAllMovies(true)
-      isLoadingMoreAllMoviesRef.current = true
+        setIsLoadingMoreAllMovies(true)
+        isLoadingMoreAllMoviesRef.current = true
 
-      try {
-        await loadAllMoviesPage(
+        void loadAllMoviesPage(
           allMoviesPageRef.current + 1,
           true,
           selectedGenreFilters,
           selectedSortFilter,
         )
-      } catch {
-        setHasMoreAllMovies(false)
-        hasMoreAllMoviesRef.current = false
-      } finally {
-        setIsLoadingMoreAllMovies(false)
-        isLoadingMoreAllMoviesRef.current = false
-      }
-    }
+          .catch(() => {
+            setHasMoreAllMovies(false)
+            hasMoreAllMoviesRef.current = false
+          })
+          .finally(() => {
+            setIsLoadingMoreAllMovies(false)
+            isLoadingMoreAllMoviesRef.current = false
+          })
+      },
+      {
+        root: observerRoot,
+        rootMargin: '0px 0px 240px 0px',
+        threshold: 0.01,
+      },
+    )
 
-    scrollTarget.addEventListener('scroll', handleScroll, { passive: true })
+    observer.observe(triggerElement)
 
     return () => {
-      scrollTarget.removeEventListener('scroll', handleScroll)
+      observer.disconnect()
     }
   }, [isAllMoviesLoading, loadAllMoviesPage, selectedGenreFilters, selectedSortFilter])
 
@@ -1410,6 +1422,8 @@ function HomePage() {
                 />
               </div>
             ) : null}
+
+            <div className="home-movie-grid-load-trigger" ref={allMoviesLoadTriggerRef} aria-hidden="true" />
           </section>
         </main>
       </div>
