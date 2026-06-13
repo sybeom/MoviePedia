@@ -6,6 +6,10 @@ import loadingIcon from '../assets/icons/loading.svg'
 import naverLoginButtonImage from '../assets/icons/NAVER_login.png'
 import nextIcon from '../assets/icons/next.svg'
 import previousIcon from '../assets/icons/previous.svg'
+import rating12Icon from '../assets/ratings/12.svg'
+import rating15Icon from '../assets/ratings/15.svg'
+import rating19Icon from '../assets/ratings/19.svg'
+import ratingAllIcon from '../assets/ratings/all.svg'
 import searchIcon from '../assets/icons/search.svg'
 import { login, logout } from '../api/auth'
 import { isApiError, request } from '../api/client'
@@ -29,6 +33,7 @@ type PopularMovie = {
   title: string
   poster: string
   genres: string[]
+  certification: string
 }
 
 type BannerMovie = {
@@ -60,6 +65,12 @@ const BANNER_AUTOPLAY_MS = 5000
 const BANNER_TRANSITION_MS = 520
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 const HOME_SORT_FILTERS: MovieSortFilter[] = ['최신순', '오래된순']
+const HOME_CERTIFICATION_ICON_MAP: Record<string, string> = {
+  '12': rating12Icon,
+  '15': rating15Icon,
+  '19': rating19Icon,
+  ALL: ratingAllIcon,
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -91,6 +102,10 @@ function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   }
 
   return ''
+}
+
+function getCertificationIcon(certification: string) {
+  return HOME_CERTIFICATION_ICON_MAP[certification.toUpperCase()] ?? ''
 }
 
 function getStringArrayValue(record: Record<string, unknown>, keys: string[]) {
@@ -319,8 +334,9 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
       const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
       const genres = getStringArrayValue(value, ['genres', 'genre'])
+      const certification = getStringValue(value, ['certification', 'rating', 'ageRating'])
 
-      return { code, title, poster, genres }
+      return { code, title, poster, genres, certification }
     })
     .filter((value) => value.code && value.title)
 }
@@ -1356,7 +1372,24 @@ function HomePage() {
                         </div>
                       )}
                     </div>
-                    <p className="home-movie-grid-title">{movie.title}</p>
+                    <div className="home-movie-grid-title-row">
+                      <p className="home-movie-grid-title">{movie.title}</p>
+                      {movie.certification ? (
+                        <div className="home-movie-grid-certification">
+                          {getCertificationIcon(movie.certification) ? (
+                            <img
+                              className="home-movie-grid-certification-icon"
+                              src={getCertificationIcon(movie.certification)}
+                              alt={`${movie.certification} 관람등급`}
+                            />
+                          ) : (
+                            <span className="home-movie-grid-certification-text">
+                              {movie.certification}
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
                     {movie.genres.length > 0 ? (
                       <p className="home-movie-grid-genres">{movie.genres.join(' / ')}</p>
                     ) : null}

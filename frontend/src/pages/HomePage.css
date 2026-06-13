@@ -706,13 +706,56 @@
   background: #e5e7eb;
 }
 
+.home-movie-grid-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
 .home-movie-grid-title {
   margin: 0;
   overflow: hidden;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: calc(100% - 24px);
   color: #f8fafc;
   font-size: 15px;
   font-weight: 700;
   line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-movie-grid-certification {
+  flex: 0 0 auto;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.home-movie-grid-certification-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.home-movie-grid-certification-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  padding: 0 6px;
+  overflow: hidden;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: rgba(107, 114, 128, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1097,6 +1140,16 @@
 
 .home-page-light .home-movie-grid-title {
   color: #111827;
+}
+
+.home-page-light .home-movie-grid-certification {
+  color: inherit;
+}
+
+.home-page-light .home-movie-grid-certification-text {
+  color: #4b5563;
+  background: #e5e7eb;
+  border-color: #dde3ea;
 }
 
 .home-page-light .home-movie-grid-genres {
