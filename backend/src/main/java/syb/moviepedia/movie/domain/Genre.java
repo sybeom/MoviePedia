@@ -3,12 +3,14 @@ package syb.moviepedia.movie.domain;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
  * 장르 정보 엔티티
  */
 @Entity
+@Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

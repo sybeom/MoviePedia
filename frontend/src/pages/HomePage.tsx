@@ -47,7 +47,6 @@ type MovieListPage = {
 }
 
 type HomeTheme = 'dark' | 'light'
-type GenreFilter = '전체' | '액션' | '코미디' | '드라마' | '스릴러' | '애니메이션'
 type MovieSortFilter = '최신순' | '오래된순'
 type GenreOption = {
   label: string
@@ -222,20 +221,8 @@ function normalizeMovieListPage(data: unknown): MovieListPage {
   }
 }
 
-function getGenreQueryValue(filter: GenreFilter) {
-  if (filter === '전체') {
-    return ''
-  }
-
-  const genreMap: Record<Exclude<GenreFilter, '전체'>, string> = {
-    액션: 'ACTION',
-    코미디: 'COMEDY',
-    드라마: 'DRAMA',
-    스릴러: 'THRILLER',
-    애니메이션: 'ANIMATION',
-  }
-
-  return genreMap[filter]
+function getGenreQueryValues(filters: string[]) {
+  return filters.filter((filter) => filter !== '전체')
 }
 
 function getSortQueryValue(filter: MovieSortFilter) {
@@ -265,7 +252,7 @@ function normalizeGenreOptions(data: unknown): GenreOption[] {
       }
 
       const label = getStringValue(item, ['label', 'name', 'text'])
-      const value = getStringValue(item, ['value', 'code', 'id'])
+      const value = getStringValue(item, ['value', 'code', 'id']) || label
 
       if (!label || !value) {
         return null
@@ -408,7 +395,7 @@ function HomePage() {
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [isBannerSliding, setIsBannerSliding] = useState(false)
   const [nowPlayingPage, setNowPlayingPage] = useState(0)
-  const [selectedGenreFilter, setSelectedGenreFilter] = useState<GenreFilter>('전체')
+  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['전체'])
   const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
   const [allMovies, setAllMovies] = useState<PopularMovie[]>([])
   const [allMoviesPage, setAllMoviesPage] = useState(0)
@@ -419,6 +406,23 @@ function HomePage() {
   const allMoviesPageRef = useRef(0)
   const hasMoreAllMoviesRef = useRef(true)
   const isLoadingMoreAllMoviesRef = useRef(false)
+
+  function toggleGenreFilter(genreLabel: string) {
+    setSelectedGenreFilters((previousFilters) => {
+      if (genreLabel === '전체') {
+        return ['전체']
+      }
+
+      const nextFilters = previousFilters.filter((filter) => filter !== '전체')
+
+      if (nextFilters.includes(genreLabel)) {
+        const removedFilters = nextFilters.filter((filter) => filter !== genreLabel)
+        return removedFilters.length > 0 ? removedFilters : ['전체']
+      }
+
+      return [...nextFilters, genreLabel]
+    })
+  }
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -558,17 +562,17 @@ function HomePage() {
   }, [])
 
   const loadAllMoviesPage = useCallback(
-    async (page: number, append: boolean, genreFilter: GenreFilter, sortFilter: MovieSortFilter) => {
+    async (page: number, append: boolean, genreFilters: string[], sortFilter: MovieSortFilter) => {
       const searchParams = new URLSearchParams({
         page: String(page),
         sort: getSortQueryValue(sortFilter),
       })
 
-      const genreValue = getGenreQueryValue(genreFilter)
+      const genreValues = getGenreQueryValues(genreFilters)
 
-      if (genreValue) {
-        searchParams.set('genre', genreValue)
-      }
+      genreValues.forEach((genreValue) => {
+        searchParams.append('genre', genreValue)
+      })
 
       const response = await request<unknown>(`/movies?${searchParams.toString()}`, {
         method: 'GET',
@@ -600,7 +604,7 @@ function HomePage() {
       hasMoreAllMoviesRef.current = true
 
       try {
-        await loadAllMoviesPage(0, false, selectedGenreFilter, selectedSortFilter)
+        await loadAllMoviesPage(0, false, selectedGenreFilters, selectedSortFilter)
       } catch {
         if (!isMounted) {
           return
@@ -620,7 +624,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [loadAllMoviesPage, selectedGenreFilter, selectedSortFilter])
+  }, [loadAllMoviesPage, selectedGenreFilters, selectedSortFilter])
 
   useEffect(() => {
     const trimmedQuery = query.trim()
@@ -899,7 +903,7 @@ function HomePage() {
         await loadAllMoviesPage(
           allMoviesPageRef.current + 1,
           true,
-          selectedGenreFilter,
+          selectedGenreFilters,
           selectedSortFilter,
         )
       } catch {
@@ -916,7 +920,7 @@ function HomePage() {
     return () => {
       scrollTarget.removeEventListener('scroll', handleScroll)
     }
-  }, [isAllMoviesLoading, loadAllMoviesPage, selectedGenreFilter, selectedSortFilter])
+  }, [isAllMoviesLoading, loadAllMoviesPage, selectedGenreFilters, selectedSortFilter])
 
   useEffect(() => {
     if (isBannerLoading || bannerPageCount <= 1 || isBannerSliding) {
@@ -1286,11 +1290,13 @@ function HomePage() {
                     <button
                       key={genre.value}
                       className={`home-genre-filter-button${
-                        genre.label === selectedGenreFilter ? ' home-genre-filter-button-active' : ''
+                        selectedGenreFilters.includes(genre.label)
+                          ? ' home-genre-filter-button-active'
+                          : ''
                       }`}
                       type="button"
-                      onClick={() => setSelectedGenreFilter(genre.label as GenreFilter)}
-                      aria-pressed={genre.label === selectedGenreFilter}
+                      onClick={() => toggleGenreFilter(genre.label)}
+                      aria-pressed={selectedGenreFilters.includes(genre.label)}
                     >
                       {genre.label}
                     </button>

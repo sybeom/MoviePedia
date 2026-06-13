@@ -81,6 +81,23 @@ public class MovieController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("카테고리 별 영화 목록 조회 성공", movieService.getCategoryMovies()));
     }
 
+    @Operation(summary = "장르 목록", description = "필터 목록에 표시할 장르 목록을 조회한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "장르 데이터 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/genres")
+    public ResponseEntity<ApiSuccessResponse<List<GenreResponse>>> getGenres() {
+        List<GenreResponse> genres = movieService.getGenres();
+        log.info("genres: {}", genres);
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("장르 목록 조회 성공", genres));
+    }
+
     @Operation(summary = "영화 상세", description = "영화 상세 페이지 데이터를 조회한다")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "영화 상세 정보 조회 성공"),

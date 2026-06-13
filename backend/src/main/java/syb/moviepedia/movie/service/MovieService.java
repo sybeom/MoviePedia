@@ -11,10 +11,7 @@ import syb.moviepedia.common.CreditRole;
 import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.common.VideoType;
 import syb.moviepedia.common.exception.MovieNotFoundException;
-import syb.moviepedia.movie.domain.Credit;
-import syb.moviepedia.movie.domain.Movie;
-import syb.moviepedia.movie.domain.MovieCategory;
-import syb.moviepedia.movie.domain.Video;
+import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
@@ -32,6 +29,7 @@ public class MovieService {
     private final CountryRepository countryRepository;
     private final MovieCreditRepository movieCreditRepository;
     private final VideoRepository videoRepository;
+    private final GenreRepository genreRepository;
 
     @Transactional(readOnly = true)
     public List<AllMoviesResponse> getAllMovies(Pageable pageable, CommentSortType sortType) {
@@ -86,6 +84,12 @@ public class MovieService {
                 .upcoming(upcomingListDto)
                 .nowPlaying(nowPlayingListDto)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GenreResponse> getGenres() {
+        log.info("장르 목록 조회 성공");
+        return genreRepository.findAll().stream().map(genre -> GenreResponse.builder().name(genre.getName()).build()).toList();
     }
 
     /**
