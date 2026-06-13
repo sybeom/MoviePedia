@@ -1,4 +1,11 @@
 package syb.moviepedia.movie.dto.response;
 
-public class MovieBannerResponse {
+import lombok.Builder;
+
+@Builder
+public record MovieBannerResponse(
+        Long movieCode,
+        String title,
+        String backdropPath
+) {
 }

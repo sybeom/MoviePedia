@@ -31,6 +31,20 @@ public class MovieService {
     private final VideoRepository videoRepository;
 
     @Transactional(readOnly = true)
+    public List<MovieBannerResponse> getBannerMovies() {
+        List<MovieCategory> mvCategoryList =
+                movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
+        return mvCategoryList.stream().map(mvCategory -> mvCategory.getMovie())
+                .map(movie -> MovieBannerResponse.builder()
+                        .movieCode(movie.getCode())
+                        .title(movie.getTitle())
+                        .backdropPath(movie.getBackdropPath())
+                        .build())
+                .limit(10)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
         log.info("영화 엔티티 수: {}", movieRepository.count());
         List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);

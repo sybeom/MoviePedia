@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.movie.dto.response.MovieBannerResponse;
 import syb.moviepedia.movie.dto.response.MovieCategoriesResponse;
 import syb.moviepedia.movie.dto.response.MovieDetailResponse;
 import syb.moviepedia.movie.dto.response.VideoResponse;
@@ -28,7 +29,25 @@ import java.util.List;
 @RequestMapping("/movies")
 public class MovieController {
     private final MovieService movieService;
-    //
+
+    @Operation(
+            summary = "홈화면 배너 영화", description = "홈 화면 배너에 보여질 인기영화 목록의 back_drop 경로를 가져온다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "배너 영화 목록 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/banner")
+    public ResponseEntity<ApiSuccessResponse<List<MovieBannerResponse>>> getBannerMovies() {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 배너 목록 조회 성공", movieService.getBannerMovies()));
+    }
+
+
+
     /**
      * 엘라스틱 도입 커밋
      */
