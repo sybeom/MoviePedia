@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
@@ -30,6 +30,12 @@ type PopularMovie = {
   poster: string
 }
 
+type BannerMovie = {
+  code: string
+  title: string
+  backdrop: string
+}
+
 type MovieCollectionResponse = {
   popular?: unknown
   nowPlaying?: unknown
@@ -42,6 +48,8 @@ const SEARCH_DEBOUNCE_MS = 500
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
 const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
 const BANNER_AUTOPLAY_MS = 5000
+const BANNER_TRANSITION_MS = 520
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -75,6 +83,32 @@ function getScalarStringValue(record: Record<string, unknown>, keys: string[]) {
   return ''
 }
 
+function getImageSource(value: string) {
+  const normalizedValue =
+    value
+      .split('|')
+      .map((item) => item.trim())
+      .find(Boolean) ?? ''
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(normalizedValue)) {
+    return normalizedValue
+  }
+
+  if (normalizedValue.startsWith('//')) {
+    return `https:${normalizedValue}`
+  }
+
+  if (normalizedValue.startsWith('/')) {
+    return `${TMDB_IMAGE_BASE_URL}${normalizedValue}`
+  }
+
+  return normalizedValue
+}
+
 function normalizeSearchMovies(data: unknown): SearchMovie[] {
   if (!Array.isArray(data)) {
     return []
@@ -101,9 +135,42 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
     .map((value) => {
       const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
-      const poster = getStringValue(value, ['poster', 'posterPath', 'poster_path'])
+      const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
 
       return { code, title, poster }
+    })
+    .filter((value) => value.code && value.title)
+}
+
+function normalizeBannerMovies(data: unknown): BannerMovie[] {
+  const list = Array.isArray(data)
+    ? data
+    : isRecord(data) && Array.isArray(data.banners)
+      ? data.banners
+      : isRecord(data) && Array.isArray(data.data)
+        ? data.data
+        : isRecord(data) && Array.isArray(data.nowPlaying)
+          ? data.nowPlaying
+          : []
+
+  return list
+    .filter(isRecord)
+    .map((value) => {
+      const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
+      const title = getStringValue(value, ['title', 'movieNm', 'name'])
+      const backdrop = getImageSource(
+        getStringValue(value, [
+          'backdrop',
+          'backdropUrl',
+          'backdropPath',
+          'backdrop_path',
+          'poster',
+          'posterPath',
+          'poster_path',
+        ]),
+      )
+
+      return { code, title, backdrop }
     })
     .filter((value) => value.code && value.title)
 }
@@ -135,14 +202,18 @@ function HomePage() {
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
 
   const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
+  const [bannerMovies, setBannerMovies] = useState<BannerMovie[]>([])
   const [nowPlayingMovies, setNowPlayingMovies] = useState<PopularMovie[]>([])
   const [upcomingMovies, setUpcomingMovies] = useState<PopularMovie[]>([])
   const [isPopularLoading, setIsPopularLoading] = useState(true)
+  const [isBannerLoading, setIsBannerLoading] = useState(true)
   const [bannerPage, setBannerPage] = useState(0)
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
+  const [isBannerSliding, setIsBannerSliding] = useState(false)
   const [popularPage, setPopularPage] = useState(0)
   const [nowPlayingPage, setNowPlayingPage] = useState(0)
   const [upcomingPage, setUpcomingPage] = useState(0)
+  const bannerTransitionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     function handleAuthSessionChange() {
@@ -159,7 +230,7 @@ function HomePage() {
   useEffect(() => {
     let isMounted = true
 
-    async function loadPopularMovies() {
+    async function loadMovieCollections() {
       setIsPopularLoading(true)
 
       try {
@@ -174,7 +245,6 @@ function HomePage() {
         setPopularMovies(normalizePopularMovies(response?.popular))
         setNowPlayingMovies(normalizePopularMovies(response?.nowPlaying))
         setUpcomingMovies(normalizePopularMovies(response?.upcoming))
-        setBannerPage(0)
         setPopularPage(0)
         setNowPlayingPage(0)
         setUpcomingPage(0)
@@ -186,7 +256,6 @@ function HomePage() {
         setPopularMovies([])
         setNowPlayingMovies([])
         setUpcomingMovies([])
-        setBannerPage(0)
       } finally {
         if (isMounted) {
           setIsPopularLoading(false)
@@ -194,7 +263,47 @@ function HomePage() {
       }
     }
 
-    void loadPopularMovies()
+    void loadMovieCollections()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadBannerMovies() {
+      setIsBannerLoading(true)
+
+      try {
+        const response = await request<unknown>('/movies/banner', {
+          method: 'GET',
+        })
+
+        if (!isMounted) {
+          return
+        }
+
+        setBannerMovies(normalizeBannerMovies(response))
+        setIsBannerSliding(false)
+        setBannerPage(0)
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        setBannerMovies([])
+        setIsBannerSliding(false)
+        setBannerPage(0)
+      } finally {
+        if (isMounted) {
+          setIsBannerLoading(false)
+        }
+      }
+    }
+
+    void loadBannerMovies()
 
     return () => {
       isMounted = false
@@ -269,7 +378,7 @@ function HomePage() {
     }
   }, [])
 
-  function moveToMovieDetail(movie: SearchMovie | PopularMovie) {
+  function moveToMovieDetail(movie: SearchMovie | PopularMovie | BannerMovie) {
     setIsSearchResultsOpen(false)
     setActiveSearchIndex(-1)
     navigate(`/movies/${movie.code}`, {
@@ -375,8 +484,21 @@ function HomePage() {
   }
 
   const popularPageCount = popularMovies.length
-  const bannerPageCount = nowPlayingMovies.length
-  const visibleBannerMovie = nowPlayingMovies[bannerPage] ?? null
+  const bannerPageCount = bannerMovies.length
+  const visibleBannerMovie = bannerMovies[bannerPage] ?? null
+  const previousBannerIndex =
+    bannerPageCount > 0 ? (bannerPage - 1 + bannerPageCount) % bannerPageCount : -1
+  const nextBannerIndex = bannerPageCount > 0 ? (bannerPage + 1) % bannerPageCount : -1
+  const bannerSlides =
+    bannerPageCount > 1
+      ? [
+          bannerMovies[previousBannerIndex],
+          bannerMovies[bannerPage],
+          bannerMovies[nextBannerIndex],
+        ].filter((movie): movie is BannerMovie => Boolean(movie))
+      : visibleBannerMovie
+        ? [visibleBannerMovie]
+        : []
   const visiblePopularMovie = popularMovies[popularPage] ?? null
   const visiblePopularCards = popularMovies
     .map((movie, index) => ({ movie, offset: index - popularPage }))
@@ -400,14 +522,51 @@ function HomePage() {
     setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
   }
 
+  const startBannerTransition = useCallback(
+    (direction: 'next' | 'previous', allowWrap = false) => {
+      if (bannerPageCount <= 1 || isBannerSliding) {
+        return
+      }
+
+      if (direction === 'next' && bannerPage >= bannerPageCount - 1 && !allowWrap) {
+        return
+      }
+
+      if (direction === 'previous' && bannerPage <= 0 && !allowWrap) {
+        return
+      }
+
+      if (bannerTransitionTimeoutRef.current) {
+        window.clearTimeout(bannerTransitionTimeoutRef.current)
+        bannerTransitionTimeoutRef.current = null
+      }
+
+      setBannerDirection(direction)
+      setIsBannerSliding(true)
+
+      bannerTransitionTimeoutRef.current = window.setTimeout(() => {
+        setBannerPage((currentPage) => {
+          if (direction === 'next') {
+            return allowWrap ? (currentPage + 1) % bannerPageCount : Math.min(bannerPageCount - 1, currentPage + 1)
+          }
+
+          return allowWrap
+            ? (currentPage - 1 + bannerPageCount) % bannerPageCount
+            : Math.max(0, currentPage - 1)
+        })
+        setIsBannerSliding(false)
+        bannerTransitionTimeoutRef.current = null
+      }, BANNER_TRANSITION_MS)
+    },
+    [bannerPage, bannerPageCount, isBannerSliding],
+  )
+
   function moveToPreviousBannerMovie() {
-    setBannerDirection('previous')
-    setBannerPage((page) => Math.max(0, page - 1))
+    startBannerTransition('previous')
   }
 
   function moveToNextBannerMovie() {
-    setBannerDirection('next')
-    setBannerPage((page) => Math.min(bannerPageCount - 1, page + 1))
+    startBannerTransition('next')
   }
 
   function moveToPreviousNowPlayingMovie() {
@@ -427,19 +586,61 @@ function HomePage() {
   }
 
   useEffect(() => {
-    if (isPopularLoading || bannerPageCount <= 1) {
+    if (isBannerLoading || bannerPageCount <= 1 || isBannerSliding) {
       return
     }
 
     const autoplayTimer = window.setInterval(() => {
-      setBannerDirection('next')
-      setBannerPage((page) => (page >= bannerPageCount - 1 ? 0 : page + 1))
+      startBannerTransition('next', true)
     }, BANNER_AUTOPLAY_MS)
 
     return () => {
       window.clearInterval(autoplayTimer)
     }
-  }, [bannerPageCount, isPopularLoading])
+  }, [bannerPageCount, isBannerLoading, isBannerSliding, startBannerTransition])
+
+  useEffect(() => {
+    return () => {
+      if (bannerTransitionTimeoutRef.current) {
+        window.clearTimeout(bannerTransitionTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (bannerTransitionTimeoutRef.current) {
+        window.clearTimeout(bannerTransitionTimeoutRef.current)
+        bannerTransitionTimeoutRef.current = null
+      }
+    }
+  }, [bannerPage])
+
+  function renderBannerSlide(movie: BannerMovie, index: number) {
+    return (
+      <button
+        key={`banner-slide-${movie.code}-${index}-${bannerPage}`}
+        className="home-banner-card home-banner-slide"
+        type="button"
+        onClick={() => moveToMovieDetail(movie)}
+        aria-label={`${movie.title} 상세 보기`}
+      >
+        <div className="home-banner-poster-shell">
+          {movie.backdrop ? (
+            <img className="home-banner-poster" src={movie.backdrop} alt={`${movie.title} 배너`} />
+          ) : (
+            <div className="home-banner-poster home-popular-poster-fallback">
+              <span>{movie.title}</span>
+            </div>
+          )}
+          <div className="home-banner-overlay" aria-hidden="true" />
+          <div className="home-banner-copy">
+            <h2>{movie.title}</h2>
+          </div>
+        </div>
+      </button>
+    )
+  }
 
   function renderMovieSection({
     title,
@@ -650,7 +851,7 @@ function HomePage() {
           </section>
 
           <section className="home-banner-section" aria-label="현재 상영중인 영화 배너">
-            {isPopularLoading ? (
+            {isBannerLoading ? (
               <div className="home-popular-loading" aria-live="polite">
                 <img
                   className="home-popular-loading-icon"
@@ -671,31 +872,15 @@ function HomePage() {
                   <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
                 </button>
 
-                <button
-                  key={`banner-${visibleBannerMovie.code}-${bannerPage}`}
-                  className={`home-banner-card home-banner-card-${bannerDirection}`}
-                  type="button"
-                  onClick={() => moveToMovieDetail(visibleBannerMovie)}
-                  aria-label={`${visibleBannerMovie.title} 상세 보기`}
-                >
-                  <div className="home-banner-poster-shell">
-                    {visibleBannerMovie.poster ? (
-                      <img
-                        className="home-banner-poster"
-                        src={visibleBannerMovie.poster}
-                        alt={`${visibleBannerMovie.title} 배너`}
-                      />
-                    ) : (
-                      <div className="home-banner-poster home-popular-poster-fallback">
-                        <span>{visibleBannerMovie.title}</span>
-                      </div>
-                    )}
-                    <div className="home-banner-overlay" aria-hidden="true" />
-                    <div className="home-banner-copy">
-                      <h2>{visibleBannerMovie.title}</h2>
-                    </div>
+                <div className="home-banner-stage">
+                  <div
+                    className={`home-banner-track${
+                      isBannerSliding ? ` home-banner-track-sliding-${bannerDirection}` : ''
+                    }`}
+                  >
+                    {bannerSlides.map((movie, index) => renderBannerSlide(movie, index))}
                   </div>
-                </button>
+                </div>
 
                 <button
                   className="home-banner-side-button home-banner-side-button-next"
@@ -709,7 +894,7 @@ function HomePage() {
 
                 {bannerPageCount > 1 ? (
                   <div className="home-banner-indicators" aria-label="배너 위치">
-                    {nowPlayingMovies.map((movie, index) => (
+                    {bannerMovies.map((movie, index) => (
                       <button
                         key={`banner-indicator-${movie.code}`}
                         className={`home-banner-indicator${
@@ -717,7 +902,20 @@ function HomePage() {
                         }`}
                         type="button"
                         onClick={() => {
-                          setBannerDirection(index < bannerPage ? 'previous' : 'next')
+                          if (isBannerSliding || index === bannerPage) {
+                            return
+                          }
+
+                          if (index === bannerPage + 1 || (bannerPage === bannerPageCount - 1 && index === 0)) {
+                            startBannerTransition('next', index === 0)
+                            return
+                          }
+
+                          if (index === bannerPage - 1 || (bannerPage === 0 && index === bannerPageCount - 1)) {
+                            startBannerTransition('previous', index === bannerPageCount - 1)
+                            return
+                          }
+
                           setBannerPage(index)
                         }}
                         aria-label={`${movie.title} 배너로 이동`}
@@ -859,3 +1057,4 @@ function HomePage() {
 }
 
 export default HomePage
+
