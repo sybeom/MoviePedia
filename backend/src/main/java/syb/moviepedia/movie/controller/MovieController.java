@@ -12,7 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import syb.moviepedia.common.CommentSortType;
+import syb.moviepedia.common.SortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.movie.dto.request.FilterRequest;
@@ -43,9 +43,9 @@ public class MovieController {
     public ResponseEntity<ApiSuccessResponse<List<AllMoviesResponse>>> allMovies(
             @PageableDefault(size = 10) Pageable pageable,
             @ModelAttribute FilterRequest filter,
-            @RequestParam(defaultValue = "LATEST") CommentSortType sort) {
+            @RequestParam(defaultValue = "LATEST") SortType sort) {
         log.info("필터 목록: {}, 개봉 상태 : {}",filter.toString(), filter.releaseStatus());
-        movieService.getAllMoviesTest();
+        movieService.getAllMoviesTest(filter,sort, pageable);
         return ResponseEntity.ok().body(ApiSuccessResponse.of(
                 "전체 영화 목록 조회 성공", movieService.getAllMovies(pageable,sort)));
     }

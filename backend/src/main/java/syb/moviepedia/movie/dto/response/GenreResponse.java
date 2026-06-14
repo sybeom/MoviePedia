@@ -4,7 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record GenreResponse(
-        Integer genreId,
+        Integer genreCode,
         String name
 ) {
 }

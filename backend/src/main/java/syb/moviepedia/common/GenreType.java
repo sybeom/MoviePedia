@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 @Getter
 @RequiredArgsConstructor
-public enum MovieGenre {
+public enum GenreType {
     ACTION(28, "액션"),
     ADVENTURE(12, "모험"),
     ANIMATION(16, "애니메이션"),
@@ -29,13 +29,13 @@ public enum MovieGenre {
     WESTERN(37, "서부");
 
     private final int id;
-    private final String koreanName;
+    private final String name;
 
     public static int toId(String koreanName) {
         return Arrays.stream(values())
-                .filter(genre -> genre.koreanName.equals(koreanName))
+                .filter(genre -> genre.name.equals(koreanName))
                 .findFirst()
-                .map(MovieGenre::getId)
+                .map(GenreType::getId)
                 .orElseThrow(() -> new IllegalArgumentException("알 수 없는 장르명: " + koreanName));
     }
 
@@ -43,7 +43,7 @@ public enum MovieGenre {
         return Arrays.stream(values())
                 .filter(genre -> genre.id == id)
                 .findFirst()
-                .map(MovieGenre::getKoreanName)
+                .map(genreType -> genreType.getName())
                 .orElseThrow(() -> new IllegalArgumentException("알 수 없는 장르 ID: " + id));
     }
 }

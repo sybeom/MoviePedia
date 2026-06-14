@@ -1,9 +1,7 @@
 package syb.moviepedia.movie.dto.response;
 
 import lombok.Builder;
-import syb.moviepedia.common.MovieGenre;
 import syb.moviepedia.movie.domain.Movie;
-import syb.moviepedia.movie.domain.MovieCategory;
 
 import java.util.List;
 
@@ -32,7 +30,6 @@ public record MovieSummaryResponse(
                 .code(m.getCode())
                 .title(m.getTitle())
                 .poster(m.getPosterPath())
-                .genre(m.getGenreNames())
                 .certification(m.getCertification())
                 .build();
     }

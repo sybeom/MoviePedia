@@ -15,19 +15,18 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     Optional<Movie> findByCode(Long code);
 
-
     @Query("""
         select m
         from Movie m
     """)
     Slice<Movie> findAllMovies(Pageable pageable);
 
-//    @Query("""
-//        select m
-//        from Movie m
-//        fetch join
-//    """)
-//    Slice<Movie> findFilteredMovies();
+    // 필터된 영화 조회
+    @Query("""
+        select m
+        from Movie m
+    """)
+    Slice<Movie> findFilteredMovies(@Param("genreIds") List<Integer> genreIds, Pageable pageable);
 
     // codes에 존재하는 영화 코드들 찾기
     @Query("""

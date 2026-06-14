@@ -1,6 +1,6 @@
 package syb.moviepedia.common;
 
-public enum CommentSortType {
+public enum SortType {
     LATEST,
     OLDEST;
 }

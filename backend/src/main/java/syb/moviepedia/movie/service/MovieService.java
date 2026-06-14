@@ -3,19 +3,21 @@ package syb.moviepedia.movie.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.*;
 import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.movie.domain.*;
+import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
+import static syb.moviepedia.common.SortType.LATEST;
+import static syb.moviepedia.common.SortType.OLDEST;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,9 +30,10 @@ public class MovieService {
     private final MovieCreditRepository movieCreditRepository;
     private final VideoRepository videoRepository;
     private final GenreRepository genreRepository;
+    private final MovieGenreRepository movieGenreRepository;
 
     @Transactional(readOnly = true)
-    public List<AllMoviesResponse> getAllMovies(Pageable pageable, CommentSortType sortType) {
+    public List<AllMoviesResponse> getAllMovies(Pageable pageable, SortType sortType) {
 
         Sort sort = switch (sortType) {
             case LATEST -> Sort.by(Sort.Direction.DESC, "releaseDate");
@@ -90,7 +93,7 @@ public class MovieService {
         log.info("장르 목록 조회 성공");
         return genreRepository.findAll().stream().map(genre ->
                 GenreResponse.builder()
-                        .genreId(genre.getGenreId())
+                        .genreCode(genre.getCode())
                         .name(genre.getName()).build())
                 .toList();
     }
@@ -102,16 +105,25 @@ public class MovieService {
      */
     @Transactional
     public MovieDetailResponse getMovieDetail(Long mvCode) {
-        // 영화 상세, DB에 영화 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
+        // 영화 상세. 영화가 DB에 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
         Movie movie = movieRepository.findByCode(mvCode).orElseGet(() -> {
             log.info("DB 영화 존재 X, DB 저장");
-            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode); // 상세 api 호출
-            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode)); // 등급
-            List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가
-            return movieRepository.save(toMovieFromDetail(detail, certification, countries));
+
+            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
+            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
+            List<String> countries = countryRepository.findNameByCodeIn(detail.country());
+
+            // 영화 저장
+            Movie savedMovie = movieRepository.save(
+                    toMovieFromTmdbDetail(detail, certification, countries)
+            );
+
+            saveMovieGenres(savedMovie, detail);
+
+            return savedMovie;
         });
 
-        // 영화가 있더라도 기타(등급, 런타임, 국가) 정보 채워져있지 않을 때.
+        // 영화가 있더라도 기타(등급, 런타임, 국가) 정보 채워져있지 않을 경우.
         // 보통 카테고리 영화 저장시 기타 정보는 저장되지 않아 상세 페이지 조회시 실행됨
         if(!movie.getDetailFetched()) {
             log.info("getMovieDetail(): 영화 상세 업데이트");
@@ -130,6 +142,29 @@ public class MovieService {
         }
 
         return toMovieDetailResponse(movie, creditDto, score);
+    }
+
+    private void saveMovieGenres(Movie movie, TmdbMovieDetail detail) {
+        if (detail.genres() == null || detail.genres().isEmpty()) {
+            return;
+        }
+
+        // 장르 추출
+        List<MovieGenre> movieGenres = detail.genres().stream()
+                .map(tmdbGenre -> {
+                    Genre genre = genreRepository.findByCode(tmdbGenre.id())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "존재하지 않는 장르입니다. tmdbGenreId=" + tmdbGenre.id()
+                            ));
+
+                    return MovieGenre.builder()
+                            .movie(movie)
+                            .genre(genre)
+                            .build();
+                })
+                .toList();
+
+        movieGenreRepository.saveAll(movieGenres);
     }
 
     // 출연 배우
@@ -224,13 +259,12 @@ public class MovieService {
     }
 
     // 영화 상세 정보 -> 영화 엔티티 가공
-    private Movie toMovieFromDetail(TmdbMovieDetail detail, String certification, List<String> countries) {
+    private Movie toMovieFromTmdbDetail(TmdbMovieDetail detail, String certification, List<String> countries) {
         return Movie.builder()
                 .code(detail.id())
                 .title(detail.title())
                 .posterPath(detail.posterPath())
                 .backdropPath(detail.backdropPath())
-                .genreIds(extractGenresFromDetail(detail.genres()))
                 .certification(certification)
                 .overview(detail.overview())
                 .releaseDate(detail.releaseYear())
@@ -277,7 +311,15 @@ public class MovieService {
                 .orElse("등급 미정");
     }
 
-    public void getAllMoviesTest() {
+    public void getAllMoviesTest(FilterRequest filter, SortType sortType, Pageable pageable) {
+        Sort sort = switch (sortType) {
+            case LATEST -> Sort.by(Sort.Direction.DESC, "releaseDate");
+            case OLDEST -> Sort.by(Sort.Direction.ASC, "releaseDate");
+        };
 
+        // 정렬 조건 추가된 Pageable
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        Slice<Movie> filteredMovies = movieRepository.findFilteredMovies(filter.genre(), sortedPageable);
+        log.info("filteredMovies: {}", filteredMovies.toString());
     }
 }

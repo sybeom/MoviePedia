@@ -21,10 +21,8 @@ import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
 import syb.moviepedia.movie.repository.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 영화 초기 데이터 설정을 위한 클래스
@@ -47,6 +45,7 @@ public class MovieInitService {
     private static final String INDEX_NAME = "movie_search";
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
+
     // 장르 데이터 초기화(로드)
     public void initGenres() {
         // tmdb 장르 데이터는 총 19개
@@ -58,10 +57,10 @@ public class MovieInitService {
         log.info("initGenres() 실행, 장르 데이터 변경 감지");
         List<Genre> genres = tmdbClient.getMovieGenres().genres().stream()
                 .filter(genre ->
-                        !genreRepository.existsByGenreId(genre.id())) // 존재하지 않는 값들만
+                        !genreRepository.existsByCode(genre.id())) // 존재하지 않는 값들만
                 .map(genre ->
                         Genre.builder()
-                                .genreId(genre.id())
+                                .code(genre.id())
                                 .name(genre.name())
                                 .build())
                 .toList();
@@ -219,7 +218,6 @@ public class MovieInitService {
                 .title(tmdbMovie.title())
                 .backdropPath(tmdbMovie.backdropPath())
                 .posterPath(tmdbMovie.posterPath())
-                .genreIds(tmdbMovie.genres())
                 .certification(certification)
                 .overview(tmdbMovie.overview())
                 .releaseDate(tmdbMovie.releaseDate())
@@ -250,7 +248,7 @@ public class MovieInitService {
                 .filter(release -> release.certification() != null && !release.certification().isBlank())
                 .filter(release -> release.type() == 3) // type==3 : 극장 개봉
                 .findFirst()
-                .map(info -> info.certification())
+                .map(release -> release.certification())
                 .orElse("등급 미정");
     }
 

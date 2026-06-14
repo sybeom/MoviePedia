@@ -20,8 +20,8 @@ public class Genre {
 
     private Long id;
 
-    @Column(name = "genre_id", unique = true, nullable = false)
-    private Integer genreId;
+    @Column(unique = true, nullable = false)
+    private Integer code;
 
     @Column(unique = true, nullable = false)
     private String name;

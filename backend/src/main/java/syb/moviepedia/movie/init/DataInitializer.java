@@ -27,5 +27,6 @@ public class DataInitializer implements CommandLineRunner {
 //        movieInitService.saveElasticMovies();
 
 //        movieInitService.setGenre();
+//        movieInitService.initData();
     }
 }

@@ -15,7 +15,7 @@ import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.dto.response.CommentResponse;
 import syb.moviepedia.comment.repository.CommentRepository;
-import syb.moviepedia.common.CommentSortType;
+import syb.moviepedia.common.SortType;
 import syb.moviepedia.common.exception.CommentAlreadyExistsException;
 import syb.moviepedia.common.exception.CommentNotFoundException;
 import syb.moviepedia.common.exception.MemberNotFoundException;
@@ -48,7 +48,7 @@ public class CommentService {
 
     // 모든 코멘트 목록
     @Transactional
-    public CommentListResponse getAllComments(Long mvCode, Pageable pageable, String loginId, CommentSortType sortType) {
+    public CommentListResponse getAllComments(Long mvCode, Pageable pageable, String loginId, SortType sortType) {
         Movie movie = movieRepository.findByCode(mvCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
