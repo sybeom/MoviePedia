@@ -261,27 +261,22 @@ function getReleaseQueryValue(filter: MovieReleaseFilter) {
 function normalizeGenreOptions(data: unknown): GenreOption[] {
   const source = Array.isArray(data)
     ? data
-    : isRecord(data) && Array.isArray(data.genres)
-      ? data.genres
-      : isRecord(data) && Array.isArray(data.data)
-        ? data.data
+    : isRecord(data) && Array.isArray(data.data)
+      ? data.data
+      : isRecord(data) && isRecord(data.data) && Array.isArray(data.data.genres)
+        ? data.data.genres
+        : isRecord(data) && Array.isArray(data.genres)
+          ? data.genres
         : []
 
   const normalizedOptions = source
     .map((item) => {
-      if (typeof item === 'string' && item.trim()) {
-        return {
-          label: item.trim(),
-          value: item.trim(),
-        }
-      }
-
       if (!isRecord(item)) {
         return null
       }
 
       const label = getStringValue(item, ['label', 'name', 'text'])
-      const value = getScalarStringValue(item, ['genreId', 'value', 'code', 'id']) || label
+      const value = getScalarStringValue(item, ['genreCode', 'genreId', 'value', 'code', 'id'])
 
       if (!label || !value) {
         return null
