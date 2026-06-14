@@ -141,7 +141,13 @@ public class MovieService {
             score = movie.getLikeRate();
         }
 
-        return toMovieDetailResponse(movie, creditDto, score);
+        // 장르
+        List<String> genreNames = movieGenreRepository.findGenresByMovieId(movie.getId())
+                .stream()
+                .map(Genre::getName)
+                .toList();
+
+        return toMovieDetailResponse(movie, genreNames, creditDto, score);
     }
 
     private void saveMovieGenres(Movie movie, TmdbMovieDetail detail) {
@@ -275,8 +281,8 @@ public class MovieService {
     }
 
     // 영화 상세 DTO로 변환
-    private MovieDetailResponse toMovieDetailResponse(Movie m, List<MovieCreditResponse> dto, int score) {
-        return MovieDetailResponse.from(m, dto, score);
+    private MovieDetailResponse toMovieDetailResponse(Movie m, List<String> genreNames, List<MovieCreditResponse> dto, int score) {
+        return MovieDetailResponse.from(m, genreNames, dto, score);
     }
 
     // Credit 엔티티 영화 크레딧 DTO로 가공

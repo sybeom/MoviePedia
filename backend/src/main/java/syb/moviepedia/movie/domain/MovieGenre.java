@@ -3,11 +3,13 @@ package syb.moviepedia.movie.domain;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 영화-장르의 N:M 관계를 표현하기 위한 중간 테이블(엔티티)
  */
 @Entity
+@NoArgsConstructor
 @Getter
 public class MovieGenre {
     @Id

@@ -44,10 +44,11 @@ public record MovieDetailResponse(
         }
     }
 
-    public static MovieDetailResponse from(Movie movie, List<MovieCreditResponse> dto, int score) {
+    public static MovieDetailResponse from(Movie movie, List<String> genreNames, List<MovieCreditResponse> dto, int score) {
         return MovieDetailResponse.builder()
                 .code(movie.getCode())
                 .title(movie.getTitle())
+                .genres(genreNames)
                 .posterPath(movie.getPosterPath())
                 .backdropPath(movie.getBackdropPath())
                 .certification(movie.getCertification())
