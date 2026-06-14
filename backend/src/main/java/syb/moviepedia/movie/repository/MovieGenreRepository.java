@@ -26,4 +26,14 @@ public interface MovieGenreRepository extends JpaRepository<MovieGenre, Long> {
         where mg.movie.id = :movieId
     """)
     List<Genre> findGenresByMovieId(Long movieId);
+
+    @Query("""
+        select mg.movie
+        from MovieGenre mg
+        where mg.genre.code in :genreIds
+        group by mg.movie
+        having count(distinct mg.genre.code) = :genreCount
+    """)
+    List<Movie> findAllFilteredMovies(@Param("genreIds") List<Integer> genreIds,
+                                           @Param("genreCount") long genreCount);
 }

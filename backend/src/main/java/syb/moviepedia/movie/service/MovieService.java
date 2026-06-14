@@ -325,7 +325,7 @@ public class MovieService {
 
         // 정렬 조건 추가된 Pageable
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
-        Slice<Movie> filteredMovies = movieRepository.findFilteredMovies(filter.genre(), sortedPageable);
-        log.info("filteredMovies: {}", filteredMovies.toString());
+        List<Movie> allFilteredMovies = movieGenreRepository.findAllFilteredMovies(filter.genre(), filter.genre().size());
+        log.info("All movies found: {}", allFilteredMovies);
     }
 }
