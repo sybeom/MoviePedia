@@ -28,6 +28,11 @@ import java.util.List;
 public class MovieController {
     private final MovieService movieService;
 
+    /**
+     * 임시 커밋
+     * @param pageable
+     */
+
     @Operation(
             summary = "홈 화면 전체 영화", description = "홈 화면 전체 영화 목록 10개씩 가져온다.")
     @ApiResponses({
@@ -98,7 +103,6 @@ public class MovieController {
         log.info("genres: {}", genres);
         return ResponseEntity.ok().body(ApiSuccessResponse.of("장르 목록 조회 성공", genres));
     }
-
     @Operation(summary = "영화 상세", description = "영화 상세 페이지 데이터를 조회한다")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "영화 상세 정보 조회 성공"),
