@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,14 +46,13 @@ public class MovieController {
             )
     })
     @GetMapping
-    public ResponseEntity<ApiSuccessResponse<List<AllMoviesResponse>>> allMovies(
+    public ResponseEntity<ApiSuccessResponse<Slice<AllMoviesResponse>>> allMovies(
             @PageableDefault(size = 10) Pageable pageable,
             @ModelAttribute FilterRequest filter,
             @RequestParam(defaultValue = "LATEST") SortType sort) {
         log.info("필터 목록: {}, 개봉 상태 : {}",filter.toString(), filter.releaseStatus());
-        movieService.getAllMoviesTest(filter,sort, pageable);
         return ResponseEntity.ok().body(ApiSuccessResponse.of(
-                "전체 영화 목록 조회 성공", movieService.getAllMovies(pageable,sort)));
+                "전체 영화 목록 조회 성공", movieService.getAllMovies(filter, sort, pageable)));
     }
 
     @Operation(
@@ -103,6 +103,7 @@ public class MovieController {
         log.info("genres: {}", genres);
         return ResponseEntity.ok().body(ApiSuccessResponse.of("장르 목록 조회 성공", genres));
     }
+
     @Operation(summary = "영화 상세", description = "영화 상세 페이지 데이터를 조회한다")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "영화 상세 정보 조회 성공"),

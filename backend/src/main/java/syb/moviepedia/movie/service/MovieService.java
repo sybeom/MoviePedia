@@ -1,5 +1,11 @@
 package syb.moviepedia.movie.service;
 
+import com.querydsl.core.QueryResults;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -31,26 +37,66 @@ public class MovieService {
     private final VideoRepository videoRepository;
     private final GenreRepository genreRepository;
     private final MovieGenreRepository movieGenreRepository;
+    private final JPAQueryFactory query;
 
     @Transactional(readOnly = true)
-    public List<AllMoviesResponse> getAllMovies(Pageable pageable, SortType sortType) {
+    public SliceImpl<AllMoviesResponse> getAllMovies(FilterRequest filter, SortType sortType, Pageable pageable) {
+        QMovie movie = QMovie.movie;
 
-        Sort sort = switch (sortType) {
-            case LATEST -> Sort.by(Sort.Direction.DESC, "releaseDate");
-            case OLDEST -> Sort.by(Sort.Direction.ASC, "releaseDate");
+        OrderSpecifier<?> orderSpecifier = switch (sortType) {
+            case LATEST -> movie.releaseDate.desc();
+            case OLDEST -> movie.releaseDate.asc();
         };
 
-        // 정렬 조건 추가된 Pageable
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
-        Slice<Movie> movies = movieRepository.findAllMovies(sortedPageable);
+        int pageSize = pageable.getPageSize();
 
-        return movies.stream().map(mv -> AllMoviesResponse.builder()
-                        .code(mv.getCode())
-                        .title(mv.getTitle())
-                        .posterPath(mv.getPosterPath())
-                        .certification(mv.getCertification())
-                        .build())
+        List<Movie> movies = query
+                .select(movie)
+                .from(movie)
+                .where(
+                        genreExists(movie, filter.genre())
+                )
+                .orderBy(orderSpecifier)
+                .offset(pageable.getOffset())
+                .limit(pageSize + 1)
+                .fetch();
+
+        boolean hasNext = movies.size() > pageSize;
+
+        if (hasNext) {
+            movies.remove(pageSize);
+        }
+
+        List<AllMoviesResponse> content = movies.stream()
+                .map(AllMoviesResponse::from)
                 .toList();
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageSize,
+                switch (sortType) {
+                    case LATEST -> Sort.by(Sort.Direction.DESC, "releaseDate");
+                    case OLDEST -> Sort.by(Sort.Direction.ASC, "releaseDate");
+                }
+        );
+
+        return new SliceImpl<>(content, sortedPageable, hasNext);
+    }
+
+    private BooleanExpression genreExists(QMovie movie, List<Integer> genres) {
+        if (genres == null || genres.isEmpty()) {
+            return null;
+        }
+        QMovieGenre mg = new QMovieGenre("mg");
+
+        return JPAExpressions
+                .selectOne()
+                .from(mg)
+                .where(
+                        mg.movie.eq(movie),
+                        mg.genre.code.in(genres)
+                )
+                .exists();
     }
 
     @Transactional(readOnly = true)
@@ -317,15 +363,12 @@ public class MovieService {
                 .orElse("등급 미정");
     }
 
-    public void getAllMoviesTest(FilterRequest filter, SortType sortType, Pageable pageable) {
-        Sort sort = switch (sortType) {
-            case LATEST -> Sort.by(Sort.Direction.DESC, "releaseDate");
-            case OLDEST -> Sort.by(Sort.Direction.ASC, "releaseDate");
-        };
+    // 장르 필터
+    private BooleanExpression genreIn(QMovieGenre qMg, List<Integer> genreCodes) {
+        if (genreCodes == null || genreCodes.isEmpty()) { // null이면 모든 영화
+            return null;
+        }
 
-        // 정렬 조건 추가된 Pageable
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
-        List<Movie> allFilteredMovies = movieGenreRepository.findAllFilteredMovies(filter.genre(), filter.genre().size());
-        log.info("All movies found: {}", allFilteredMovies);
+        return qMg.genre.code.in(genreCodes);
     }
 }
