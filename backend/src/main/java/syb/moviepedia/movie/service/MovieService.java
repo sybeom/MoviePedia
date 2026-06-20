@@ -19,11 +19,15 @@ import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import static syb.moviepedia.common.SortType.LATEST;
 import static syb.moviepedia.common.SortType.OLDEST;
+import static syb.moviepedia.movie.domain.QMovie.movie;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -54,7 +58,8 @@ public class MovieService {
                 .select(movie)
                 .from(movie)
                 .where(
-                        genreExists(movie, filter.genre())
+                        genreExists(movie, filter.genre()),
+                        releasedCondition(filter.releaseStatus())
                 )
                 .orderBy(orderSpecifier)
                 .offset(pageable.getOffset())
@@ -83,6 +88,7 @@ public class MovieService {
         return new SliceImpl<>(content, sortedPageable, hasNext);
     }
 
+    // 장르 필터
     private BooleanExpression genreExists(QMovie movie, List<Integer> genres) {
         if (genres == null || genres.isEmpty()) {
             return null;
@@ -97,6 +103,20 @@ public class MovieService {
                         mg.genre.code.in(genres)
                 )
                 .exists();
+    }
+
+    // 개봉 여부
+    private BooleanExpression releasedCondition(ReleaseStatus releaseCond) {
+        if (releaseCond == null) {
+            return null;
+        }
+        LocalDate today = LocalDate.now();
+
+        if (releaseCond == ReleaseStatus.RELEASED) {
+            return movie.releaseDate.loe(today);
+        }
+
+        return movie.releaseDate.gt(today);
     }
 
     @Transactional(readOnly = true)

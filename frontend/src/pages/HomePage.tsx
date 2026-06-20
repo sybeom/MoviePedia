@@ -1368,6 +1368,25 @@ function HomePage() {
               </div>
 
               <div className="home-filter-group">
+                <span className="home-filter-group-label">개봉 여부</span>
+                <div className="home-genre-filter-row" role="tablist" aria-label="개봉 상태 필터">
+                  {HOME_RELEASE_FILTERS.map((filter) => (
+                    <button
+                      key={filter}
+                      className={`home-genre-filter-button${
+                        filter === selectedReleaseFilter ? ' home-genre-filter-button-active' : ''
+                      }`}
+                      type="button"
+                      onClick={() => setSelectedReleaseFilter(filter)}
+                      aria-pressed={filter === selectedReleaseFilter}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="home-filter-group">
                 <span className="home-filter-group-label">정렬</span>
                 <div className="home-genre-filter-row" role="tablist" aria-label="정렬 필터">
                   {HOME_SORT_FILTERS.map((sort) => (
@@ -1381,25 +1400,6 @@ function HomePage() {
                       aria-pressed={sort === selectedSortFilter}
                     >
                       {sort}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="home-filter-group">
-                <span className="home-filter-group-label">개봉 상태</span>
-                <div className="home-genre-filter-row" role="tablist" aria-label="개봉 상태 필터">
-                  {HOME_RELEASE_FILTERS.map((filter) => (
-                    <button
-                      key={filter}
-                      className={`home-genre-filter-button${
-                        filter === selectedReleaseFilter ? ' home-genre-filter-button-active' : ''
-                      }`}
-                      type="button"
-                      onClick={() => setSelectedReleaseFilter(filter)}
-                      aria-pressed={filter === selectedReleaseFilter}
-                    >
-                      {filter}
                     </button>
                   ))}
                 </div>
