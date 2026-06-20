@@ -20,7 +20,7 @@ public class Genre {
 
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "genre_code", unique = true, nullable = false)
     private Integer code;
 
     @Column(unique = true, nullable = false)
