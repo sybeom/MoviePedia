@@ -16,7 +16,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     Optional<Movie> findByCode(Long code);
 
-
     @Query("""
         select m
         from Movie m

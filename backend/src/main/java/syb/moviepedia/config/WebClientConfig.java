@@ -21,7 +21,7 @@ public class WebClientConfig {
     @Bean // 영화진흥위원회
     public WebClient kobisWebClient() {
         return WebClient.builder()
-                .baseUrl("https://www.kobis.or.kr/kobisopenapi/webservice/rest")
+                .baseUrl("https://www.kobis.or.kr/kobisopenapi/webservice/rest/movie")
                 .build();
     }
 
@@ -42,6 +42,7 @@ public class WebClientConfig {
     @Bean // TMDB
     public WebClient tmdbWebClient(
             @Value("${tmdb.api.base-url}") String baseUrl,
+            // 값은 RUN -> Edit Configuration -> Environment variables에 설정되어있음. Authorization 헤더에 설정된다
             @Value("${tmdb.api.token}") String token
     ) {
         return WebClient.builder()
