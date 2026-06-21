@@ -26,7 +26,7 @@ function getMetaParts(parts: string[]) {
 }
 
 function getCertificationIcon(certification: string) {
-  return CERTIFICATION_ICON_MAP[certification] ?? ''
+  return CERTIFICATION_ICON_MAP[certification.toUpperCase()] ?? ''
 }
 
 function MetaFragments({ parts }: { parts: string[] }) {

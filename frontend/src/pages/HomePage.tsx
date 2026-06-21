@@ -388,6 +388,7 @@ function HomePage() {
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
   const mainShellRef = useRef<HTMLElement | null>(null)
   const allMoviesLoadTriggerRef = useRef<HTMLDivElement | null>(null)
+  const allMoviesSectionRef = useRef<HTMLElement | null>(null)
 
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
   const [theme, setTheme] = useState<HomeTheme>(() => {
@@ -424,6 +425,7 @@ function HomePage() {
   const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['ALL'])
   const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
   const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MovieReleaseFilter>('전체')
+  const [isExpandedMovieView, setIsExpandedMovieView] = useState(false)
   const [allMovies, setAllMovies] = useState<PopularMovie[]>([])
   const [allMoviesPage, setAllMoviesPage] = useState(0)
   const [hasMoreAllMovies, setHasMoreAllMovies] = useState(true)
@@ -474,6 +476,17 @@ function HomePage() {
   useEffect(() => {
     isLoadingMoreAllMoviesRef.current = isLoadingMoreAllMovies
   }, [isLoadingMoreAllMovies])
+
+  useEffect(() => {
+    if (!isExpandedMovieView || !mainShellRef.current || !allMoviesSectionRef.current) {
+      return
+    }
+
+    mainShellRef.current.scrollTo({
+      top: Math.max(0, allMoviesSectionRef.current.offsetTop - 12),
+      behavior: 'smooth',
+    })
+  }, [isExpandedMovieView])
 
   useEffect(() => {
     let isMounted = true
@@ -1154,10 +1167,20 @@ function HomePage() {
   }
 
   return (
-    <div className={`home-page home-page-${theme}`}>
-      <div className="home-desktop-container">
-        <main className="home-main-shell" ref={mainShellRef}>
-          <section className="home-search-section">
+    <div
+      className={`home-page home-page-${theme}${isExpandedMovieView ? ' home-page-expanded' : ''}`}
+    >
+      <div
+        className={`home-desktop-container${
+          isExpandedMovieView ? ' home-desktop-container-expanded' : ''
+        }`}
+      >
+        <main
+          className={`home-main-shell${isExpandedMovieView ? ' home-main-shell-expanded' : ''}`}
+          ref={mainShellRef}
+        >
+          {!isExpandedMovieView ? (
+            <section className="home-search-section">
             <div className="search-box-shell" ref={searchBoxRef}>
               <form className="home-search-form" onSubmit={handleSearch}>
                 <label className="sr-only" htmlFor="movie-search">
@@ -1248,9 +1271,11 @@ function HomePage() {
             </div>
 
             {message ? <p className="home-search-message">{message}</p> : null}
-          </section>
+            </section>
+          ) : null}
 
-          <section className="home-banner-section" aria-label="현재 상영중인 영화 배너">
+          {!isExpandedMovieView ? (
+            <section className="home-banner-section" aria-label="현재 상영중인 영화 배너">
             {isBannerLoading ? (
               <div className="home-popular-loading" aria-live="polite">
                 <img
@@ -1328,24 +1353,56 @@ function HomePage() {
             ) : (
               <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
             )}
-          </section>
+            </section>
+          ) : null}
 
-          {renderMovieSection({
-            title: '현재 상영중인 영화',
-            visibleMovie: visibleNowPlayingMovie,
-            visibleCards: visibleNowPlayingCards,
-            page: nowPlayingPage,
-            pageCount: nowPlayingPageCount,
-            onPrevious: moveToPreviousNowPlayingMovie,
-            onNext: moveToNextNowPlayingMovie,
-          })}
+          {!isExpandedMovieView
+            ? renderMovieSection({
+                title: '현재 상영중인 영화',
+                visibleMovie: visibleNowPlayingMovie,
+                visibleCards: visibleNowPlayingCards,
+                page: nowPlayingPage,
+                pageCount: nowPlayingPageCount,
+                onPrevious: moveToPreviousNowPlayingMovie,
+                onNext: moveToNextNowPlayingMovie,
+              })
+            : null}
 
-          <section className="home-movie-grid-section" aria-labelledby="home-all-movies-title">
-            <div className="home-popular-section-header">
-              <h2 id="home-all-movies-title">전체 영화</h2>
-            </div>
+          {isExpandedMovieView ? (
+            <section className="home-expanded-view-hero" aria-labelledby="home-expanded-view-title">
+              <h1 id="home-expanded-view-title">전체 영화</h1>
+              <button
+                className="home-expand-view-button home-expand-view-button-hero"
+                type="button"
+                onClick={() => setIsExpandedMovieView(false)}
+              >
+                기본 보기
+              </button>
+            </section>
+          ) : null}
 
-            <div className="home-filter-panel">
+          <section
+            className={`home-movie-grid-section${
+              isExpandedMovieView ? ' home-movie-grid-section-expanded' : ''
+            }`}
+            aria-labelledby="home-all-movies-title"
+            ref={allMoviesSectionRef}
+          >
+            {isExpandedMovieView ? null : (
+              <div className="home-popular-section-header">
+                <h2 id="home-all-movies-title">전체 영화</h2>
+                <button
+                  className="home-expand-view-button"
+                  type="button"
+                  onClick={() => navigate('/movies')}
+                  aria-pressed="false"
+                >
+                  펼쳐보기
+                </button>
+              </div>
+            )}
+
+            <div className={`home-filter-panel${isExpandedMovieView ? ' home-filter-panel-expanded' : ''}`}>
               <div className="home-filter-group">
                 <span className="home-filter-group-label">장르</span>
                 <div className="home-genre-filter-row" role="tablist" aria-label="장르 필터">
@@ -1416,7 +1473,7 @@ function HomePage() {
                 />
               </div>
             ) : allMovies.length > 0 ? (
-              <div className="home-movie-grid">
+              <div className={`home-movie-grid${isExpandedMovieView ? ' home-movie-grid-expanded' : ''}`}>
                 {allMovies.map((movie) => (
                   <button
                     key={`all-movie-${movie.code}`}
@@ -1482,7 +1539,7 @@ function HomePage() {
         </main>
       </div>
 
-      <aside className="home-sidebar" aria-label="메인 내비게이션">
+      {!isExpandedMovieView ? <aside className="home-sidebar" aria-label="메인 내비게이션">
         <div className="home-brand-block">
           <p className="home-brand-mark">MP</p>
           <div className="home-brand-copy">
@@ -1502,9 +1559,9 @@ function HomePage() {
             </button>
           ))}
         </nav>
-      </aside>
+      </aside> : null}
 
-      <aside className="home-auth-panel">
+      {!isExpandedMovieView ? <aside className="home-auth-panel">
         <div className="home-auth-card">
           {authSession ? (
             <div className="home-auth-session">
@@ -1556,7 +1613,7 @@ function HomePage() {
             </form>
           )}
         </div>
-      </aside>
+      </aside> : null}
 
       <button
         className="home-theme-toggle"

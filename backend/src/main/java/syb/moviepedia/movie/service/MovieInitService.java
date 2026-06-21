@@ -42,9 +42,11 @@ public class MovieInitService {
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
     private final ElasticsearchOperations esOperations;
+    private final MovieGenreRepository movieGenreRepository;
+    private final MovieCreditRepository movieCreditRepository;
+    private final VideoRepository videoRepository;
     private static final String INDEX_NAME = "movie_search";
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
-
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -89,8 +91,10 @@ public class MovieInitService {
     public void initMovies(int page) {
         log.info("initMovies() 일반 영화 초기 데이터 호출 페이지: {}", page);
         TmdbMovieList response = tmdbClient.getInitMovies(page);
-        saveMovies(response);
+//        saveMovies(response);
+        newSaveMovies(response);
     }
+
 
     private void saveMovies(TmdbMovieList responses) {
         List<Long> codes = responses.results().stream().map(tmdbMovie -> tmdbMovie.code()).toList();
@@ -98,17 +102,84 @@ public class MovieInitService {
         Set<Long> existingCodes = movieRepository.findCodesByCodeIn(codes);
 
         List<Movie> movies = responses.results().stream()
-                .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code())) // DB에 없는 영화들만
+                .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code()))// DB에 없는 영화들만
                 .filter(tmdbMv ->
                         // 숫자만 와도되고 특수문자만 와도 되지만, 언어가 포함되면 한글이 반드시 최소 1개는 포함하는 정규식
                         tmdbMv.title().matches(TITLE_PATTERN))
-                .map(response ->{
+                .map(response -> {
                             String certification = extractCertification(response);
                             return toMovie(response, certification);
                 })
                 .toList();
         movieRepository.saveAll(movies);
 //        saveElasticMovies(movies); // 엘라스틱 서치 저장
+    }
+
+    @Transactional
+    private void newSaveMovies(TmdbMovieList responses) {
+        List<TmdbMovie> newMovieResponses = filterNewMovieResponses(responses);
+
+        if (newMovieResponses.isEmpty()) {
+            return;
+        }
+
+        List<Movie> movies = newMovieResponses.stream()
+                .map(response -> {
+                    String certification = extractCertification(response);
+                    return toMovie(response, certification);
+                })
+                .toList();
+
+        List<Movie> savedMovies = movieRepository.saveAll(movies);
+
+        saveMovieGenres(newMovieResponses, savedMovies);
+    }
+    private List<TmdbMovie> filterNewMovieResponses(TmdbMovieList responses) {
+        List<Long> codes = responses.results().stream()
+                .map(TmdbMovie::code)
+                .toList();
+
+        Set<Long> existingCodes = movieRepository.findCodesByCodeIn(codes);
+
+        return responses.results().stream()
+                .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code()))
+                .filter(tmdbMv -> tmdbMv.title().matches(TITLE_PATTERN))
+                .toList();
+    }
+
+    private void saveMovieGenres(
+            List<TmdbMovie> newMovieResponses,
+            List<Movie> savedMovies
+    ) {
+        Map<Long, Movie> movieMap = savedMovies.stream()
+                .collect(Collectors.toMap(Movie::getCode, movie -> movie));
+
+        Set<Integer> genreCodes = newMovieResponses.stream()
+                .flatMap(response -> response.genres().stream())
+                .collect(Collectors.toSet());
+
+        if (genreCodes.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, Genre> genreMap = genreRepository.findByCodeIn(genreCodes).stream()
+                .collect(Collectors.toMap(Genre::getCode, genre -> genre));
+
+        List<MovieGenre> movieGenres = newMovieResponses.stream()
+                .flatMap(response -> {
+                    Movie movie = movieMap.get(response.code());
+
+                    return response.genres().stream()
+                            .map(genreMap::get)
+                            .filter(Objects::nonNull)
+                            .map(genre -> MovieGenre.builder()
+                                    .movie(movie)
+                                    .genre(genre)
+                                    .build());
+                })
+                .toList();
+
+        movieGenreRepository.saveAll(movieGenres);
     }
 
     // 엘라스틱서치에 저장
@@ -245,11 +316,12 @@ public class MovieInitService {
                 .filter(releaseData -> releaseData.iso31661().equals("KR")) // 한국만 추출
                 .filter(releaseData -> releaseData.releaseDates() != null)
                 .flatMap(releaseDates -> releaseDates.releaseDates().stream()) // release_dates[] 평탄화
-                .filter(release -> release.certification() != null && !release.certification().isBlank())
+                .filter(release -> release.certification() != null)
                 .filter(release -> release.type() == 3) // type==3 : 극장 개봉
-                .findFirst()
                 .map(release -> release.certification())
-                .orElse("등급 미정");
+                .filter(certification -> certification != null && !certification.isBlank())
+                .findFirst()
+                .orElse("등급 미정"); // 위 필터들을 통과하지 못하면 등급 미지정
     }
 
     // 더미 회원 생성

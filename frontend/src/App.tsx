@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import CookiePage from './pages/CookiePage'
 import LoginPage from './pages/LoginPage'
 import MovieDetailPage from './pages/MovieDetailPage'
+import MovieBrowsePage from './pages/MovieBrowsePage'
 import SignupPage from './pages/SignupPage'
 import { getAuthSession } from './utils/authStorage'
 import { authRequest, isAuthSessionError } from './utils/fetchUtil'
@@ -51,6 +52,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/movies" element={<MovieBrowsePage />} />
       <Route path="/movies/:movieCode" element={<MovieDetailPage />} />
       <Route path="/cookie" element={<CookiePage />} />
       <Route path="/login" element={<LoginPage />} />

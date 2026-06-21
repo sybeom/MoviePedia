@@ -382,13 +382,4 @@ public class MovieService {
                 .map(info -> info.certification())
                 .orElse("등급 미정");
     }
-
-    // 장르 필터
-    private BooleanExpression genreIn(QMovieGenre qMg, List<Integer> genreCodes) {
-        if (genreCodes == null || genreCodes.isEmpty()) { // null이면 모든 영화
-            return null;
-        }
-
-        return qMg.genre.code.in(genreCodes);
-    }
 }

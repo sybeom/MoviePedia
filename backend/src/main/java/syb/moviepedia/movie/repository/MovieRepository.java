@@ -3,6 +3,7 @@ package syb.moviepedia.movie.repository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import syb.moviepedia.movie.domain.Movie;
@@ -14,6 +15,7 @@ import java.util.Set;
 public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     Optional<Movie> findByCode(Long code);
+
 
     @Query("""
         select m
@@ -29,6 +31,14 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
         where m.code in :codes
     """)
     Set<Long> findCodesByCodeIn(@Param("codes") List<Long> codes);
+
+    // codes에 존재하는 영화 코드들 찾기
+    @Query("""
+        select m
+        from Movie m
+        where m.code in :codes
+    """)
+    List<Movie> findMoviesByCodeIn(@Param("codes") List<Long> codes);
 
     // id가 마지막 조회 id보다 큰 영화 중에서 id 오름차순으로 최대 1000개 조회
     List<Movie> findTop1000ByIdGreaterThanOrderByIdAsc(Long id);
