@@ -15,6 +15,7 @@ import {
   updateMovieComment,
   verifyCommentAuth,
 } from '../api/movieDetail'
+import { getMediaConfigByPath } from '../config/media'
 import MovieCommentList from '../components/movie-detail/MovieCommentList'
 import MovieCommentModal from '../components/movie-detail/MovieCommentModal'
 import MovieDetailCredits from '../components/movie-detail/MovieDetailCredits'
@@ -48,9 +49,10 @@ const COMMENTS_PAGE_SIZE = 20
 
 function MovieDetailPage() {
   const navigate = useNavigate()
-  const { movieCode: movieCodeParam } = useParams()
-  const resolvedMovieCode = movieCodeParam ?? ''
   const location = useLocation()
+  const mediaConfig = getMediaConfigByPath(location.pathname)
+  const { movieCode: movieCodeParam, seriesCode: seriesCodeParam } = useParams()
+  const resolvedMovieCode = movieCodeParam ?? seriesCodeParam ?? ''
   const state = location.state as MovieDetailState | null
   const initialMovie = state?.movie
   const mainShellRef = useRef<HTMLElement | null>(null)
@@ -155,7 +157,12 @@ function MovieDetailPage() {
 
   const loadMovieCommentsPage = useCallback(
     async (page: number, append: boolean, sortOrder: CommentSortOrder) => {
-      const response = await fetchMovieComments(resolvedMovieCode, page, sortOrder)
+      const response = await fetchMovieComments(
+        resolvedMovieCode,
+        page,
+        sortOrder,
+        mediaConfig.type,
+      )
 
       const nextComments = response.comments
 
@@ -169,7 +176,7 @@ function MovieDetailPage() {
       commentsPageRef.current = page
       hasMoreCommentsRef.current = nextComments.length === COMMENTS_PAGE_SIZE
     },
-    [resolvedMovieCode],
+    [mediaConfig.type, resolvedMovieCode],
   )
 
   useEffect(() => {
@@ -185,7 +192,7 @@ function MovieDetailPage() {
       setMessage(resolvedMovieCode ? '' : '?곹솕 ?뺣낫瑜?李얠쓣 ???놁뒿?덈떎.')
 
       try {
-        const normalizedDetail = await fetchMovieDetail(resolvedMovieCode)
+        const normalizedDetail = await fetchMovieDetail(resolvedMovieCode, mediaConfig.type)
 
         if (!normalizedDetail) {
           setMessage('영화 정보를 불러오지 못했습니다.')
@@ -221,7 +228,7 @@ function MovieDetailPage() {
       setIsTrailersLoading(Boolean(resolvedMovieCode))
 
       try {
-        const trailers = await fetchMovieTrailers(resolvedMovieCode)
+        const trailers = await fetchMovieTrailers(resolvedMovieCode, mediaConfig.type)
 
         setMovieDetail((previousMovieDetail) => ({
           ...previousMovieDetail,
@@ -239,7 +246,7 @@ function MovieDetailPage() {
 
     void loadMovieDetail()
     void loadMovieTrailersData()
-  }, [initialMovie, resolvedMovieCode])
+  }, [initialMovie, mediaConfig.type, resolvedMovieCode])
 
   useEffect(() => {
     let isMounted = true
@@ -533,7 +540,11 @@ function MovieDetailPage() {
         return
       }
 
-      const detail = await fetchMovieCommentForEdit(targetMovieId, targetCommentId)
+      const detail = await fetchMovieCommentForEdit(
+        targetMovieId,
+        targetCommentId,
+        mediaConfig.type,
+      )
 
       if (!detail) {
         return
@@ -566,9 +577,14 @@ function MovieDetailPage() {
     }
 
     try {
-      await deleteMovieComment(resolvedMovieCode, targetCommentId, {
-        movieId: targetMovieId,
-      })
+      await deleteMovieComment(
+        resolvedMovieCode,
+        targetCommentId,
+        {
+          movieId: targetMovieId,
+        },
+        mediaConfig.type,
+      )
 
       setComments((previousComments) =>
         previousComments.filter((previousComment) => previousComment.id !== comment.id),
@@ -605,11 +621,16 @@ function MovieDetailPage() {
       setIsSubmittingComment(true)
 
       try {
-        await updateMovieComment(resolvedMovieCode, editingCommentTarget.commentId, {
-          movieId: editingCommentTarget.movieId || movieDetail.id,
-          content: trimmedCommentDraft,
-          reactionType: selectedReactionType,
-        })
+        await updateMovieComment(
+          resolvedMovieCode,
+          editingCommentTarget.commentId,
+          {
+            movieId: editingCommentTarget.movieId || movieDetail.id,
+            content: trimmedCommentDraft,
+            reactionType: selectedReactionType,
+          },
+          mediaConfig.type,
+        )
 
         setCommentDraft('')
         setSelectedRating(0)
@@ -636,12 +657,16 @@ function MovieDetailPage() {
         return
       }
 
-      await createMovieComment(resolvedMovieCode, {
-        movieId: resolvedMovieRecordId,
-        nickname: session.nickname,
-        content: trimmedCommentDraft,
-        reactionType: selectedReactionType,
-      })
+      await createMovieComment(
+        resolvedMovieCode,
+        {
+          movieId: resolvedMovieRecordId,
+          nickname: session.nickname,
+          content: trimmedCommentDraft,
+          reactionType: selectedReactionType,
+        },
+        mediaConfig.type,
+      )
 
       setCommentDraft('')
       setSelectedRating(0)
@@ -678,12 +703,14 @@ function MovieDetailPage() {
           </div>
 
           <nav className="home-nav">
-            {PRIMARY_NAV_ITEMS.map((item, index) => (
+            {PRIMARY_NAV_ITEMS.map((item) => (
               <button
-                className={`home-nav-item${index === 0 ? ' home-nav-item-active' : ''}`}
+                className={`home-nav-item${
+                  item === mediaConfig.navLabel ? ' home-nav-item-active' : ''
+                }`}
                 type="button"
                 key={item}
-                onClick={() => navigate('/')}
+                onClick={() => navigate(item === 'TV 시리즈' ? '/series' : '/')}
               >
                 <span>{item}</span>
               </button>
@@ -698,7 +725,7 @@ function MovieDetailPage() {
               movieDetail={movieDetail}
               isLoading={isLoading}
               message={visibleMessage}
-              onBack={() => navigate('/')}
+              onBack={() => navigate(mediaConfig.homePath)}
               />
             </section>
 

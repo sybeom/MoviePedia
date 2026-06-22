@@ -1,4 +1,5 @@
 import { request } from './client'
+import { MEDIA_CONFIGS, type MediaType } from '../config/media'
 import { getAuthSession } from '../utils/authStorage'
 import { authRequest } from '../utils/fetchUtil'
 import type {
@@ -15,16 +16,20 @@ import {
   normalizeMovieTrailers,
 } from '../utils/movieDetail'
 
-export async function fetchMovieDetail(movieId: string) {
-  const response = await request<unknown>(`/movies/${movieId}`, {
+function getMediaResourcePath(mediaType: MediaType) {
+  return MEDIA_CONFIGS[mediaType].resourcePath
+}
+
+export async function fetchMovieDetail(movieId: string, mediaType: MediaType = 'movie') {
+  const response = await request<unknown>(`${getMediaResourcePath(mediaType)}/${movieId}`, {
     method: 'GET',
   })
 
   return normalizeMovieDetail(response)
 }
 
-export async function fetchMovieTrailers(movieCode: string) {
-  const response = await request<unknown>(`/movies/${movieCode}/videos`, {
+export async function fetchMovieTrailers(movieCode: string, mediaType: MediaType = 'movie') {
+  const response = await request<unknown>(`${getMediaResourcePath(mediaType)}/${movieCode}/videos`, {
     method: 'GET',
   })
 
@@ -35,6 +40,7 @@ export function fetchMovieComments(
   movieId: string,
   page = 0,
   sort: 'latest' | 'oldest' = 'latest',
+  mediaType: MediaType = 'movie',
 ) {
   const session = getAuthSession()
   const sortParam = sort === 'oldest' ? 'OLDEST' : 'LATEST'
@@ -44,18 +50,25 @@ export function fetchMovieComments(
     sort: sortParam,
   })
 
-  return request<unknown>(`/movies/${movieId}/comments?${searchParams.toString()}`, {
-    method: 'GET',
-    headers: session?.accessToken
-      ? {
-          Authorization: `Bearer ${session.accessToken}`,
-        }
-      : undefined,
-  }).then((response) => normalizeMovieComments(response))
+  return request<unknown>(
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments?${searchParams.toString()}`,
+    {
+      method: 'GET',
+      headers: session?.accessToken
+        ? {
+            Authorization: `Bearer ${session.accessToken}`,
+          }
+        : undefined,
+    },
+  ).then((response) => normalizeMovieComments(response))
 }
 
-export function createMovieComment(movieId: string, body: CreateCommentRequest) {
-  return authRequest<CreateCommentRequest>(`/movies/${movieId}/comments`, {
+export function createMovieComment(
+  movieId: string,
+  body: CreateCommentRequest,
+  mediaType: MediaType = 'movie',
+) {
+  return authRequest<CreateCommentRequest>(`${getMediaResourcePath(mediaType)}/${movieId}/comments`, {
     method: 'POST',
     body,
   })
@@ -65,28 +78,43 @@ export function updateMovieComment(
   movieId: string,
   commentId: string,
   body: UpdateCommentRequest,
+  mediaType: MediaType = 'movie',
 ) {
-  return authRequest<UpdateCommentRequest>(`/movies/${movieId}/comments/${commentId}`, {
-    method: 'PATCH',
-    body,
-  })
+  return authRequest<UpdateCommentRequest>(
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}`,
+    {
+      method: 'PATCH',
+      body,
+    },
+  )
 }
 
 export function deleteMovieComment(
   movieId: string,
   commentId: string,
   body: DeleteCommentRequest,
+  mediaType: MediaType = 'movie',
 ) {
-  return authRequest<DeleteCommentRequest>(`/movies/${movieId}/comments/${commentId}`, {
-    method: 'DELETE',
-    body,
-  })
+  return authRequest<DeleteCommentRequest>(
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}`,
+    {
+      method: 'DELETE',
+      body,
+    },
+  )
 }
 
-export function fetchMovieCommentForEdit(movieId: string, commentId: string) {
-  return authRequest<unknown>(`/movies/${movieId}/comments/${commentId}/edit`, {
+export function fetchMovieCommentForEdit(
+  movieId: string,
+  commentId: string,
+  mediaType: MediaType = 'movie',
+) {
+  return authRequest<unknown>(
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}/edit`,
+    {
     method: 'GET',
-  }).then((response) => normalizeMovieCommentDetail(response))
+    },
+  ).then((response) => normalizeMovieCommentDetail(response))
 }
 
 export function verifyCommentAuth() {

@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
 import loadingIcon from '../assets/icons/loading.svg'
@@ -14,6 +14,7 @@ import searchIcon from '../assets/icons/search.svg'
 import { login, logout } from '../api/auth'
 import { isApiError, request } from '../api/client'
 import HomeSearchResults from '../components/home/HomeSearchResults'
+import { getMediaConfigByPath } from '../config/media'
 import {
   clearAuthSession,
   getAuthSession,
@@ -385,6 +386,8 @@ function normalizeBannerMovies(data: unknown): BannerMovie[] {
 
 function HomePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const mediaConfig = getMediaConfigByPath(location.pathname)
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
   const mainShellRef = useRef<HTMLElement | null>(null)
   const allMoviesLoadTriggerRef = useRef<HTMLDivElement | null>(null)
@@ -495,9 +498,12 @@ function HomePage() {
       setIsCategoriesLoading(true)
 
       try {
-        const response = await request<CategoryMoviesResponse>('/movies/categories', {
+        const response = await request<CategoryMoviesResponse>(
+          `${mediaConfig.resourcePath}/categories`,
+          {
           method: 'GET',
-        })
+          },
+        )
 
         if (!isMounted) {
           return
@@ -523,7 +529,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [mediaConfig.resourcePath])
 
   useEffect(() => {
     let isMounted = true
@@ -532,7 +538,7 @@ function HomePage() {
       setIsBannerLoading(true)
 
       try {
-        const response = await request<unknown>('/movies/banners', {
+        const response = await request<unknown>(`${mediaConfig.resourcePath}/banners`, {
           method: 'GET',
         })
 
@@ -563,7 +569,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [mediaConfig.resourcePath])
 
   useEffect(() => {
     let isMounted = true
@@ -572,7 +578,7 @@ function HomePage() {
       setIsGenresLoading(true)
 
       try {
-        const response = await request<unknown>('/movies/genres', {
+        const response = await request<unknown>(`${mediaConfig.resourcePath}/genres`, {
           method: 'GET',
         })
 
@@ -599,7 +605,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [mediaConfig.resourcePath])
 
   const loadAllMoviesPage = useCallback(
     async (
@@ -627,9 +633,12 @@ function HomePage() {
         searchParams.set('releaseStatus', releaseValue)
       }
 
-      const response = await request<unknown>(`/movies?${searchParams.toString()}`, {
+      const response = await request<unknown>(
+        `${mediaConfig.resourcePath}?${searchParams.toString()}`,
+        {
         method: 'GET',
-      })
+        },
+      )
       const normalizedPage = normalizeMovieListPage(response)
 
       setAllMovies((previousMovies) =>
@@ -641,7 +650,7 @@ function HomePage() {
       allMoviesPageRef.current = page
       hasMoreAllMoviesRef.current = normalizedPage.hasMore
     },
-    [],
+    [mediaConfig.resourcePath],
   )
 
   useEffect(() => {
@@ -698,7 +707,7 @@ function HomePage() {
 
       try {
         const response = await request<unknown>(
-          `/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`,
+          `${mediaConfig.resourcePath}/search?keyword=${encodeURIComponent(trimmedQuery)}`,
           { method: 'GET' },
         )
 
@@ -727,7 +736,7 @@ function HomePage() {
       isMounted = false
       window.clearTimeout(debounceTimer)
     }
-  }, [query])
+  }, [mediaConfig.resourcePath, query])
 
   useEffect(() => {
     function handleDocumentMouseDown(event: MouseEvent) {
@@ -756,7 +765,7 @@ function HomePage() {
   function moveToMovieDetail(movie: SearchMovie | PopularMovie | BannerMovie) {
     setIsSearchResultsOpen(false)
     setActiveSearchIndex(-1)
-    navigate(`/movies/${movie.code}`, {
+    navigate(mediaConfig.detailPath(movie.code), {
       state: {
         movie: {
           id: movie.code,
@@ -836,7 +845,7 @@ function HomePage() {
 
     try {
       const response = await request<unknown>(
-        `/movies/search?keyword=${encodeURIComponent(trimmedQuery)}`,
+        `${mediaConfig.resourcePath}/search?keyword=${encodeURIComponent(trimmedQuery)}`,
         { method: 'GET' },
       )
 
@@ -1184,13 +1193,13 @@ function HomePage() {
             <div className="search-box-shell" ref={searchBoxRef}>
               <form className="home-search-form" onSubmit={handleSearch}>
                 <label className="sr-only" htmlFor="movie-search">
-                  영화 검색
+                  {mediaConfig.searchLabel}
                 </label>
                 <input
                   id="movie-search"
                   className="home-search-input"
                   type="search"
-                  placeholder="영화 제목을 입력해보세요"
+                  placeholder={mediaConfig.searchPlaceholder}
                   value={query}
                   onChange={(event) => {
                     const nextQuery = event.target.value
@@ -1267,6 +1276,8 @@ function HomePage() {
                 isLoading={isSearchLoading}
                 isOpen={isSearchResultsOpen}
                 activeIndex={activeSearchIndex}
+                ariaLabel={`${mediaConfig.navLabel} 검색 목록`}
+                buildDetailPath={mediaConfig.detailPath}
               />
             </div>
 
@@ -1275,7 +1286,7 @@ function HomePage() {
           ) : null}
 
           {!isExpandedMovieView ? (
-            <section className="home-banner-section" aria-label="현재 상영중인 영화 배너">
+            <section className="home-banner-section" aria-label={mediaConfig.bannerAriaLabel}>
             {isBannerLoading ? (
               <div className="home-popular-loading" aria-live="polite">
                 <img
@@ -1292,7 +1303,7 @@ function HomePage() {
                   type="button"
                   onClick={moveToPreviousBannerMovie}
                   disabled={bannerPage === 0}
-                  aria-label="이전 현재 상영중인 영화"
+                  aria-label={`이전 ${mediaConfig.currentItemsTitle}`}
                 >
                   <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
                 </button>
@@ -1312,7 +1323,7 @@ function HomePage() {
                   type="button"
                   onClick={moveToNextBannerMovie}
                   disabled={bannerPage >= bannerPageCount - 1}
-                  aria-label="다음 현재 상영중인 영화"
+                  aria-label={`다음 ${mediaConfig.currentItemsTitle}`}
                 >
                   <img className="home-popular-side-button-icon" src={nextIcon} alt="" aria-hidden="true" />
                 </button>
@@ -1358,7 +1369,7 @@ function HomePage() {
 
           {!isExpandedMovieView
             ? renderMovieSection({
-                title: '현재 상영중인 영화',
+                title: mediaConfig.currentItemsTitle,
                 visibleMovie: visibleNowPlayingMovie,
                 visibleCards: visibleNowPlayingCards,
                 page: nowPlayingPage,
@@ -1370,7 +1381,7 @@ function HomePage() {
 
           {isExpandedMovieView ? (
             <section className="home-expanded-view-hero" aria-labelledby="home-expanded-view-title">
-              <h1 id="home-expanded-view-title">전체 영화</h1>
+              <h1 id="home-expanded-view-title">{mediaConfig.allItemsTitle}</h1>
               <button
                 className="home-expand-view-button home-expand-view-button-hero"
                 type="button"
@@ -1390,11 +1401,11 @@ function HomePage() {
           >
             {isExpandedMovieView ? null : (
               <div className="home-popular-section-header">
-                <h2 id="home-all-movies-title">전체 영화</h2>
+                <h2 id="home-all-movies-title">{mediaConfig.allItemsTitle}</h2>
                 <button
                   className="home-expand-view-button"
                   type="button"
-                  onClick={() => navigate('/movies')}
+                  onClick={() => navigate(mediaConfig.browsePath)}
                   aria-pressed="false"
                 >
                   펼쳐보기
@@ -1549,11 +1560,14 @@ function HomePage() {
         </div>
 
         <nav className="home-nav">
-          {PRIMARY_NAV_ITEMS.map((item, index) => (
+          {PRIMARY_NAV_ITEMS.map((item) => (
             <button
-              className={`home-nav-item${index === 0 ? ' home-nav-item-active' : ''}`}
+              className={`home-nav-item${
+                item === mediaConfig.navLabel ? ' home-nav-item-active' : ''
+              }`}
               type="button"
               key={item}
+              onClick={() => navigate(item === 'TV 시리즈' ? '/series' : '/')}
             >
               <span>{item}</span>
             </button>

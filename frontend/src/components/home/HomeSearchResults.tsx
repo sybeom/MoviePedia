@@ -11,15 +11,18 @@ type HomeSearchResultsProps = {
   isLoading: boolean
   isOpen: boolean
   activeIndex: number
+  ariaLabel?: string
+  buildDetailPath?: (code: string) => string
 }
 
-// 홈 검색 목록 UI 구성
 function HomeSearchResults({
   query,
   movies,
   isLoading,
   isOpen,
   activeIndex,
+  ariaLabel = '검색 목록',
+  buildDetailPath = (code) => `/movies/${code}`,
 }: HomeSearchResultsProps) {
   const trimmedQuery = query.trim()
 
@@ -28,9 +31,9 @@ function HomeSearchResults({
   }
 
   return (
-    <div className="home-search-results" role="listbox" aria-label="영화 검색 목록">
+    <div className="home-search-results" role="listbox" aria-label={ariaLabel}>
       {isLoading ? (
-        <p className="home-search-result-empty">검색 중...</p>
+        <p className="home-search-result-empty">검색 중..</p>
       ) : movies.length > 0 ? (
         movies.map((movie, index) => (
           <Link
@@ -38,7 +41,7 @@ function HomeSearchResults({
               activeIndex === index ? ' home-search-result-item-active' : ''
             }`}
             key={`${movie.code}-${index}`}
-            to={`/movies/${movie.code}`}
+            to={buildDetailPath(movie.code)}
             role="option"
             aria-selected={activeIndex === index}
             state={{ movie: { id: movie.code, title: movie.title, poster: '' } }}

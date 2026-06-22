@@ -51,9 +51,12 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/movies" element={<MovieBrowsePage />} />
-      <Route path="/movies/:movieCode" element={<MovieDetailPage />} />
+      <Route path="/" element={<HomePage key="movie-home" />} />
+      <Route path="/series" element={<HomePage key="series-home" />} />
+      <Route path="/movies" element={<MovieBrowsePage key="movie-browse" />} />
+      <Route path="/series/browse" element={<MovieBrowsePage key="series-browse" />} />
+      <Route path="/movies/:movieCode" element={<MovieDetailPage key="movie-detail" />} />
+      <Route path="/series/:seriesCode" element={<MovieDetailPage key="series-detail" />} />
       <Route path="/cookie" element={<CookiePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
