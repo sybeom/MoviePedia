@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Builder
 public record MovieDetailResponse(
-        Long code,
+        Integer code,
         String title,
         String backdropPath,
         String posterPath,

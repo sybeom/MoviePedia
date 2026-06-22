@@ -48,7 +48,7 @@ public class CommentController {
     })
     @GetMapping
     public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getCommentList(
-            @PathVariable Long movieCode,
+            @PathVariable Integer movieCode,
             @PageableDefault(size = 20) Pageable pageable,
             @RequestParam(defaultValue = "LATEST") SortType sort,
             Authentication auth) {
@@ -85,7 +85,7 @@ public class CommentController {
     })
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<Void>> saveComment(
-            @PathVariable Long movieCode,
+            @PathVariable Integer movieCode,
             @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외에서 처리
 
         commentService.saveComment(movieCode, dto);

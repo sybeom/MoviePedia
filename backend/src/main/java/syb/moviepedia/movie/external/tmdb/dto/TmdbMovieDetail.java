@@ -20,7 +20,7 @@ import java.util.List;
  */
 @Builder
 public record TmdbMovieDetail(
-        Long id,
+        Integer id,
         String title,
         @JsonProperty("backdrop_path")
         String backdropPath,

@@ -10,7 +10,7 @@ import java.util.List;
  */
 public record TmdbMovie(
         @JsonProperty("id")
-        Long code,
+        Integer code,
 
         String title,
 

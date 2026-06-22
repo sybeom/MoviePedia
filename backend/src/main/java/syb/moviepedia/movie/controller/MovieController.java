@@ -115,7 +115,7 @@ public class MovieController {
             )
     })
     @GetMapping("/{movieCode}")
-    public ResponseEntity<ApiSuccessResponse<MovieDetailResponse>> getMovieDetail(@PathVariable Long movieCode) {
+    public ResponseEntity<ApiSuccessResponse<MovieDetailResponse>> getMovieDetail(@PathVariable Integer movieCode) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 상세 정보", movieService.getMovieDetail(movieCode)));
     }
 
@@ -128,7 +128,7 @@ public class MovieController {
                     ))
     })
     @GetMapping("/{movieCode}/videos")
-    public ResponseEntity<ApiSuccessResponse<List<VideoResponse>>> getTrailer(@PathVariable Long movieCode) {
+    public ResponseEntity<ApiSuccessResponse<List<VideoResponse>>> getTrailer(@PathVariable Integer movieCode) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("트레일러 조회 성공", movieService.getVideos(movieCode)));
     }
 }

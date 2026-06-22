@@ -6,15 +6,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import syb.moviepedia.common.GenreType;
 import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+
 @Slf4j
 @Builder
 @Entity
@@ -27,7 +24,7 @@ public class Movie {
     private Long id;
 
     @Column(name = "movie_code", unique = true, nullable = false)
-    private Long code;
+    private Integer code;
 
     private String title;
 

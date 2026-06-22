@@ -27,10 +27,10 @@ public class TmdbClient {
     private static final String UPCOMING_PATH = "/movie/upcoming";
     private static final String GENRE_PATH = "/genre/movie/list";
     private static final String COUNTRY_PATH = "/configuration/countries";
-    private static final String RELEASE_DATE_PATH = "/movie/{movieId}/release_dates";
-    private static final String DETAIL_PATH = "/movie/{movieId}";
-    private static final String CREDIT_PATH = "/movie/{movieId}/credits";
-    private static final String TRAILER_PATH = "/movie/{movie_id}/videos";
+    private static final String RELEASE_DATE_PATH = "/movie/{movieCode}/release_dates";
+    private static final String DETAIL_PATH = "/movie/{movieCode}";
+    private static final String CREDIT_PATH = "/movie/{movieCode}/credits";
+    private static final String TRAILER_PATH = "/movie/{movieCode}/videos";
 
     // 전체 영화
     public TmdbMovieList getInitMovies(int page) {
@@ -58,9 +58,9 @@ public class TmdbClient {
     }
 
     // 관람 등급
-    public TmdbMovieCertification getMovieCertification(Long movieId) {
+    public TmdbMovieCertification getMovieCertification(Integer mvCode) {
         // 개봉일 api로 관람등급을 얻는다.
-        return fetchMovieReleaseDate(movieId);
+        return fetchMovieReleaseDate(mvCode);
     }
 
     // 국가 정보
@@ -69,18 +69,18 @@ public class TmdbClient {
     }
 
     // 영화 상세
-    public TmdbMovieDetail getMovieDetail(Long movieId) {
-        return fetchMovieDetail(movieId);
+    public TmdbMovieDetail getMovieDetail(Integer mvCode) {
+        return fetchMovieDetail(mvCode);
     }
 
     // 크레딧 (감독, 출연) 정보
-    public TmdbCredit getCredit(Long movieId) {
-        return fetchCredit(movieId);
+    public TmdbCredit getCredit(Integer mvCode) {
+        return fetchCredit(mvCode);
     }
 
     // 비디오(트레일러) 정보
-    public TmdbVideoResponse getVideos(Long movieId) {
-        return fetchMovieVideos(movieId);
+    public TmdbVideoResponse getVideos(Integer mvCode) {
+        return fetchMovieVideos(mvCode);
     }
 
     // 초기 영화 호출
@@ -132,7 +132,7 @@ public class TmdbClient {
     }
 
     // 개봉일 api 호출 - 연령 등급 얻기(개봉일 api에서 영화 연령 등급을 얻을 수 있기때문)
-    private TmdbMovieCertification fetchMovieReleaseDate(Long movieId) {
+    private TmdbMovieCertification fetchMovieReleaseDate(Integer mvCode) {
         return get(
                 RELEASE_DATE_PATH,
                 TmdbMovieCertification.class,
@@ -140,12 +140,12 @@ public class TmdbClient {
                 uriBuilder -> uriBuilder
                         .queryParam("language", "ko-KR")
                         .queryParam("region", "KR"),
-                movieId
+                mvCode
         );
     }
 
     // 영화 상세 api 호출 (영화 상세는 변환할 데이터가 크게 없기 때문에 Dto 클래스로 받고 그대로 반환)
-    private TmdbMovieDetail fetchMovieDetail(Long movieId) {
+    private TmdbMovieDetail fetchMovieDetail(Integer mvCode) {
         return get(
                 DETAIL_PATH,
                 TmdbMovieDetail.class,
@@ -153,31 +153,31 @@ public class TmdbClient {
                 uriBuilder -> uriBuilder
                         .queryParam("language", "ko-KR")
                         .queryParam("region", "KR"),
-                movieId
+                mvCode
         );
     }
 
     // 크레딧(감독 및 출연진) api
-    private TmdbCredit fetchCredit(Long movieId) {
+    private TmdbCredit fetchCredit(Integer mvCode) {
         return get(
                 CREDIT_PATH,
                 TmdbCredit.class,
                 "TMDB 크레딧 API 호출 실패",
                 uriBuilder -> uriBuilder
                         .queryParam("language", "ko-KR"),
-                movieId
+                mvCode
         );
     }
 
     // 영화 트레일러 api
-    private TmdbVideoResponse fetchMovieVideos(Long movieId) {
+    private TmdbVideoResponse fetchMovieVideos(Integer mvCode) {
         return get(
                 TRAILER_PATH,
                 TmdbVideoResponse.class,
                 "TMDB 트레일러 API 호출 실패",
                 uriBuilder -> uriBuilder
                         .queryParam("language", "ko-KR"),
-                movieId
+                mvCode
         );
     }
 

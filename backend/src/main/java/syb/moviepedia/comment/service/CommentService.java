@@ -48,7 +48,7 @@ public class CommentService {
 
     // 모든 코멘트 목록
     @Transactional
-    public CommentListResponse getAllComments(Long mvCode, Pageable pageable, String loginId, SortType sortType) {
+    public CommentListResponse getAllComments(Integer mvCode, Pageable pageable, String loginId, SortType sortType) {
         Movie movie = movieRepository.findByCode(mvCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
@@ -71,7 +71,7 @@ public class CommentService {
 
     // 저장
     @Transactional
-    public void saveComment(Long mvCode, CommentSaveRequest dto) {
+    public void saveComment(Integer mvCode, CommentSaveRequest dto) {
         Movie movie = movieRepository.findByCode(mvCode).orElseThrow(
                 () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 

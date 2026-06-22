@@ -14,7 +14,7 @@ import java.util.Set;
 
 public interface MovieRepository extends JpaRepository<Movie, Long> {
 
-    Optional<Movie> findByCode(Long code);
+    Optional<Movie> findByCode(Integer code);
 
     @Query("""
         select m
@@ -29,7 +29,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
         from Movie m
         where m.code in :codes
     """)
-    Set<Long> findCodesByCodeIn(@Param("codes") List<Long> codes);
+    Set<Long> findCodesByCodeIn(@Param("codes") List<Integer> codes);
 
     // codes에 존재하는 영화 코드들 찾기
     @Query("""

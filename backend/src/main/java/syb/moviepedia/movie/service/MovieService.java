@@ -170,7 +170,7 @@ public class MovieService {
      * DB에 있더라도 detailFetched가 false면 일부 상세 정보(국가, 관람등급, 런타임 등)이 비어있는 상태이므로 업데이트한다.
      */
     @Transactional
-    public MovieDetailResponse getMovieDetail(Long mvCode) {
+    public MovieDetailResponse getMovieDetail(Integer mvCode) {
         // 영화 상세. 영화가 DB에 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
         Movie movie = movieRepository.findByCode(mvCode).orElseGet(() -> {
             log.info("DB 영화 존재 X, DB 저장");
@@ -286,7 +286,7 @@ public class MovieService {
     }
 
     @Transactional
-    public List<VideoResponse> getVideos(Long movieCode) {
+    public List<VideoResponse> getVideos(Integer movieCode) {
         Movie movie = movieRepository.findByCode(movieCode)
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드 :" + movieCode));
 

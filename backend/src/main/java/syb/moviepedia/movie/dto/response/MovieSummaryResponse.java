@@ -10,7 +10,7 @@ import java.util.List;
  */
 @Builder
 public record MovieSummaryResponse(
-        Long code,
+        Integer code,
         String title, // 제목
         String poster, // 포스터
         List<String> genre, // 장르

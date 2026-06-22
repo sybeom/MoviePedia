@@ -5,7 +5,7 @@ import syb.moviepedia.movie.domain.Movie;
 
 @Builder
 public record AllMoviesResponse(
-        Long code,
+        Integer code,
         String posterPath,
         String title,
         String certification

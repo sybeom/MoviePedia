@@ -100,7 +100,7 @@ public class MovieInitService {
 
 
     private void saveMovies(TmdbMovieList responses) {
-        List<Long> codes = responses.results().stream().map(tmdbMovie -> tmdbMovie.code()).toList();
+        List<Integer> codes = responses.results().stream().map(tmdbMovie -> tmdbMovie.code()).toList();
         // 현재 DB에 존재하는 영화 code만 걸러냄, 속도 때문에 Set을 사용
         Set<Long> existingCodes = movieRepository.findCodesByCodeIn(codes);
 
@@ -138,7 +138,7 @@ public class MovieInitService {
         saveMovieGenres(newMovieResponses, savedMovies);
     }
     private List<TmdbMovie> filterNewMovieResponses(TmdbMovieList responses) {
-        List<Long> codes = responses.results().stream()
+        List<Integer> codes = responses.results().stream()
                 .map(TmdbMovie::code)
                 .toList();
 
@@ -154,7 +154,7 @@ public class MovieInitService {
             List<TmdbMovie> newMovieResponses,
             List<Movie> savedMovies
     ) {
-        Map<Long, Movie> movieMap = savedMovies.stream()
+        Map<Integer, Movie> movieMap = savedMovies.stream()
                 .collect(Collectors.toMap(Movie::getCode, movie -> movie));
 
         Set<Integer> genreCodes = newMovieResponses.stream()
@@ -354,7 +354,7 @@ public class MovieInitService {
         if (commentRepository.count() > 0) return;
 
         log.info("createComment(): 코멘트 더미 데이터 생성 시작");
-        Movie movie = movieRepository.findByCode(350L).get();
+        Movie movie = movieRepository.findByCode(350).get();
 
         List<Comment> list = new ArrayList<>();
 
