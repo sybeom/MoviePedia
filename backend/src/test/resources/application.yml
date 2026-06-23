@@ -1,0 +1,5 @@
+tmdb:
+  api:
+    base-url: https://api.themoviedb.org/3
+    # 값은 RUN -> Edit Configuration -> Environment variables에 설정되어있음. Authorization 헤더에 설정된다
+    token: ${TMDB_API_TOKEN}

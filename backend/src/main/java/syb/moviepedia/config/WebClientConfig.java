@@ -45,6 +45,7 @@ public class WebClientConfig {
             // 값은 RUN -> Edit Configuration -> Environment variables에 설정되어있음. Authorization 헤더에 설정된다
             @Value("${tmdb.api.token}") String token
     ) {
+        System.out.println("TMDB baseUrl = " + baseUrl);
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + token)
