@@ -12,17 +12,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.repository.CommentRepository;
-import syb.moviepedia.common.MovieCategoryType;
-import syb.moviepedia.common.ProviderType;
-import syb.moviepedia.common.ReactionType;
-import syb.moviepedia.common.RoleType;
+import syb.moviepedia.common.*;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
 import syb.moviepedia.movie.repository.*;
+import syb.moviepedia.tv.external.TmdbTVClient;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,6 +35,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class MovieInitService {
 
+    private final TmdbTVClient tmdbTVClient;
     private final TmdbClient tmdbClient;
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;

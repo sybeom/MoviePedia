@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 
 import java.util.function.Consumer;
@@ -17,6 +18,7 @@ public class TmdbTVClient {
 
     private final WebClient tmdbWebClient;
     private final static String TV_DISCOVER_PATH = "/discover/tv";
+    private final static String TV_GENRES = "/genre/tv/list";
 
     public TmdbTVDiscover getTvTest(int page) {
         return get(

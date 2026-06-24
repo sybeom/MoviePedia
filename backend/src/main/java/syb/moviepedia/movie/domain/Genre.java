@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import syb.moviepedia.common.MediaType;
 
 /**
  * 장르 정보 엔티티
@@ -25,4 +26,8 @@ public class Genre {
 
     @Column(unique = true, nullable = false)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "media_type", nullable = false)
+    private MediaType mediaType;
 }
