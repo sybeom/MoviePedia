@@ -29,11 +29,6 @@ import java.util.List;
 public class MovieController {
     private final MovieService movieService;
 
-    /**
-     * 임시 커밋
-     * @param pageable
-     */
-
     @Operation(
             summary = "홈 화면 전체 영화", description = "홈 화면 전체 영화 목록 10개씩 가져온다.")
     @ApiResponses({

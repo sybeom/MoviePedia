@@ -3,6 +3,7 @@ package syb.moviepedia.movie.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import syb.moviepedia.common.MediaType;
 import syb.moviepedia.movie.domain.Genre;
 
 import java.util.Collection;
@@ -17,4 +18,11 @@ public interface GenreRepository extends JpaRepository<Genre,Long> {
     Optional<Genre> findByCode(Integer code);
 
     List<Genre> findByCodeIn(Collection<Integer> codes);
+
+    @Query("""
+        select g
+        from Genre g
+        where g.mediaType=MediaType.MOVIE or g.mediaType=MediaType.BOTH
+    """)
+    List<Genre> findAllByMediaType();
 }
