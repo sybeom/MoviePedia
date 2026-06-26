@@ -11,7 +11,7 @@ import java.util.List;
  */
 @MappedSuperclass
 public abstract class BaseMediaEntity {
-    private Long code;
+    private Integer code;
 
     private String title;
 
@@ -20,6 +20,7 @@ public abstract class BaseMediaEntity {
 
     private String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
 
+    @Column(columnDefinition = "TEXT")
     private String overview;
 
     @Column(name = "release_date")
@@ -35,4 +36,24 @@ public abstract class BaseMediaEntity {
 
     @Column(name = "like_count", nullable = false)
     private long likeCount=0;
+
+    protected BaseMediaEntity(
+            Integer code,
+            String title,
+            String posterPath,
+            String certification,
+            String overview,
+            String releaseDate,
+            List<String> country,
+            Boolean detailFetched
+    ) {
+        this.code = code;
+        this.title = title;
+        this.posterPath = posterPath;
+        this.certification = certification;
+        this.overview = overview;
+        this.releaseDate = releaseDate;
+        this.country = country;
+        this.detailFetched = detailFetched;
+    }
 }

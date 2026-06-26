@@ -152,7 +152,7 @@ public class MovieService {
     @Transactional(readOnly = true)
     public List<GenreResponse> getGenres(MediaType mediaType) {
         log.info("장르 목록 조회 성공");
-        
+
         return genreRepository.findAllByMediaType(mediaType).stream().map(genre ->
                 GenreResponse.builder()
                         .genreCode(genre.getCode())

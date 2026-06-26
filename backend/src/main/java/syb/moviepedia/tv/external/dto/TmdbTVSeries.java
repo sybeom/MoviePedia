@@ -8,8 +8,11 @@ import java.util.List;
  * Tmdb TV api(/tv/{series_id}) 호출 결과
  */
 public record TmdbTVSeries(
+        @JsonProperty("id")
+        Integer code,
+
         @JsonProperty("name")
-        String title,
+        String title, // 시리즈 제목
 
         @JsonProperty("genre_ids")
         List<Integer> genres,
@@ -17,8 +20,23 @@ public record TmdbTVSeries(
         @JsonProperty("origin_country")
         List<String> countries,
 
-        @JsonProperty("number_of_seasons")
-        Integer numberOfSeasons
+        List<TVSeasons> seasons
 ) {
+        public record TVSeasons(
+                @JsonProperty("id")
+                Integer seasonCode,
 
+                @JsonProperty("name")
+                String title,
+
+                String overview,
+
+                @JsonProperty("poster_path")
+                String posterPath,
+
+                @JsonProperty("season_number")
+                Integer seasonNumber
+        ) {
+
+        }
 }

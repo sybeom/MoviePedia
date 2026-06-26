@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class MovieInitService {
 
-    private final TmdbTVClient tmdbTVClient;
     private final TmdbClient tmdbClient;
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;

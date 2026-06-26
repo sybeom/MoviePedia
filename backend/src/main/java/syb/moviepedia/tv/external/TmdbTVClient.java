@@ -8,6 +8,7 @@ import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
+import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 
 import java.util.function.Consumer;
 
@@ -18,6 +19,7 @@ public class TmdbTVClient {
 
     private final WebClient tmdbWebClient;
     private final static String TV_DISCOVER_PATH = "/discover/tv";
+    private final static String SERIES_PATH = "/tv/{seriesId}";
     private final static String TV_GENRES = "/genre/tv/list";
 
     public TmdbTVDiscover getTvTest(int page) {
@@ -29,6 +31,18 @@ public class TmdbTVClient {
                         .queryParam("page", page)
                         .queryParam("language", "KO-KR")
         );
+    }
+
+    public TmdbTVSeries getTVSeries(Integer seriesCode) {
+        return get(
+                SERIES_PATH,
+                TmdbTVSeries.class,
+                "Tmdb TV Series Detail api 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                seriesCode
+        );
+
     }
 
     private <T> T get(
