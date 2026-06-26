@@ -1,11 +1,9 @@
 package syb.moviepedia.movie.service;
 
-import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -21,12 +19,9 @@ import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static syb.moviepedia.common.SortType.LATEST;
-import static syb.moviepedia.common.SortType.OLDEST;
 import static syb.moviepedia.movie.domain.QMovie.movie;
 
 @Slf4j
@@ -155,11 +150,10 @@ public class MovieService {
 
     // 장르 목록 조회 (필터 목록에 보여질 데이터들)
     @Transactional(readOnly = true)
-    public List<GenreResponse> getGenres() {
+    public List<GenreResponse> getGenres(MediaType mediaType) {
         log.info("장르 목록 조회 성공");
-        List<Genre> allByMediaType = genreRepository.findAllByMediaType();
-        log.info("장르 목록 : {}", allByMediaType.toString());
-        return genreRepository.findAllByMediaType().stream().map(genre ->
+        
+        return genreRepository.findAllByMediaType(mediaType).stream().map(genre ->
                 GenreResponse.builder()
                         .genreCode(genre.getCode())
                         .name(genre.getName()).build())

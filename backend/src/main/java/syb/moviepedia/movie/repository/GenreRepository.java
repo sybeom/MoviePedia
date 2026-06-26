@@ -22,7 +22,7 @@ public interface GenreRepository extends JpaRepository<Genre,Long> {
     @Query("""
         select g
         from Genre g
-        where g.mediaType=MediaType.MOVIE or g.mediaType=MediaType.BOTH
+        where g.mediaType=:mediaType or g.mediaType=MediaType.BOTH
     """)
-    List<Genre> findAllByMediaType();
+    List<Genre> findAllByMediaType(@Param("mediaType") MediaType mediaType);
 }

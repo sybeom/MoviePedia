@@ -13,6 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import syb.moviepedia.common.MediaType;
 import syb.moviepedia.common.SortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
@@ -93,8 +94,8 @@ public class MovieController {
             )
     })
     @GetMapping("/genres")
-    public ResponseEntity<ApiSuccessResponse<List<GenreResponse>>> getGenres() {
-        List<GenreResponse> genres = movieService.getGenres();
+    public ResponseEntity<ApiSuccessResponse<List<GenreResponse>>> getGenres(@RequestParam MediaType mediaType) {
+        List<GenreResponse> genres = movieService.getGenres(mediaType);
         log.info("genres: {}", genres);
         return ResponseEntity.ok().body(ApiSuccessResponse.of("장르 목록 조회 성공", genres));
     }
