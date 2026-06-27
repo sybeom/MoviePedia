@@ -22,7 +22,9 @@ public class TmdbTVClient {
     private final static String SERIES_PATH = "/tv/{seriesId}";
     private final static String TV_GENRES = "/genre/tv/list";
 
-    public TmdbTVDiscover getTvTest(int page) {
+
+     // TV 시리즈 목록 api
+    public TmdbTVDiscover fetchTVSeries(int page) {
         return get(
                 TV_DISCOVER_PATH,
                 TmdbTVDiscover.class,
@@ -33,7 +35,8 @@ public class TmdbTVClient {
         );
     }
 
-    public TmdbTVSeries getTVSeries(Integer seriesCode) {
+    // 시리즈 상세 정보 api
+    public TmdbTVSeries fetchTVSeriesDetail(Integer seriesCode) {
         return get(
                 SERIES_PATH,
                 TmdbTVSeries.class,

@@ -30,21 +30,23 @@ public class TmdbApiTest {
     public void tmdbApiTest(){
 
         // 시리즈 id를 반환
-        TmdbTVDiscover discover = tmdbTVClient.getTvTest(1);
+        TmdbTVDiscover discover = tmdbTVClient.fetchTVSeries(1);
         org.assertj.core.api.Assertions.assertThat(discover).isNotNull();
 
         List<TV> tvs = discover.results().stream()
-                .map(result -> tmdbTVClient.getTVSeries(result.id()))
+                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.id()))
                 .filter(series -> series.title().matches(TITLE_PATTERN))
                 .flatMap(series -> series.seasons().stream()
+                        .filter(season -> season.seasonNumber() != 0)
                         .map(season -> TV.builder()
                                 .code(series.code())
                                 .title(series.title())
+                                .seasonNum(season.seasonNumber())
+                                .episodeCnt(season.episodeCnt())
                                 .posterPath(season.posterPath())
                                 .overview(season.overview())
                                 .country(countryRepo.findNameByCodeIn(series.countries()))
                                 .detailFetched(false)
-                                .seasonNum(season.seasonNumber())
                                 .build()
                         )
                 )

@@ -15,9 +15,6 @@ public abstract class BaseMediaEntity {
 
     private String title;
 
-    @Column(name = "poster_path")
-    private String posterPath;
-
     private String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
 
     @Column(columnDefinition = "TEXT")
@@ -36,6 +33,9 @@ public abstract class BaseMediaEntity {
 
     @Column(name = "like_count", nullable = false)
     private long likeCount=0;
+
+    @Column(name = "poster_path")
+    private String posterPath;
 
     protected BaseMediaEntity(
             Integer code,

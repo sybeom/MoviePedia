@@ -3,11 +3,14 @@ package syb.moviepedia.tv.domain;
 
 import jakarta.persistence.*;
 import lombok.Builder;
-import lombok.experimental.SuperBuilder;
 import syb.moviepedia.media.BaseMediaEntity;
 
 import java.util.List;
 
+
+/**
+ * TV 시즌별 엔티티
+ */
 @Entity
 @AttributeOverrides({
         @AttributeOverride(
@@ -27,20 +30,25 @@ public class TV extends BaseMediaEntity {
     @Column(name = "season_number")
     private Integer seasonNum;
 
+    @Column(name = "episode_count")
+    private Integer episodeCnt;
+
     @Builder
     public TV(
             Integer code,
             String title,
+            Integer seasonNum,
+            Integer episodeCnt,
             String posterPath,
             String certification,
             String overview,
             String releaseDate,
             List<String> country,
-            Boolean detailFetched,
-            Integer seasonNum
+            Boolean detailFetched
+
     ) {
         super(code, title, posterPath, certification, overview, releaseDate, country, detailFetched);
         this.seasonNum = seasonNum;
+        this.episodeCnt = episodeCnt;
     }
-
 }

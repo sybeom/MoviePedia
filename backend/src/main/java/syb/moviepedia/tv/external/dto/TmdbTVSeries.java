@@ -35,7 +35,10 @@ public record TmdbTVSeries(
                 String posterPath,
 
                 @JsonProperty("season_number")
-                Integer seasonNumber
+                Integer seasonNumber,
+
+                @JsonProperty("episode_count")
+                Integer episodeCnt
         ) {
 
         }

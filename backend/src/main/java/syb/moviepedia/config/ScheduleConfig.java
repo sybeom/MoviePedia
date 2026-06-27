@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.jwt.repository.JwtRepository;
 import syb.moviepedia.movie.service.MovieInitService;
+import syb.moviepedia.tv.service.TvInitService;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -20,9 +21,10 @@ import java.util.Locale;
 public class ScheduleConfig {
     private final JwtRepository jwtRepository;
     private final MovieInitService movieInitService;
+    private final TvInitService tvInitService;
 
     // TODO: https://sabarada.tistory.com/220 배치 하는 방법
-    private int page = 0;
+    private int page = 1;
 
     // 새벽 3시마다 Refresh 토큰 저장소 8일 지난 토큰 삭제
     @Scheduled(cron = "0 0 3 * * *") // 기본 cron = "0 0 3 * * *" (새벽 3시 진행)
@@ -43,8 +45,7 @@ public class ScheduleConfig {
 //    // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
 //    @Scheduled(fixedRate = 15000, initialDelay = 10000) // 3분마다 삽입
 //    public void InsertMovie() {
-//        log.info("영화 삽입 스케줄 호출");
-//
-//        movieInitService.initMovies(page++);
+////        movieInitService.initMovies(page++);
+//        tvInitService.initTV(page++);
 //    }
 }
