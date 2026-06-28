@@ -2,6 +2,7 @@ package syb.moviepedia.media;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  *
  */
 @MappedSuperclass
+@NoArgsConstructor
 public abstract class BaseMediaEntity {
     private Integer code;
 

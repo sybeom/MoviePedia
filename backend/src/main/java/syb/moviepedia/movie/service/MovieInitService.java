@@ -265,7 +265,6 @@ public class MovieInitService {
             MovieCategory mc = MovieCategory.builder()
                     .categoryType(category)
                     .movie(movie)
-                    .popularity(response.popularity())
                     .build();
 
             movieCategoryRepository.save(mc);

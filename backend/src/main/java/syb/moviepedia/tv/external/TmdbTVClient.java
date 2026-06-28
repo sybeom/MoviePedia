@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
+import syb.moviepedia.tv.external.dto.TmdbTVCategory;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 
@@ -21,6 +21,7 @@ public class TmdbTVClient {
     private final static String TV_DISCOVER_PATH = "/discover/tv";
     private final static String SERIES_PATH = "/tv/{seriesId}";
     private final static String TV_GENRES = "/genre/tv/list";
+    private final static String TV_POPULAR = "/tv/popular";
 
 
      // TV 시리즈 목록 api
@@ -46,6 +47,18 @@ public class TmdbTVClient {
                 seriesCode
         );
 
+    }
+
+    // 인기 TV 시리즈 api
+    public TmdbTVCategory fetchTVPopularCategories() {
+        return get(
+                TV_POPULAR,
+                TmdbTVCategory.class,
+                "Tmdb TV Popular Category api 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("page", 1)
+                        .queryParam("language", "KO-KR")
+        );
     }
 
     private <T> T get(

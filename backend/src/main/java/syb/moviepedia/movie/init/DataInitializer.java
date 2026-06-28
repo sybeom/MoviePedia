@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import syb.moviepedia.movie.service.MovieInitService;
+import syb.moviepedia.tv.service.TVInitService;
 
 /**
  * 영화 초기 데이터 클래스 (실행시 1회 실행)
@@ -15,6 +16,7 @@ import syb.moviepedia.movie.service.MovieInitService;
 public class DataInitializer implements CommandLineRunner {
 
     private final MovieInitService movieInitService;
+    private final TVInitService tvInitService;
 
     @Override
     public void run(String... args) {
@@ -28,5 +30,6 @@ public class DataInitializer implements CommandLineRunner {
 
 //        movieInitService.setGenre();
 //        movieInitService.initData();
+//        tvInitService.initCategories();
     }
 }

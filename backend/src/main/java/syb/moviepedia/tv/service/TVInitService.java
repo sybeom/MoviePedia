@@ -3,22 +3,44 @@ package syb.moviepedia.tv.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import syb.moviepedia.common.MovieCategoryType;
 import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.tv.domain.TV;
+import syb.moviepedia.tv.domain.TVCategory;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
+import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class TvInitService {
-    private final TVRepository tvRepository;
+public class TVInitService {
+    private final TVRepository tvRepo;
+    private final TVCategoryRepository tvCategoryRepo;
     private final TmdbTVClient tmdbTVClient;
     private final CountryRepository countryRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
+
+    public void initCategories() {
+        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()
+                .filter(result -> isTitleMatch(result.title()))
+                .map(result -> result.code())
+                .collect(Collectors.toSet());
+
+        List<TV> tvList = tvRepo.findByPopularSeason(seriesCodes);
+
+        List<TVCategory> categories = tvList.stream().map(tv -> TVCategory.builder()
+                        .movieCategoryType(MovieCategoryType.POPULAR)
+                        .tv(tv)
+                        .build())
+                .toList();
+        tvCategoryRepo.saveAll(categories);
+    }
 
     public void initTV(int page) {
         // 시리즈 id를 반환
@@ -26,7 +48,7 @@ public class TvInitService {
 
         List<TV> tvs = tvSeries.results().stream()
                 .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.id()))
-                .filter(series -> series.title().matches(TITLE_PATTERN))
+                .filter(series -> isTitleMatch(series.title()))
                 .flatMap(series -> series.seasons().stream()
                         .filter(season -> season.seasonNumber() != 0)
                         .map(season -> TV.builder()
@@ -43,7 +65,11 @@ public class TvInitService {
                 )
                 .toList();
 
-        tvRepository.saveAll(tvs);
+        tvRepo.saveAll(tvs);
 
+    }
+
+    private boolean isTitleMatch(String title) {
+        return title.matches(TITLE_PATTERN);
     }
 }

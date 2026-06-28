@@ -3,6 +3,7 @@ package syb.moviepedia.tv.domain;
 
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import syb.moviepedia.media.BaseMediaEntity;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
                 column = @Column(name = "series_title")
         )
 })
+@NoArgsConstructor
 public class TV extends BaseMediaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

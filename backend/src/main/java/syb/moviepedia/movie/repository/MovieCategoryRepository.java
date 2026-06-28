@@ -18,7 +18,6 @@ public interface MovieCategoryRepository extends JpaRepository<MovieCategory, Lo
         from MovieCategory mc
         join fetch mc.movie
         where mc.categoryType = :categoryType
-        order by mc.popularity desc
     """)
-    List<MovieCategory> findByCategoryTypeOrderByPopularityDesc(@Param("categoryType") MovieCategoryType categoryType);
+    List<MovieCategory> findByCategoryTypeOrderByPopularity(@Param("categoryType") MovieCategoryType categoryType);
 }

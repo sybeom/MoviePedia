@@ -117,7 +117,7 @@ public class MovieService {
     @Transactional(readOnly = true)
     public List<MovieBannerResponse> getBannerMovies() {
         List<MovieCategory> mvCategoryList =
-                movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
+                movieCategoryRepository.findByCategoryTypeOrderByPopularity(MovieCategoryType.POPULAR);
         return mvCategoryList.stream().map(mvCategory -> mvCategory.getMovie())
                 .map(movie -> MovieBannerResponse.builder()
                         .movieCode(movie.getCode())
@@ -131,9 +131,9 @@ public class MovieService {
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
         log.info("영화 엔티티 수: {}", movieRepository.count());
-        List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.POPULAR);
-        List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.UPCOMING);
-        List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularityDesc(MovieCategoryType.NOW_PLAYING);
+        List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularity(MovieCategoryType.POPULAR);
+        List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularity(MovieCategoryType.UPCOMING);
+        List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularity(MovieCategoryType.NOW_PLAYING);
 
         // DTO로 가공
         List<MovieSummaryResponse> popularListDto = popularList.stream().map(response -> toMovieSummaryDto(response)).toList();
