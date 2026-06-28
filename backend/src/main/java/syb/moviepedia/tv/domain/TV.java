@@ -3,7 +3,9 @@ package syb.moviepedia.tv.domain;
 
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import syb.moviepedia.media.BaseMediaEntity;
 
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.List;
 /**
  * TV 시즌별 엔티티
  */
-@Entity
+
 @AttributeOverrides({
         @AttributeOverride(
                 name = "code",
@@ -23,6 +25,8 @@ import java.util.List;
                 column = @Column(name = "series_title")
         )
 })
+@Entity
+@Getter
 @NoArgsConstructor
 public class TV extends BaseMediaEntity {
     @Id

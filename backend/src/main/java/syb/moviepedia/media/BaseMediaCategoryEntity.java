@@ -1,8 +1,10 @@
 package syb.moviepedia.media;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
 import syb.moviepedia.common.MediaCategoryType;
 
+@NoArgsConstructor
 @MappedSuperclass
 public abstract class BaseMediaCategoryEntity {
     @Id

@@ -15,8 +15,8 @@ public record TmdbTVCategory(
             @JsonProperty("name")
             String title,
 
-            @JsonProperty("poster_path")
-            String posetPath
+            @JsonProperty("backdrop_path")
+            String backdropPath
     ) {
 
     }

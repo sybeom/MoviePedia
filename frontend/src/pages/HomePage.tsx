@@ -45,6 +45,7 @@ type BannerMovie = {
 
 type CategoryMoviesResponse = {
   nowPlaying?: unknown
+  popular?: unknown
 }
 
 type MovieListPage = {
@@ -340,7 +341,14 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
   return data
     .filter(isRecord)
     .map((value) => {
-      const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
+      const code = getScalarStringValue(value, [
+        'code',
+        'movieCode',
+        'movieCd',
+        'tvcode',
+        'tvCode',
+        'seriesCode',
+      ])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
       const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
       const genres = getStringArrayValue(value, ['genres', 'genre'])
@@ -365,7 +373,14 @@ function normalizeBannerMovies(data: unknown): BannerMovie[] {
   return list
     .filter(isRecord)
     .map((value) => {
-      const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
+      const code = getScalarStringValue(value, [
+        'code',
+        'movieCode',
+        'movieCd',
+        'tvcode',
+        'tvCode',
+        'seriesCode',
+      ])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
       const backdrop = getImageSource(
         getStringValue(value, [
@@ -418,6 +433,7 @@ function HomePage() {
   const [genreOptions, setGenreOptions] = useState<GenreOption[]>([{ label: '전체', value: 'ALL' }])
   const [bannerMovies, setBannerMovies] = useState<BannerMovie[]>([])
   const [nowPlayingMovies, setNowPlayingMovies] = useState<PopularMovie[]>([])
+  const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
   const [isBannerLoading, setIsBannerLoading] = useState(true)
   const [isGenresLoading, setIsGenresLoading] = useState(true)
@@ -425,6 +441,7 @@ function HomePage() {
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [isBannerSliding, setIsBannerSliding] = useState(false)
   const [nowPlayingPage, setNowPlayingPage] = useState(0)
+  const [popularPage, setPopularPage] = useState(0)
   const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['ALL'])
   const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
   const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MovieReleaseFilter>('전체')
@@ -501,7 +518,7 @@ function HomePage() {
         const response = await request<CategoryMoviesResponse>(
           `${mediaConfig.resourcePath}/categories`,
           {
-          method: 'GET',
+            method: 'GET',
           },
         )
 
@@ -510,13 +527,16 @@ function HomePage() {
         }
 
         setNowPlayingMovies(normalizePopularMovies(response?.nowPlaying))
+        setPopularMovies(normalizePopularMovies(response?.popular))
         setNowPlayingPage(0)
+        setPopularPage(0)
       } catch {
         if (!isMounted) {
           return
         }
 
         setNowPlayingMovies([])
+        setPopularMovies([])
       } finally {
         if (isMounted) {
           setIsCategoriesLoading(false)
@@ -529,7 +549,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [mediaConfig.resourcePath])
+  }, [mediaConfig.resourcePath, mediaConfig.type])
 
   useEffect(() => {
     let isMounted = true
@@ -538,9 +558,14 @@ function HomePage() {
       setIsBannerLoading(true)
 
       try {
-        const response = await request<unknown>(`${mediaConfig.resourcePath}/banners`, {
-          method: 'GET',
-        })
+        const response =
+          mediaConfig.type === 'series'
+            ? await request<unknown>('/tv/banners', {
+                method: 'GET',
+              })
+            : await request<unknown>(`${mediaConfig.resourcePath}/banners`, {
+                method: 'GET',
+              })
 
         if (!isMounted) {
           return
@@ -569,7 +594,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [mediaConfig.resourcePath])
+  }, [mediaConfig.resourcePath, mediaConfig.type])
 
   useEffect(() => {
     let isMounted = true
@@ -611,7 +636,7 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [mediaConfig.resourcePath])
+  }, [mediaConfig.resourcePath, mediaConfig.type])
 
   const loadAllMoviesPage = useCallback(
     async (
@@ -893,6 +918,11 @@ function HomePage() {
   const visibleNowPlayingCards = nowPlayingMovies
     .map((movie, index) => ({ movie, offset: index - nowPlayingPage }))
     .filter(({ offset }) => offset >= -2 && offset <= 2)
+  const popularPageCount = popularMovies.length
+  const visiblePopularMovie = popularMovies[popularPage] ?? null
+  const visiblePopularCards = popularMovies
+    .map((movie, index) => ({ movie, offset: index - popularPage }))
+    .filter(({ offset }) => offset >= -2 && offset <= 2)
 
   const startBannerTransition = useCallback(
     (direction: 'next' | 'previous', allowWrap = false) => {
@@ -947,6 +977,14 @@ function HomePage() {
 
   function moveToNextNowPlayingMovie() {
     setNowPlayingPage((page) => Math.min(nowPlayingPageCount - 1, page + 1))
+  }
+
+  function moveToPreviousPopularMovie() {
+    setPopularPage((page) => Math.max(0, page - 1))
+  }
+
+  function moveToNextPopularMovie() {
+    setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
   }
 
   useEffect(() => {
@@ -1382,6 +1420,19 @@ function HomePage() {
                 pageCount: nowPlayingPageCount,
                 onPrevious: moveToPreviousNowPlayingMovie,
                 onNext: moveToNextNowPlayingMovie,
+              })
+            : null}
+
+          {!isExpandedMovieView
+            && mediaConfig.type === 'movie'
+            ? renderMovieSection({
+                title: mediaConfig.popularItemsTitle,
+                visibleMovie: visiblePopularMovie,
+                visibleCards: visiblePopularCards,
+                page: popularPage,
+                pageCount: popularPageCount,
+                onPrevious: moveToPreviousPopularMovie,
+                onNext: moveToNextPopularMovie,
               })
             : null}
 

@@ -11,6 +11,7 @@ export type MediaConfig = {
   searchPlaceholder: string
   allItemsTitle: string
   currentItemsTitle: string
+  popularItemsTitle: string
   bannerAriaLabel: string
   filterAriaLabel: string
   listAriaLabel: string
@@ -29,6 +30,7 @@ export const MEDIA_CONFIGS: Record<MediaType, MediaConfig> = {
     searchPlaceholder: '영화 제목을 입력해보세요',
     allItemsTitle: '전체 영화',
     currentItemsTitle: '현재 상영중인 영화',
+    popularItemsTitle: '인기 영화',
     bannerAriaLabel: '현재 상영중인 영화 배너',
     filterAriaLabel: '영화 필터',
     listAriaLabel: '전체 영화 목록',
@@ -45,6 +47,7 @@ export const MEDIA_CONFIGS: Record<MediaType, MediaConfig> = {
     searchPlaceholder: '시리즈 제목을 입력해보세요',
     allItemsTitle: '전체 시리즈',
     currentItemsTitle: '현재 방영중인 시리즈',
+    popularItemsTitle: '인기 TV 시리즈',
     bannerAriaLabel: '현재 방영중인 시리즈 배너',
     filterAriaLabel: '시리즈 필터',
     listAriaLabel: '전체 시리즈 목록',

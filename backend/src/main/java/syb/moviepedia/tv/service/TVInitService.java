@@ -27,18 +27,31 @@ public class TVInitService {
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
     public void initCategories() {
-        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()
+//        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()
+//                .filter(result -> isTitleMatch(result.title()))
+//                .map(result -> result.code())
+//                .collect(Collectors.toSet());
+
+//        List<TV> tvList = tvRepo.findByPopularSeason(seriesCodes);
+
+//        List<TVCategory> categories = tvList.stream().map(tv -> TVCategory.builder()
+//                        .code(tv.getCode())
+//                        .title(tv.getTitle())
+//                        .backdropPath("E")
+//                        .mediaCategoryType(MediaCategoryType.POPULAR)
+//                        .tv(tv)
+//                        .build())
+//                .toList();
+        List<TVCategory> categories = tmdbTVClient.fetchTVPopularCategories().results().stream()
                 .filter(result -> isTitleMatch(result.title()))
-                .map(result -> result.code())
-                .collect(Collectors.toSet());
-
-        List<TV> tvList = tvRepo.findByPopularSeason(seriesCodes);
-
-        List<TVCategory> categories = tvList.stream().map(tv -> TVCategory.builder()
+                .map(result -> TVCategory.builder()
+                        .code(result.code())
+                        .title(result.title())
+                        .backdropPath(result.backdropPath())
                         .mediaCategoryType(MediaCategoryType.POPULAR)
-                        .tv(tv)
                         .build())
                 .toList();
+
         tvCategoryRepo.saveAll(categories);
     }
 
