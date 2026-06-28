@@ -3,7 +3,7 @@ package syb.moviepedia.tv.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.common.MediaCategoryType;
 import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVCategory;
@@ -35,7 +35,7 @@ public class TVInitService {
         List<TV> tvList = tvRepo.findByPopularSeason(seriesCodes);
 
         List<TVCategory> categories = tvList.stream().map(tv -> TVCategory.builder()
-                        .movieCategoryType(MovieCategoryType.POPULAR)
+                        .mediaCategoryType(MediaCategoryType.POPULAR)
                         .tv(tv)
                         .build())
                 .toList();

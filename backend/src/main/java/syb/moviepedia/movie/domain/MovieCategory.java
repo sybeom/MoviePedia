@@ -2,9 +2,7 @@ package syb.moviepedia.movie.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import syb.moviepedia.common.MovieCategoryType;
-
-import java.time.LocalDateTime;
+import syb.moviepedia.common.MediaCategoryType;
 
 /**
  * 홈화면 인기, 현재 상영, 개봉 예정 영화 엔티티
@@ -21,7 +19,7 @@ public class MovieCategory {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private MovieCategoryType categoryType;
+    private MediaCategoryType categoryType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id")

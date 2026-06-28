@@ -2,7 +2,7 @@ package syb.moviepedia.tv.domain;
 
 import jakarta.persistence.*;
 import lombok.Builder;
-import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.common.MediaCategoryType;
 import syb.moviepedia.media.BaseMediaCategoryEntity;
 
 @Table(name = "tv_category")
@@ -14,10 +14,10 @@ public class TVCategory extends BaseMediaCategoryEntity {
 
     @Builder
     public TVCategory(
-            MovieCategoryType movieCategoryType,
+            MediaCategoryType mediaCategoryType,
             TV tv
     ) {
-        super(movieCategoryType);
+        super(mediaCategoryType);
         this.tv = tv;
     }
 }

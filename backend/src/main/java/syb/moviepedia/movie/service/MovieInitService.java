@@ -17,11 +17,9 @@ import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovieList;
 import syb.moviepedia.movie.repository.*;
-import syb.moviepedia.tv.external.TmdbTVClient;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -249,7 +247,7 @@ public class MovieInitService {
     }
 
     // 카테고리 영화 목록 초기화(저장) 또는 업데이트
-    private void refreshCategoryMovies(MovieCategoryType category, TmdbMovieList responses) {
+    private void refreshCategoryMovies(MediaCategoryType category, TmdbMovieList responses) {
         log.info("RefreshCategoryMovies 호출 : {}", category);
         // 기존 카테고리 영화 모두 삭제 (카테고리 목록들을 모두 삭제하고 다시 저장하는 방식으로 갱신한다)
         movieCategoryRepository.deleteByCategoryType(category);
@@ -275,9 +273,9 @@ public class MovieInitService {
     @Transactional
     public void refreshAllCategoryMovies() {
         log.info("카테고리 영화 전체 갱신 시작");
-        refreshCategoryMovies(MovieCategoryType.POPULAR, tmdbClient.getPopularMovies());
-        refreshCategoryMovies(MovieCategoryType.UPCOMING, tmdbClient.getUpcomingMovies());
-        refreshCategoryMovies(MovieCategoryType.NOW_PLAYING, tmdbClient.getNowPlayingMovies());
+        refreshCategoryMovies(MediaCategoryType.POPULAR, tmdbClient.getPopularMovies());
+        refreshCategoryMovies(MediaCategoryType.UPCOMING, tmdbClient.getUpcomingMovies());
+        refreshCategoryMovies(MediaCategoryType.NOW_PLAYING, tmdbClient.getNowPlayingMovies());
         log.info("카테고리 영화 전체 갱신 완료");
     }
 

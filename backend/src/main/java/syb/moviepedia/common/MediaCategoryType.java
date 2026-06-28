@@ -1,6 +1,6 @@
 package syb.moviepedia.common;
 
-public enum MovieCategoryType {
+public enum MediaCategoryType {
     POPULAR,
     UPCOMING,
     NOW_PLAYING

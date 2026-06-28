@@ -1,8 +1,7 @@
 package syb.moviepedia.media;
 
 import jakarta.persistence.*;
-import lombok.NoArgsConstructor;
-import syb.moviepedia.common.MovieCategoryType;
+import syb.moviepedia.common.MediaCategoryType;
 
 @MappedSuperclass
 public abstract class BaseMediaCategoryEntity {
@@ -11,10 +10,10 @@ public abstract class BaseMediaCategoryEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private MovieCategoryType categoryType;
+    private MediaCategoryType categoryType;
 
     protected BaseMediaCategoryEntity(
-            MovieCategoryType categoryType
+            MediaCategoryType categoryType
     ) {
         this.categoryType = categoryType;
     }
