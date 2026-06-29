@@ -10,9 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import syb.moviepedia.common.MediaType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
 import syb.moviepedia.tv.service.TVService;
 
@@ -41,5 +44,22 @@ public class TVController {
         log.info("/popular 호출 확인");
         return ResponseEntity.ok().body(
                 ApiSuccessResponse.of("인기 TV 목록 조회 성공", tvService.getPopularTVList()));
+    }
+
+    @Operation(summary = "장르 목록", description = "필터 목록에 표시할 장르 목록을 조회한다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "장르 데이터 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/genres")
+    public ResponseEntity<ApiSuccessResponse<List<GenreResponse>>> getGenres(@RequestParam MediaType mediaType) {
+        List<GenreResponse> genres = tvService.getGenres(mediaType);
+        log.info("genres: {}", genres);
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("장르 목록 조회 성공", genres));
     }
 }

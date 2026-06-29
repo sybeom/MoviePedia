@@ -43,11 +43,6 @@ type BannerMovie = {
   backdrop: string
 }
 
-type CategoryMoviesResponse = {
-  nowPlaying?: unknown
-  popular?: unknown
-}
-
 type MovieListPage = {
   movies: PopularMovie[]
   hasMore: boolean
@@ -432,16 +427,11 @@ function HomePage() {
 
   const [genreOptions, setGenreOptions] = useState<GenreOption[]>([{ label: '전체', value: 'ALL' }])
   const [bannerMovies, setBannerMovies] = useState<BannerMovie[]>([])
-  const [nowPlayingMovies, setNowPlayingMovies] = useState<PopularMovie[]>([])
-  const [popularMovies, setPopularMovies] = useState<PopularMovie[]>([])
-  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true)
   const [isBannerLoading, setIsBannerLoading] = useState(true)
   const [isGenresLoading, setIsGenresLoading] = useState(true)
   const [bannerPage, setBannerPage] = useState(0)
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [isBannerSliding, setIsBannerSliding] = useState(false)
-  const [nowPlayingPage, setNowPlayingPage] = useState(0)
-  const [popularPage, setPopularPage] = useState(0)
   const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['ALL'])
   const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
   const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MovieReleaseFilter>('전체')
@@ -511,49 +501,6 @@ function HomePage() {
   useEffect(() => {
     let isMounted = true
 
-    async function loadCategoryMovies() {
-      setIsCategoriesLoading(true)
-
-      try {
-        const response = await request<CategoryMoviesResponse>(
-          `${mediaConfig.resourcePath}/categories`,
-          {
-            method: 'GET',
-          },
-        )
-
-        if (!isMounted) {
-          return
-        }
-
-        setNowPlayingMovies(normalizePopularMovies(response?.nowPlaying))
-        setPopularMovies(normalizePopularMovies(response?.popular))
-        setNowPlayingPage(0)
-        setPopularPage(0)
-      } catch {
-        if (!isMounted) {
-          return
-        }
-
-        setNowPlayingMovies([])
-        setPopularMovies([])
-      } finally {
-        if (isMounted) {
-          setIsCategoriesLoading(false)
-        }
-      }
-    }
-
-    void loadCategoryMovies()
-
-    return () => {
-      isMounted = false
-    }
-  }, [mediaConfig.resourcePath, mediaConfig.type])
-
-  useEffect(() => {
-    let isMounted = true
-
     async function loadBannerMovies() {
       setIsBannerLoading(true)
 
@@ -607,7 +554,9 @@ function HomePage() {
           mediaType: mediaConfig.type === 'series' ? 'TV' : 'MOVIE',
         })
         const response = await request<unknown>(
-          `${mediaConfig.resourcePath}/genres?${searchParams.toString()}`,
+          mediaConfig.type === 'series'
+            ? `/tv/genres?${searchParams.toString()}`
+            : `${mediaConfig.resourcePath}/genres?${searchParams.toString()}`,
           {
             method: 'GET',
           },
@@ -913,17 +862,6 @@ function HomePage() {
       : visibleBannerMovie
         ? [visibleBannerMovie]
         : []
-  const nowPlayingPageCount = nowPlayingMovies.length
-  const visibleNowPlayingMovie = nowPlayingMovies[nowPlayingPage] ?? null
-  const visibleNowPlayingCards = nowPlayingMovies
-    .map((movie, index) => ({ movie, offset: index - nowPlayingPage }))
-    .filter(({ offset }) => offset >= -2 && offset <= 2)
-  const popularPageCount = popularMovies.length
-  const visiblePopularMovie = popularMovies[popularPage] ?? null
-  const visiblePopularCards = popularMovies
-    .map((movie, index) => ({ movie, offset: index - popularPage }))
-    .filter(({ offset }) => offset >= -2 && offset <= 2)
-
   const startBannerTransition = useCallback(
     (direction: 'next' | 'previous', allowWrap = false) => {
       if (bannerPageCount <= 1 || isBannerSliding) {
@@ -969,22 +907,6 @@ function HomePage() {
 
   function moveToNextBannerMovie() {
     startBannerTransition('next')
-  }
-
-  function moveToPreviousNowPlayingMovie() {
-    setNowPlayingPage((page) => Math.max(0, page - 1))
-  }
-
-  function moveToNextNowPlayingMovie() {
-    setNowPlayingPage((page) => Math.min(nowPlayingPageCount - 1, page + 1))
-  }
-
-  function moveToPreviousPopularMovie() {
-    setPopularPage((page) => Math.max(0, page - 1))
-  }
-
-  function moveToNextPopularMovie() {
-    setPopularPage((page) => Math.min(popularPageCount - 1, page + 1))
   }
 
   useEffect(() => {
@@ -1105,117 +1027,6 @@ function HomePage() {
           </div>
         </div>
       </button>
-    )
-  }
-
-  function renderMovieSection({
-    title,
-    visibleMovie,
-    visibleCards,
-    page,
-    pageCount,
-    onPrevious,
-    onNext,
-  }: {
-    title: string
-    visibleMovie: PopularMovie | null
-    visibleCards: Array<{ movie: PopularMovie; offset: number }>
-    page: number
-    pageCount: number
-    onPrevious: () => void
-    onNext: () => void
-  }) {
-    return (
-      <section className="home-popular-section">
-        <div className="home-popular-section-header">
-          <h2>{title}</h2>
-        </div>
-
-        {isCategoriesLoading ? (
-          <div className="home-popular-loading" aria-live="polite">
-            <img
-              className="home-popular-loading-icon"
-              src={loadingIcon}
-              alt=""
-              aria-hidden="true"
-            />
-          </div>
-        ) : visibleMovie ? (
-          <div className="home-popular-carousel">
-            <button
-              className="home-popular-side-button"
-              type="button"
-              onClick={onPrevious}
-              disabled={page === 0}
-              aria-label={`이전 ${title}`}
-            >
-              <img className="home-popular-side-button-icon" src={previousIcon} alt="" aria-hidden="true" />
-            </button>
-
-            <div className="home-popular-track">
-              {visibleCards.map(({ movie, offset }) => {
-                const positionClass =
-                  offset === 0
-                    ? 'home-popular-card-current'
-                    : offset === -1
-                      ? 'home-popular-card-previous'
-                      : offset === 1
-                        ? 'home-popular-card-next'
-                        : offset < 0
-                          ? 'home-popular-card-off-left'
-                          : 'home-popular-card-off-right'
-
-                const isCurrent = offset === 0
-                const posterShellClass = isCurrent
-                  ? 'home-popular-poster-shell'
-                  : 'home-popular-preview-poster-shell'
-                const posterClass = isCurrent
-                  ? 'home-popular-poster'
-                  : 'home-popular-preview-poster'
-                const titleClass = isCurrent ? 'home-popular-title' : 'home-popular-preview-title'
-
-                return (
-                  <button
-                    className={`home-popular-card ${positionClass}`}
-                    type="button"
-                    key={`${title}-${movie.code}`}
-                    onClick={() => moveToMovieDetail(movie)}
-                    aria-label={`${movie.title} 상세 보기`}
-                  >
-                    <div className={posterShellClass}>
-                      {movie.poster ? (
-                        <img
-                          className={posterClass}
-                          src={movie.poster}
-                          alt={isCurrent ? `${movie.title} 포스터` : ''}
-                          aria-hidden={isCurrent ? undefined : 'true'}
-                        />
-                      ) : (
-                        <div className={`${posterClass} home-popular-poster-fallback`}>
-                          <span>{movie.title}</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className={titleClass}>{movie.title}</p>
-                  </button>
-                )
-              })}
-            </div>
-
-            <button
-              className="home-popular-side-button"
-              type="button"
-              onClick={onNext}
-              disabled={page >= pageCount - 1}
-              aria-label={`다음 ${title}`}
-            >
-              <img className="home-popular-side-button-icon" src={nextIcon} alt="" aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
-        )}
-      </section>
     )
   }
 
@@ -1410,31 +1221,6 @@ function HomePage() {
             )}
             </section>
           ) : null}
-
-          {!isExpandedMovieView
-            ? renderMovieSection({
-                title: mediaConfig.currentItemsTitle,
-                visibleMovie: visibleNowPlayingMovie,
-                visibleCards: visibleNowPlayingCards,
-                page: nowPlayingPage,
-                pageCount: nowPlayingPageCount,
-                onPrevious: moveToPreviousNowPlayingMovie,
-                onNext: moveToNextNowPlayingMovie,
-              })
-            : null}
-
-          {!isExpandedMovieView
-            && mediaConfig.type === 'movie'
-            ? renderMovieSection({
-                title: mediaConfig.popularItemsTitle,
-                visibleMovie: visiblePopularMovie,
-                visibleCards: visiblePopularCards,
-                page: popularPage,
-                pageCount: popularPageCount,
-                onPrevious: moveToPreviousPopularMovie,
-                onNext: moveToNextPopularMovie,
-              })
-            : null}
 
           {isExpandedMovieView ? (
             <section className="home-expanded-view-hero" aria-labelledby="home-expanded-view-title">
