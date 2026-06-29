@@ -261,7 +261,7 @@ public class MovieInitService {
             Movie movie = saveOrUpdateMovie(response); // 영화 DB에 영화가 존재하면 갱신, 없다면 저장
 
             MovieCategory mc = MovieCategory.builder()
-                    .categoryType(category)
+                    .type(category)
                     .movie(movie)
                     .build();
 
