@@ -31,12 +31,6 @@ public class ScheduleConfig {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(8);
         jwtRepository.deleteByCreatedDateBefore(LocalDateTime.now());
     }
-//    // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
-//    @Scheduled(fixedRate = 15000, initialDelay = 10000) // 3분마다 삽입
-//    public void InsertMovie() {
-////        movieInitService.initMovies(page++);
-//        tvInitService.initTV(page++);
-//    }
 
     // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
     @Scheduled(cron = "0 0 3 * * *") // initialDelay는 서버 시작후 해당 시간 뒤에 실행된다는 의미
@@ -45,5 +39,12 @@ public class ScheduleConfig {
 
         movieInitService.refreshAllCategoryMovies();
     }
-//
+
+        // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
+//    @Scheduled(fixedRate = 15000, initialDelay = 10000) // 3분마다 삽입
+//    public void InsertMovie() {
+////        movieInitService.initMovies(page++);
+////        tvInitService.initTV(page++);
+//        tvInitService.initSeries(page++);
+//    }
 }

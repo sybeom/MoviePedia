@@ -6,10 +6,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
+import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVCategory;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 
+import java.net.URI;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -22,6 +24,7 @@ public class TmdbTVClient {
     private final static String SERIES_PATH = "/tv/{seriesId}";
     private final static String TV_GENRES = "/genre/tv/list";
     private final static String TV_POPULAR = "/tv/popular";
+    private final static String TV_CONTENT_RATING = "/tv/{series_code}/content_ratings";
 
 
      // TV 시리즈 목록 api
@@ -31,8 +34,9 @@ public class TmdbTVClient {
                 TmdbTVDiscover.class,
                 "Tmdb TV Discover api 호출 실패",
                 uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR")
                         .queryParam("page", page)
-                        .queryParam("language", "KO-KR")
+                        .queryParam("sort_by", "popularity.desc")
         );
     }
 
@@ -61,6 +65,17 @@ public class TmdbTVClient {
         );
     }
 
+    // TV 시리즈 관람 등급 api
+    public TmdbContentRating fetchContentRating(Integer code) {
+        return get(
+                TV_CONTENT_RATING,
+                TmdbContentRating.class,
+                "Tmdb TV 관람 등급 api 호출 실패",
+                null,
+                code
+        );
+    }
+
     private <T> T get(
             String path,
             Class<T> responseType,
@@ -76,6 +91,8 @@ public class TmdbTVClient {
                         if (queryParams != null) {
                             queryParams.accept(uriBuilder);
                         }
+                        URI uri = uriBuilder.build(uriVariables);
+                        log.info("TMDB 요청 URI = " + uri);
 
                         return uriBuilder.build(uriVariables);
                     })

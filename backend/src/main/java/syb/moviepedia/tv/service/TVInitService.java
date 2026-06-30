@@ -7,12 +7,16 @@ import syb.moviepedia.common.MediaCategoryType;
 import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVCategory;
+import syb.moviepedia.tv.domain.TVSeries;
 import syb.moviepedia.tv.external.TmdbTVClient;
+import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
+import syb.moviepedia.tv.repsitory.TVSeriesRepository;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +26,7 @@ import java.util.stream.Collectors;
 public class TVInitService {
     private final TVRepository tvRepo;
     private final TVCategoryRepository tvCategoryRepo;
+    private final TVSeriesRepository tvSeriesRepo;
     private final TmdbTVClient tmdbTVClient;
     private final CountryRepository countryRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
@@ -60,7 +65,7 @@ public class TVInitService {
         TmdbTVDiscover tvSeries = tmdbTVClient.fetchTVSeries(page);
 
         List<TV> tvs = tvSeries.results().stream()
-                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.id()))
+                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.code()))
                 .filter(series -> isTitleMatch(series.title()))
                 .flatMap(series -> series.seasons().stream()
                         .filter(season -> season.seasonNumber() != 0)
@@ -80,6 +85,28 @@ public class TVInitService {
 
         tvRepo.saveAll(tvs);
 
+    }
+
+    public void initSeries(int page) {
+        TmdbTVDiscover tmdbSeries = tmdbTVClient.fetchTVSeries(page);
+        List<TVSeries> series = tmdbSeries.results().stream()
+                .filter(result -> isTitleMatch(result.title()))
+                .map(result -> TVSeries.builder()
+                        .code(result.code())
+                        .title(result.title())
+                        .genres(result.genreIds())
+                        .countries(countryRepo.findNameByCodeIn(result.countries()))
+                        .contentRating(getContentRating(tmdbTVClient.fetchContentRating(result.code())))
+                        .build()).toList();
+        tvSeriesRepo.saveAll(series);
+    }
+
+    private String getContentRating(TmdbContentRating tmdbContentRating) {
+        return tmdbContentRating.results().stream()
+                .filter(info -> info.countryCode().equals("KR"))
+                .map(info -> info.rating())
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean isTitleMatch(String title) {
