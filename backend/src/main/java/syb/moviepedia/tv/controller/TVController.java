@@ -28,6 +28,23 @@ import java.util.List;
 public class TVController {
     private final TVService tvService;
 
+//    @Operation(
+//            summary = "TV 홈 TV 조회", description = "TV 탭의 필터링된 TV 목록 조회"
+//    )
+//    @ApiResponses({
+//            @ApiResponse(responseCode = "200", description = "필터링 TV 목록 조회 성공"),
+//            @ApiResponse(
+//                    responseCode = "502", description = "필터링 TV 목록 조회 실패",
+//                    content = @Content(
+//                            schema = @Schema(implementation = SwaggerApiResponse.class)
+//                    )
+//            )
+//    })
+//    @GetMapping
+//    public void getAllTVs() {
+//        tvService.getAllTV();
+//    }
+
     @Operation(
             summary = "TV 홈 인기 목록 조회", description = "TV 탭 홈 화면의 인기 TV 목록 조회")
     @ApiResponses({

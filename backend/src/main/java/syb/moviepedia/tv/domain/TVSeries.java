@@ -1,7 +1,10 @@
 package syb.moviepedia.tv.domain;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -10,7 +13,10 @@ import java.util.List;
  */
 @Table(name = "tv_series")
 @Entity
+@Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TVSeries {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

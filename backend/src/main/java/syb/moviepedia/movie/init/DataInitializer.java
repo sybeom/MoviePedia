@@ -31,5 +31,6 @@ public class DataInitializer implements CommandLineRunner {
 //        movieInitService.setGenre();
 //        movieInitService.initData();
 //        tvInitService.initCategories();
+//        tvInitService.initTVGenres();
     }
 }

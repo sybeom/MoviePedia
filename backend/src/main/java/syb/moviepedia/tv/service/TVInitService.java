@@ -4,18 +4,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaCategoryType;
+import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.repository.CountryRepository;
+import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVCategory;
 import syb.moviepedia.tv.domain.TVSeries;
+import syb.moviepedia.tv.domain.TVSeriesGenre;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
+import syb.moviepedia.tv.repsitory.TVSeriesGenreRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,9 +32,41 @@ public class TVInitService {
     private final TVRepository tvRepo;
     private final TVCategoryRepository tvCategoryRepo;
     private final TVSeriesRepository tvSeriesRepo;
+    private final TVSeriesGenreRepository tvSeriesGenreRepo;
     private final TmdbTVClient tmdbTVClient;
     private final CountryRepository countryRepo;
+    private final GenreRepository genreRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
+
+    public void initTVGenres() {
+        List<TVSeries> tvSeriesList = tvSeriesRepo.findAll();
+
+        List<Integer> genreCodes = tvSeriesList.stream()
+                .flatMap(tvSeries -> tvSeries.getGenres().stream())
+                .distinct()
+                .toList();
+
+        List<Genre> genres = genreRepo.findByCodeIn(genreCodes);
+
+        Map<Integer, Genre> genreMap = genres.stream()
+                .collect(Collectors.toMap(
+                        Genre::getCode,
+                        genre -> genre
+                ));
+
+        List<TVSeriesGenre> tvSeriesGenres = tvSeriesList.stream()
+                .flatMap(tvSeries -> tvSeries.getGenres().stream()
+                        .map(genreMap::get)
+                        .filter(Objects::nonNull)
+                        .map(genre -> TVSeriesGenre.builder()
+                                .tvSeries(tvSeries)
+                                .genre(genre)
+                                .build())
+                )
+                .toList();
+
+        tvSeriesGenreRepo.saveAll(tvSeriesGenres);
+    }
 
     public void initCategories() {
 //        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()

@@ -27,6 +27,7 @@ public class TVService {
                         .build()).toList();
     }
 
+    @Transactional
     public List<GenreResponse> getGenres(MediaType mediaType) {
         genreRepo.findAllByMediaType(mediaType);
 

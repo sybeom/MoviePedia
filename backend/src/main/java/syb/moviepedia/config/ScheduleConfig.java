@@ -39,12 +39,12 @@ public class ScheduleConfig {
 
         movieInitService.refreshAllCategoryMovies();
     }
-
-        // 매일 새벽 4시 카테고리 영화 갱신 fixedRate = 1000000, initialDelay = 10000
+//
 //    @Scheduled(fixedRate = 15000, initialDelay = 10000) // 3분마다 삽입
 //    public void InsertMovie() {
 ////        movieInitService.initMovies(page++);
 ////        tvInitService.initTV(page++);
-//        tvInitService.initSeries(page++);
+////        tvInitService.initSeries(page++);
+//        tvInitService.initTVGenres();
 //    }
 }
