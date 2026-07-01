@@ -7,15 +7,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import syb.moviepedia.common.MediaType;
+import syb.moviepedia.common.SortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
+import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
+import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
 import syb.moviepedia.tv.service.TVService;
 
@@ -28,22 +31,26 @@ import java.util.List;
 public class TVController {
     private final TVService tvService;
 
-//    @Operation(
-//            summary = "TV 홈 TV 조회", description = "TV 탭의 필터링된 TV 목록 조회"
-//    )
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "필터링 TV 목록 조회 성공"),
-//            @ApiResponse(
-//                    responseCode = "502", description = "필터링 TV 목록 조회 실패",
-//                    content = @Content(
-//                            schema = @Schema(implementation = SwaggerApiResponse.class)
-//                    )
-//            )
-//    })
-//    @GetMapping
-//    public void getAllTVs() {
-//        tvService.getAllTV();
-//    }
+    @Operation(
+            summary = "TV 홈 TV 조회", description = "TV 탭의 필터링된 TV 목록 조회"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "필터링 TV 목록 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "필터링 TV 목록 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping
+    public ResponseEntity<ApiSuccessResponse<Slice<AllTVsResponse>>> getAllTVs(
+            @PageableDefault(size = 10) Pageable pageable,
+            @ModelAttribute FilterRequest filter,
+            @RequestParam(defaultValue = "LATEST") SortType sortType
+    ) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("TV 목록 조회 성공" , tvService.getAllTV(filter, sortType, pageable)));
+    }
 
     @Operation(
             summary = "TV 홈 인기 목록 조회", description = "TV 탭 홈 화면의 인기 TV 목록 조회")

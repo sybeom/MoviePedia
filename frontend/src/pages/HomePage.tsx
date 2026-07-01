@@ -32,6 +32,7 @@ type SearchMovie = {
 type PopularMovie = {
   code: string
   title: string
+  seasonNum: string
   poster: string
   genres: string[]
   certification: string
@@ -345,11 +346,12 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
         'seriesCode',
       ])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
+      const seasonNum = getScalarStringValue(value, ['seasonNum', 'season', 'seasonNumber'])
       const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
       const genres = getStringArrayValue(value, ['genres', 'genre'])
       const certification = getStringValue(value, ['certification', 'rating', 'ageRating'])
 
-      return { code, title, poster, genres, certification }
+      return { code, title, seasonNum, poster, genres, certification }
     })
     .filter((value) => value.code && value.title)
 }
@@ -1350,7 +1352,10 @@ function HomePage() {
                       )}
                     </div>
                     <div className="home-movie-grid-title-row">
-                      <p className="home-movie-grid-title">{movie.title}</p>
+                      <p className="home-movie-grid-title">
+                        {movie.title}
+                        {mediaConfig.type === 'series' && movie.seasonNum ? ` 시즌 ${movie.seasonNum}` : ''}
+                      </p>
                       {movie.certification ? (
                         <div className="home-movie-grid-certification">
                           {getCertificationIcon(movie.certification) ? (

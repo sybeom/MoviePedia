@@ -2,7 +2,7 @@ export type MediaType = 'movie' | 'series'
 
 export type MediaConfig = {
   type: MediaType
-  resourcePath: '/movies' | '/series'
+  resourcePath: '/movies' | '/tv'
   homePath: '/' | '/series'
   browsePath: '/movies' | '/series/browse'
   detailPath: (code: string) => string
@@ -38,7 +38,7 @@ export const MEDIA_CONFIGS: Record<MediaType, MediaConfig> = {
   },
   series: {
     type: 'series',
-    resourcePath: '/series',
+    resourcePath: '/tv',
     homePath: '/series',
     browsePath: '/series/browse',
     detailPath: (code) => `/series/${code}`,

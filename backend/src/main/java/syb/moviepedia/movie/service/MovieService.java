@@ -94,7 +94,7 @@ public class MovieService {
                 .selectOne()
                 .from(mg)
                 .where(
-                        mg.movie.eq(movie),
+                        mg.movie.eq(movie), // 현재 검사할 영화가 해당 장르(필터)를 가지고 있는지 여부
                         mg.genre.code.in(genres)
                 )
                 .exists();

@@ -11,6 +11,7 @@ export type SearchMediaItem = {
 export type MediaCard = {
   code: string
   title: string
+  seasonNum: string
   poster: string
   genres: string[]
   certification: string
@@ -324,13 +325,14 @@ export function normalizeMediaCards(data: unknown): MediaCard[] {
         'seriesCode',
       ])
       const title = getStringValue(value, ['title', 'movieNm', 'name', 'seriesNm'])
+      const seasonNum = getScalarStringValue(value, ['seasonNum', 'season', 'seasonNumber'])
       const poster = getImageSource(
         getStringValue(value, ['poster', 'posterPath', 'poster_path', 'image']),
       )
       const genres = getStringArrayValue(value, ['genres', 'genre', 'genreNames'])
       const certification = getStringValue(value, ['certification', 'rating', 'ageRating', 'grade'])
 
-      return { code, title, poster, genres, certification }
+      return { code, title, seasonNum, poster, genres, certification }
     })
     .filter((value) => value.code && value.title)
 }

@@ -591,7 +591,10 @@ function MovieBrowsePage() {
                 </div>
 
                 <div className="movie-browse-title-row">
-                  <p className="movie-browse-title">{movie.title}</p>
+                  <p className="movie-browse-title">
+                    {movie.title}
+                    {mediaConfig.type === 'series' && movie.seasonNum ? ` 시즌 ${movie.seasonNum}` : ''}
+                  </p>
                   {movie.certification ? (
                     getCertificationIcon(movie.certification) ? (
                       <img
