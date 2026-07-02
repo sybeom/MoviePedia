@@ -1,6 +1,9 @@
 package syb.moviepedia.tv.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaCategoryType;
@@ -19,12 +22,14 @@ import syb.moviepedia.tv.repsitory.TVRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesGenreRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -144,6 +149,50 @@ public class TVInitService {
                 .map(info -> info.rating())
                 .findFirst()
                 .orElse(null);
+    }
+
+    public void updateAllSeasonAirDates() {
+        int page = 0;
+        int size = 100;
+
+        while (true) {
+            Page<TV> seasonPage = updateSeasonAirDatesPage(page, size);
+
+            if (!seasonPage.hasNext()) {
+                break;
+            }
+
+            page++;
+        }
+    }
+
+    @Transactional
+    public Page<TV> updateSeasonAirDatesPage(int page, int size) {
+        Page<TV> seasonPage =
+                tvRepo.findAll(PageRequest.of(page, size));
+
+        for (TV season : seasonPage.getContent()) {
+            try {
+                LocalDate releaseDate =
+                        tmdbTVClient.getSeasonDetail(
+                                season.getCode(),
+                                season.getSeasonNum()
+                        ).air_date();
+
+                season.setReleaseDate(releaseDate);
+
+            } catch (Exception e) {
+                log.warn(
+                        "시즌 공개일자 업데이트 실패. seasonId={}, seriesId={}, seasonNumber={}",
+                        season.getId(),
+                        season.getCode(),
+                        season.getSeasonNum(),
+                        e
+                );
+            }
+        }
+
+        return seasonPage;
     }
 
     private boolean isTitleMatch(String title) {

@@ -5,6 +5,7 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ public abstract class BaseMediaEntity {
     private String overview;
 
     @Column(name = "release_date")
-    private String releaseDate;
+    private LocalDate releaseDate;
 
     private List<String> country;
 
@@ -47,7 +48,7 @@ public abstract class BaseMediaEntity {
             String posterPath,
             String certification,
             String overview,
-            String releaseDate,
+            LocalDate releaseDate,
             List<String> country,
             Boolean detailFetched
     ) {
@@ -59,5 +60,9 @@ public abstract class BaseMediaEntity {
         this.releaseDate = releaseDate;
         this.country = country;
         this.detailFetched = detailFetched;
+    }
+
+    protected void updateAirDate(LocalDate airDate) {
+        this.releaseDate = airDate;
     }
 }

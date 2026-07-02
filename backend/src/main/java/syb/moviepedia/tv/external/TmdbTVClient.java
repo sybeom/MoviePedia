@@ -12,6 +12,7 @@ import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -25,6 +26,22 @@ public class TmdbTVClient {
     private final static String TV_GENRES = "/genre/tv/list";
     private final static String TV_POPULAR = "/tv/popular";
     private final static String TV_CONTENT_RATING = "/tv/{series_code}/content_ratings";
+    private final static String TV_SEASON_PATH = "/tv/{series_id}/season/{season_number}";
+
+    public SeasonAirDates getSeasonDetail(Integer seasonCode, Integer seasonNum) {
+        return get(
+                TV_SEASON_PATH,
+                SeasonAirDates.class,
+                "TMDB TV 시즌 api ",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                seasonCode,seasonNum
+        );
+    }
+
+    public record SeasonAirDates(
+            LocalDate air_date) {
+    }
 
 
      // TV 시리즈 목록 api

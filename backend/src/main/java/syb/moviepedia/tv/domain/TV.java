@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import syb.moviepedia.media.BaseMediaEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -48,7 +49,7 @@ public class TV extends BaseMediaEntity {
             String posterPath,
             String certification,
             String overview,
-            String releaseDate,
+            LocalDate releaseDate,
             List<String> country,
             Boolean detailFetched
 
@@ -56,5 +57,9 @@ public class TV extends BaseMediaEntity {
         super(code, title, posterPath, certification, overview, releaseDate, country, detailFetched);
         this.seasonNum = seasonNum;
         this.episodeCnt = episodeCnt;
+    }
+
+    public void setReleaseDate(LocalDate releaseDate) {
+        updateAirDate(releaseDate);
     }
 }
