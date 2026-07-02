@@ -1,6 +1,7 @@
 package syb.moviepedia.tv.external.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.Json;
 
 import java.util.List;
 
@@ -20,8 +21,11 @@ public record TmdbTVSeries(
         @JsonProperty("origin_country")
         List<String> countries,
 
-        List<TVSeasons> seasons
-) {
+        List<TVSeasons> seasons,
+
+        @JsonProperty("poster_path")
+        String posterPath
+        ) {
         public record TVSeasons(
                 @JsonProperty("id")
                 Integer seasonCode,

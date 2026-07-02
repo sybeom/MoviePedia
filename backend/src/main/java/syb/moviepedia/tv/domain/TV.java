@@ -62,4 +62,8 @@ public class TV extends BaseMediaEntity {
     public void setReleaseDate(LocalDate releaseDate) {
         updateAirDate(releaseDate);
     }
+
+    public void setPoster(String path) {
+        setPosterPath(path);
+    }
 }

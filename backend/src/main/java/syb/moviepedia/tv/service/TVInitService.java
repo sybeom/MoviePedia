@@ -43,6 +43,15 @@ public class TVInitService {
     private final GenreRepository genreRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
+    public void setPoster() {
+        List<TV> result = tvRepo.findNotExistPoster();
+
+        result.stream().forEach(tv -> {
+            String poster = tmdbTVClient.fetchTVSeriesDetail(tv.getCode()).posterPath();
+            tv.setPoster(poster);
+        });
+    }
+
     public void initTVGenres() {
         List<TVSeries> tvSeriesList = tvSeriesRepo.findAll();
 

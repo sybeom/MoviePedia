@@ -65,4 +65,8 @@ public abstract class BaseMediaEntity {
     protected void updateAirDate(LocalDate airDate) {
         this.releaseDate = airDate;
     }
+
+    protected void setPosterPath(String posterPath) {
+        this.posterPath = posterPath;
+    }
 }
