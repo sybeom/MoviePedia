@@ -32,6 +32,20 @@ type BrowseTheme = 'dark' | 'light'
 
 const BROWSE_PAGE_SIZE = 30
 
+function getReleaseFilterLabel(mediaType: 'movie' | 'series', filter: MediaReleaseFilter) {
+  if (mediaType === 'series') {
+    if (filter === '개봉') {
+      return '공개'
+    }
+
+    if (filter === '미개봉') {
+      return '미공개'
+    }
+  }
+
+  return filter
+}
+
 function MovieBrowsePage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -530,7 +544,9 @@ function MovieBrowsePage() {
           </div>
 
           <div className="movie-browse-filter-group">
-            <span className="movie-browse-filter-label">개봉 여부</span>
+            <span className="movie-browse-filter-label">
+              {mediaConfig.type === 'series' ? '공개 여부' : '개봉 여부'}
+            </span>
             <div className="movie-browse-filter-row">
               {HOME_RELEASE_FILTERS.map((filter) => (
                 <button
@@ -541,7 +557,7 @@ function MovieBrowsePage() {
                   type="button"
                   onClick={() => setSelectedReleaseFilter(filter)}
                 >
-                  {filter}
+                  {getReleaseFilterLabel(mediaConfig.type, filter)}
                 </button>
               ))}
             </div>

@@ -151,50 +151,6 @@ public class TVInitService {
                 .orElse(null);
     }
 
-    public void updateAllSeasonAirDates() {
-        int page = 0;
-        int size = 100;
-
-        while (true) {
-            Page<TV> seasonPage = updateSeasonAirDatesPage(page, size);
-
-            if (!seasonPage.hasNext()) {
-                break;
-            }
-
-            page++;
-        }
-    }
-
-    @Transactional
-    public Page<TV> updateSeasonAirDatesPage(int page, int size) {
-        Page<TV> seasonPage =
-                tvRepo.findAll(PageRequest.of(page, size));
-
-        for (TV season : seasonPage.getContent()) {
-            try {
-                LocalDate releaseDate =
-                        tmdbTVClient.getSeasonDetail(
-                                season.getCode(),
-                                season.getSeasonNum()
-                        ).air_date();
-
-                season.setReleaseDate(releaseDate);
-
-            } catch (Exception e) {
-                log.warn(
-                        "시즌 공개일자 업데이트 실패. seasonId={}, seriesId={}, seasonNumber={}",
-                        season.getId(),
-                        season.getCode(),
-                        season.getSeasonNum(),
-                        e
-                );
-            }
-        }
-
-        return seasonPage;
-    }
-
     private boolean isTitleMatch(String title) {
         return title.matches(TITLE_PATTERN);
     }

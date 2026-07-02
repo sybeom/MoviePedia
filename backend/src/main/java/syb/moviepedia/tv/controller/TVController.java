@@ -47,9 +47,9 @@ public class TVController {
     public ResponseEntity<ApiSuccessResponse<Slice<AllTVsResponse>>> getAllTVs(
             @PageableDefault(size = 10) Pageable pageable,
             @ModelAttribute FilterRequest filter,
-            @RequestParam(defaultValue = "LATEST") SortType sortType
+            @RequestParam(defaultValue = "LATEST") SortType sort
     ) {
-        return ResponseEntity.ok().body(ApiSuccessResponse.of("TV 목록 조회 성공" , tvService.getAllTV(filter, sortType, pageable)));
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("TV 목록 조회 성공" , tvService.getAllTV(filter, sort, pageable)));
     }
 
     @Operation(

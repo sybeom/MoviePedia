@@ -256,6 +256,20 @@ function getReleaseQueryValue(filter: MovieReleaseFilter) {
   return ''
 }
 
+function getReleaseFilterLabel(mediaType: 'movie' | 'series', filter: MovieReleaseFilter) {
+  if (mediaType === 'series') {
+    if (filter === '개봉') {
+      return '공개'
+    }
+
+    if (filter === '미개봉') {
+      return '미공개'
+    }
+  }
+
+  return filter
+}
+
 function normalizeGenreOptions(data: unknown): GenreOption[] {
   const source = Array.isArray(data)
     ? data
@@ -1281,7 +1295,9 @@ function HomePage() {
               </div>
 
               <div className="home-filter-group">
-                <span className="home-filter-group-label">개봉 여부</span>
+                <span className="home-filter-group-label">
+                  {mediaConfig.type === 'series' ? '공개 여부' : '개봉 여부'}
+                </span>
                 <div className="home-genre-filter-row" role="tablist" aria-label="개봉 상태 필터">
                   {HOME_RELEASE_FILTERS.map((filter) => (
                     <button
@@ -1293,7 +1309,7 @@ function HomePage() {
                       onClick={() => setSelectedReleaseFilter(filter)}
                       aria-pressed={filter === selectedReleaseFilter}
                     >
-                      {filter}
+                      {getReleaseFilterLabel(mediaConfig.type, filter)}
                     </button>
                   ))}
                 </div>

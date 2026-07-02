@@ -45,10 +45,10 @@ public class MovieController {
     public ResponseEntity<ApiSuccessResponse<Slice<AllMoviesResponse>>> allMovies(
             @PageableDefault(size = 10) Pageable pageable,
             @ModelAttribute FilterRequest filter,
-            @RequestParam(defaultValue = "LATEST") SortType sortType) {
+            @RequestParam(defaultValue = "LATEST") SortType sort) {
         log.info("필터 목록: {}, 개봉 상태 : {}",filter.toString(), filter.releaseStatus());
         return ResponseEntity.ok().body(ApiSuccessResponse.of(
-                "전체 영화 목록 조회 성공", movieService.getAllMovies(filter, sortType, pageable)));
+                "전체 영화 목록 조회 성공", movieService.getAllMovies(filter, sort, pageable)));
     }
 
     @Operation(

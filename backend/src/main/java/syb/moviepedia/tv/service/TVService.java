@@ -1,5 +1,6 @@
 package syb.moviepedia.tv.service;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -25,6 +26,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static syb.moviepedia.movie.domain.QMovie.movie;
+import static syb.moviepedia.tv.domain.QTV.tV;
 
 @Service
 @RequiredArgsConstructor
@@ -45,23 +47,24 @@ public class TVService {
 
     @Transactional(readOnly = true)
     public SliceImpl<AllTVsResponse> getAllTV(FilterRequest filter, SortType sortType, Pageable pageable) {
-        QTV qTV =  QTV.tV;
         QTVSeries qTVSeries = QTVSeries.tVSeries;
 
 
-//        OrderSpecifier<?> orderSpecifier = switch (sortType) {
-//            case LATEST -> qTV.releaseDate.desc();
-//            case OLDEST -> qTV.releaseDate.asc();
-//        };
+        OrderSpecifier<?> orderSpecifier = switch (sortType) {
+            case LATEST -> tV.releaseDate.desc();
+            case OLDEST -> tV.releaseDate.asc();
+        };
 
         int pageSize = pageable.getPageSize();
         List<TV> tvList = query
-                .select(qTV)
-                .from(qTV)
-                .join(qTVSeries).on(qTV.code.eq(qTVSeries.code))
+                .select(tV)
+                .from(tV)
+                .join(qTVSeries).on(tV.code.eq(qTVSeries.code))
                 .where(
-                        genreExists(qTVSeries, filter.genre())
+                        genreExists(qTVSeries, filter.genre()),
+                        releasedCondition(filter.releaseStatus())
                 )
+                .orderBy(orderSpecifier)
                 .offset(pageable.getOffset())
                 .limit(pageSize + 1)
                 .fetch();
@@ -87,19 +90,6 @@ public class TVService {
         );
         return new SliceImpl<>(content, sortedPageable, hasNext);
     }
-
-    @Transactional
-    public List<GenreResponse> getGenres(MediaType mediaType) {
-
-        genreRepo.findAllByMediaType(mediaType);
-
-        return genreRepo.findAllByMediaType(mediaType).stream().map(genre ->
-                        GenreResponse.builder()
-                                .genreCode(genre.getCode())
-                                .name(genre.getName()).build())
-                .toList();
-    }
-
     // 장르 필터
     private BooleanExpression genreExists(QTVSeries qSeries, List<Integer> genres) {
         if (genres == null || genres.isEmpty()) {
@@ -125,9 +115,21 @@ public class TVService {
         LocalDate today = LocalDate.now();
 
         if (releaseCond == ReleaseStatus.RELEASED) {
-            return movie.releaseDate.loe(today);
+            return tV.releaseDate.loe(today);
         }
 
-        return movie.releaseDate.gt(today);
+        return tV.releaseDate.gt(today);
+    }
+
+    @Transactional
+    public List<GenreResponse> getGenres(MediaType mediaType) {
+
+        genreRepo.findAllByMediaType(mediaType);
+
+        return genreRepo.findAllByMediaType(mediaType).stream().map(genre ->
+                        GenreResponse.builder()
+                                .genreCode(genre.getCode())
+                                .name(genre.getName()).build())
+                .toList();
     }
 }
