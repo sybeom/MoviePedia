@@ -33,4 +33,8 @@ public class TVSeries {
     List<String> countries;
 
     String contentRating;
+
+    public void setContentRating(String contentRating) {
+        this.contentRating = contentRating;
+    }
 }

@@ -330,7 +330,14 @@ export function normalizeMediaCards(data: unknown): MediaCard[] {
         getStringValue(value, ['poster', 'posterPath', 'poster_path', 'image']),
       )
       const genres = getStringArrayValue(value, ['genres', 'genre', 'genreNames'])
-      const certification = getStringValue(value, ['certification', 'rating', 'ageRating', 'grade'])
+      const certification =
+        getStringValue(value, [
+        'contentRating',
+        'certification',
+        'rating',
+        'ageRating',
+        'grade',
+      ]) || '등급 미정'
 
       return { code, title, seasonNum, poster, genres, certification }
     })

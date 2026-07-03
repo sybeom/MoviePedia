@@ -363,7 +363,13 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
       const seasonNum = getScalarStringValue(value, ['seasonNum', 'season', 'seasonNumber'])
       const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
       const genres = getStringArrayValue(value, ['genres', 'genre'])
-      const certification = getStringValue(value, ['certification', 'rating', 'ageRating'])
+      const certification =
+        getStringValue(value, [
+        'contentRating',
+        'certification',
+        'rating',
+        'ageRating',
+      ]) || '등급 미정'
 
       return { code, title, seasonNum, poster, genres, certification }
     })

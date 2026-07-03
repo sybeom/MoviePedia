@@ -46,6 +46,19 @@ public class TVInitService {
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
 
+    public void init() {
+        List<TVSeries> seriesList = tvSeriesRepo.findByContentRatingIsNull();
+
+        for (TVSeries series : seriesList) {
+            TmdbContentRating tmdbContentRating =
+                    tmdbTVClient.fetchContentRating(series.getCode());
+
+            String contentRating = getContentRating(tmdbContentRating);
+
+            series.setContentRating(contentRating);
+        }
+    }
+
     public void initTVGenres() {
         List<TVSeries> tvSeriesList = tvSeriesRepo.findAll();
 
@@ -148,10 +161,31 @@ public class TVInitService {
 
     private String getContentRating(TmdbContentRating tmdbContentRating) {
         return tmdbContentRating.results().stream()
-                .filter(info -> info.countryCode().equals("KR"))
+                .filter(info -> "KR".equals(info.countryCode()))
                 .map(info -> info.rating())
                 .findFirst()
-                .orElse(null);
+                .orElseGet(() -> tmdbContentRating.results().stream()
+                        .filter(info -> "JP".equals(info.countryCode()))
+                        .map(info -> mapUsTvRating(info.rating()))
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(null)
+                );
+    }
+
+    private String mapUsTvRating(String rating) {
+        if (rating == null || rating.isBlank()) {
+            return null;
+        }
+
+        return switch (rating) {
+            case "TV-Y", "TV-Y7", "TV-G" -> "ALL";
+            case "TV-PG" -> "12";
+            case "TV-14" -> "15";
+            case "TV-MA" -> "19";
+            case "NR" -> null;
+            default -> null;
+        };
     }
 
     private boolean isTitleMatch(String title) {

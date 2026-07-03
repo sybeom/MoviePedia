@@ -47,7 +47,7 @@ public class TVService {
 
     @Transactional(readOnly = true)
     public SliceImpl<AllTVsResponse> getAllTV(FilterRequest filter, SortType sortType, Pageable pageable) {
-        QTVSeries qTVSeries = QTVSeries.tVSeries;
+        QTVSeries qSeries = QTVSeries.tVSeries;
 
 
         OrderSpecifier<?> orderSpecifier = switch (sortType) {
@@ -59,9 +59,9 @@ public class TVService {
         List<TV> tvList = query
                 .select(tV)
                 .from(tV)
-                .join(qTVSeries).on(tV.code.eq(qTVSeries.code)) // TV와 시리즈 연관관계가 없어서 필요함
+                .leftJoin(tV.series, qSeries).fetchJoin()
                 .where(
-                        genreExists(qTVSeries, filter.genre()),
+                        genreExists(qSeries, filter.genre()),
                         releasedCondition(filter.releaseStatus())
                 )
                 .orderBy(orderSpecifier)

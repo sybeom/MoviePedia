@@ -327,7 +327,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const backdrop = getPrimaryImageUrl(
     getStringValue(data, ['backdrop', 'backdropUrl', 'backdropPath']),
   )
-  const certification = getStringValue(data, ['certification']).toUpperCase()
+  const certification = getStringValue(data, ['contentRating', 'certification']).toUpperCase()
   const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
   const overview = getStringValue(data, ['overview', 'plot'])
   const releaseDate = getStringValue(data, ['releaseYear', 'releaseDate'])

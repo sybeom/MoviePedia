@@ -1,6 +1,7 @@
 package syb.moviepedia.tv.dto.response;
 
 import lombok.Builder;
+import syb.moviepedia.tv.domain.QTVSeries;
 import syb.moviepedia.tv.domain.TV;
 
 @Builder
@@ -17,7 +18,7 @@ public record AllTVsResponse(
                 .posterPath(tv.getPosterPath())
                 .title(tv.getTitle())
                 .seasonNum(tv.getSeasonNum())
-                .contentRating(tv.getCertification())
+                .contentRating(tv.getSeries().getContentRating())
                 .build();
     }
 }
