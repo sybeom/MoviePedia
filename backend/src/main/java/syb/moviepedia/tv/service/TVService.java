@@ -59,7 +59,7 @@ public class TVService {
         List<TV> tvList = query
                 .select(tV)
                 .from(tV)
-                .join(qTVSeries).on(tV.code.eq(qTVSeries.code))
+                .join(qTVSeries).on(tV.code.eq(qTVSeries.code)) // TV와 시리즈 연관관계가 없어서 필요함
                 .where(
                         genreExists(qTVSeries, filter.genre()),
                         releasedCondition(filter.releaseStatus())

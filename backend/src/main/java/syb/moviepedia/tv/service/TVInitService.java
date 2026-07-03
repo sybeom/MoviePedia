@@ -17,6 +17,7 @@ import syb.moviepedia.tv.domain.TVSeriesGenre;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
+import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesGenreRepository;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -43,14 +45,6 @@ public class TVInitService {
     private final GenreRepository genreRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
-    public void setPoster() {
-        List<TV> result = tvRepo.findNotExistPoster();
-
-        result.stream().forEach(tv -> {
-            String poster = tmdbTVClient.fetchTVSeriesDetail(tv.getCode()).posterPath();
-            tv.setPoster(poster);
-        });
-    }
 
     public void initTVGenres() {
         List<TVSeries> tvSeriesList = tvSeriesRepo.findAll();

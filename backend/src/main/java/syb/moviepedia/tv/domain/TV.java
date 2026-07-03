@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import syb.moviepedia.media.BaseMediaEntity;
+import syb.moviepedia.tv.service.TVService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,7 +16,6 @@ import java.util.List;
 /**
  * TV 시즌별 엔티티
  */
-
 @AttributeOverrides({
         @AttributeOverride(
                 name = "code",
@@ -40,6 +40,10 @@ public class TV extends BaseMediaEntity {
     @Column(name = "episode_count")
     private Integer episodeCnt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "series_id")
+    TVSeries series;
+
     @Builder
     public TV(
             Integer code,
@@ -47,23 +51,19 @@ public class TV extends BaseMediaEntity {
             Integer seasonNum,
             Integer episodeCnt,
             String posterPath,
-            String certification,
+            String contentRating,
             String overview,
             LocalDate releaseDate,
             List<String> country,
             Boolean detailFetched
 
     ) {
-        super(code, title, posterPath, certification, overview, releaseDate, country, detailFetched);
+        super(code, title, posterPath, contentRating, overview, releaseDate, country, detailFetched);
         this.seasonNum = seasonNum;
         this.episodeCnt = episodeCnt;
     }
 
-    public void setReleaseDate(LocalDate releaseDate) {
-        updateAirDate(releaseDate);
-    }
-
-    public void setPoster(String path) {
-        setPosterPath(path);
+    public void setSeries(TVSeries series) {
+        this.series = series;
     }
 }

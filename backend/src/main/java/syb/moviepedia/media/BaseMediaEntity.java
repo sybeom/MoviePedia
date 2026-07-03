@@ -61,12 +61,4 @@ public abstract class BaseMediaEntity {
         this.country = country;
         this.detailFetched = detailFetched;
     }
-
-    protected void updateAirDate(LocalDate airDate) {
-        this.releaseDate = airDate;
-    }
-
-    protected void setPosterPath(String posterPath) {
-        this.posterPath = posterPath;
-    }
 }

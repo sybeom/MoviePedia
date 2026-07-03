@@ -20,10 +20,5 @@ public interface TVRepository extends JpaRepository<TV, Integer> {
     """)
     List<TV> findByPopularSeason(Set<Integer> seriesIds);
 
-    @Query("""
-        select t
-        from TV t
-        where t.posterPath is null
-    """)
-    List<TV> findNotExistPoster();
+    List<TV> findBySeriesIsNull();
 }

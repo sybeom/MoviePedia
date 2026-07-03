@@ -22,9 +22,10 @@ public class TVSeries {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "series_code")
+    @Column(name = "series_code", unique = true)
     Integer code;
 
+    @Column(unique = true)
     String title;
 
     List<Integer> genres;
