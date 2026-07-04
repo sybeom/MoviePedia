@@ -39,6 +39,5 @@ public class TVSeries extends BaseMediaEntity {
             String posterPath,
             String backdropPath) {
         super(code, title, certification, country, overview, posterPath, backdropPath);
-
     }
 }

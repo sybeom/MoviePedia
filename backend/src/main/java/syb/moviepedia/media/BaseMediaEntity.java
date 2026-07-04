@@ -24,8 +24,6 @@ public abstract class BaseMediaEntity {
 
     private List<String> country;
 
-    private Integer runtime;
-
     @Column(columnDefinition = "TEXT")
     private String overview;
 
@@ -70,5 +68,11 @@ public abstract class BaseMediaEntity {
 
     protected void updateCountryAndRuntime(List<String> country) {
         this.country = country;
+    }
+
+    public void updateOverviewAndPosterPath(String overview, String posterPath, String backdropPath) {
+        this.overview = overview;
+        this.posterPath = posterPath;
+        this.backdropPath = backdropPath;
     }
 }

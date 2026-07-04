@@ -7,4 +7,5 @@ import syb.moviepedia.tv.domain.TVSeries;
 import java.util.List;
 
 public interface TVSeriesRepository extends JpaRepository<TVSeries, Long> {
+
 }

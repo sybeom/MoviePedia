@@ -14,7 +14,7 @@ public record TmdbTVDiscover(
 ) {
     public record TmdbTVResult(
             @JsonProperty("id")
-            Integer code,
+            Integer seriesCode,
 
             @JsonProperty("name")
             String title,
@@ -23,6 +23,11 @@ public record TmdbTVDiscover(
             List<Integer> genreIds,
 
             @JsonProperty("origin_country")
-            List<String> countries
+            List<String> countries,
+
+            @JsonProperty("poster_path")
+            String posterPath,
+
+            String overview
     ) { }
 }

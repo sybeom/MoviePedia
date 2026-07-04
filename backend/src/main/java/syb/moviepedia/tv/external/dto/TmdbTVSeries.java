@@ -6,6 +6,7 @@ import jakarta.json.Json;
 import java.util.List;
 
 /**
+ * Tmdb Detail
  * Tmdb TV api(/tv/{series_id}) 호출 결과
  */
 public record TmdbTVSeries(
@@ -21,10 +22,15 @@ public record TmdbTVSeries(
         @JsonProperty("origin_country")
         List<String> countries,
 
+        String overview,
+
         List<TVSeasons> seasons,
 
         @JsonProperty("poster_path")
-        String posterPath
+        String posterPath,
+
+        @JsonProperty("backdrop_path")
+        String backdropPath
         ) {
         public record TVSeasons(
                 @JsonProperty("id")

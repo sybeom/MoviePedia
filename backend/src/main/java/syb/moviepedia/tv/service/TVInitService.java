@@ -2,6 +2,7 @@ package syb.moviepedia.tv.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaCategoryType;
@@ -9,9 +10,11 @@ import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVCategory;
+import syb.moviepedia.tv.domain.TVSeries;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
+import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesGenreRepository;
@@ -33,6 +36,20 @@ public class TVInitService {
     private final CountryRepository countryRepo;
     private final GenreRepository genreRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
+
+    public void initSeries() {
+        List<TVSeries> seriesList = tvSeriesRepo.findAll();
+
+        seriesList.forEach(series -> {
+            TmdbTVSeries response = tmdbTVClient.fetchTVSeriesDetail(series.getCode());
+
+            series.updateOverviewAndPosterPath(
+                    response.overview(),
+                    response.posterPath(),
+                    response.backdropPath()
+            );
+        });
+    }
 
     public void initCategories() {
 //        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()
@@ -68,7 +85,7 @@ public class TVInitService {
         TmdbTVDiscover tvSeries = tmdbTVClient.fetchTVSeries(page);
 
         List<TV> tvs = tvSeries.results().stream()
-                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.code()))
+                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.seriesCode()))
                 .filter(series -> isTitleMatch(series.title()))
                 .flatMap(series -> series.seasons().stream()
                         .filter(season -> season.seasonNumber() != 0)
