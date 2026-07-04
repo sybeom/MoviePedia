@@ -34,7 +34,7 @@ public class TmdbApiTest {
         org.assertj.core.api.Assertions.assertThat(discover).isNotNull();
 
         List<TV> tvs = discover.results().stream()
-                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.id()))
+                .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.code()))
                 .filter(series -> series.title().matches(TITLE_PATTERN))
                 .flatMap(series -> series.seasons().stream()
                         .filter(season -> season.seasonNumber() != 0)
@@ -46,7 +46,6 @@ public class TmdbApiTest {
                                 .posterPath(season.posterPath())
                                 .overview(season.overview())
                                 .country(countryRepo.findNameByCodeIn(series.countries()))
-                                .detailFetched(false)
                                 .build()
                         )
                 )

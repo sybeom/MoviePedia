@@ -7,47 +7,37 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import syb.moviepedia.common.ReactionType;
+import syb.moviepedia.media.BaseMediaEntity;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
-@Builder
 @Entity
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Movie {
+@AttributeOverrides({
+        @AttributeOverride(
+                name = "code",
+                column = @Column(name = "movie_code",unique = true, nullable = false)
+        ),
+        @AttributeOverride(
+                name = "backdropPath",
+                column = @Column(name = "backdrop_path")
+        ),
+        @AttributeOverride(
+                name = "posterPath",
+                column = @Column(name = "poster_path")
+        )
+})
+public class Movie extends BaseMediaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "movie_code", unique = true, nullable = false)
-    private Integer code;
-
-    private String title;
-
-    @Column(name = "backdrop_path")
-    private String backdropPath;
-
-    @Column(name = "poster_path")
-    private String posterPath;
-
-    private String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
-
-    @Column(columnDefinition = "TEXT")
-    private String overview;
-
-    @Column(name = "release_date")
-    private LocalDate releaseDate;
-
-    private List<String> country;
-
-    private Integer runtime;
-
-    @Column(name = "detail_fetched")
-    private Boolean detailFetched;
+    Integer runtime;
 
     @Column(name="comment_count",nullable = false)
     private long commentCount=0;
@@ -55,20 +45,29 @@ public class Movie {
     @Column(name = "like_count", nullable = false)
     private long likeCount=0;
 
-    public void updateFrom(TmdbMovie movie, String certification) {
-        this.title = movie.title();
-        this.overview = movie.overview();
-        this.posterPath = movie.posterPath();
-        this.backdropPath = movie.backdropPath();
-        this.certification = certification;
-        this.releaseDate = movie.releaseDate();
+    @Builder
+    public Movie(
+            Integer code,
+            String title,
+            String posterPath,
+            String backdropPath,
+            String certification,
+            String overview,
+            LocalDate releaseDate,
+            List<String> country,
+            Integer runtime,
+            long commentCount,
+            long likeCount) {
+        super(code, title, posterPath, certification, overview, releaseDate, country);
+
+        this.commentCount = commentCount;
+        this.likeCount = likeCount;
+        this.runtime = runtime;
     }
 
     // 상세 정보 업데이트
     public void updateCountryAndRuntime(List<String> country, Integer runtime) {
-        this.country = country;
-        this.runtime = runtime;
-        detailFetched = true;
+        super.updateCountryAndRuntime(country);
     }
 
     // 코멘트 개수 및 좋아요 수 상태 업데이트

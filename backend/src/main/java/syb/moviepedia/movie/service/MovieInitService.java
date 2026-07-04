@@ -284,16 +284,11 @@ public class MovieInitService {
     private Movie toMovie(TmdbMovie tmdbMovie, String certification) {
         log.info("영화 제목 : {}", tmdbMovie.title());
         return Movie.builder()
-                .code(tmdbMovie.code())
-                .title(tmdbMovie.title())
-                .backdropPath(tmdbMovie.backdropPath())
-                .posterPath(tmdbMovie.posterPath())
                 .certification(certification)
                 .overview(tmdbMovie.overview())
                 .releaseDate(tmdbMovie.releaseDate())
                 .country(tmdbMovie.country())
                 .runtime(tmdbMovie.runtime())
-                .detailFetched(false)
                 .build();
     }
 
@@ -304,7 +299,6 @@ public class MovieInitService {
         return movieRepository.findByCode(tmdbMovie.code()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
                     log.info("saveOrUpdateMovie(): 영화 정보 갱신");
-                    movie.updateFrom(tmdbMovie, certification); // 존재하면 영화 정보 업데이트(값들이 변경되어있을 수 있기때문)
                     return movie;})
                 .orElseGet(() -> movieRepository.save(toMovie(tmdbMovie, certification))); // 존재하지 않으면 db 저장
     }

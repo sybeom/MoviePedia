@@ -185,15 +185,6 @@ public class MovieService {
             return savedMovie;
         });
 
-        // 영화가 있더라도 기타(등급, 런타임, 국가) 정보 채워져있지 않을 경우.
-        // 보통 카테고리 영화 저장시 기타 정보는 저장되지 않아 상세 페이지 조회시 실행됨
-        if(!movie.getDetailFetched()) {
-            log.info("getMovieDetail(): 영화 상세 업데이트");
-            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
-
-            updateMovie(movie, detail);
-        }
-
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
 
@@ -338,7 +329,6 @@ public class MovieService {
                 .releaseDate(detail.releaseYear())
                 .country(countries)
                 .runtime(detail.runtime())
-                .detailFetched(true)
                 .build();
     }
 

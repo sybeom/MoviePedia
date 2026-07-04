@@ -30,8 +30,7 @@ public abstract class BaseMediaEntity {
 
     private List<String> country;
 
-    @Column(name = "detail_fetched")
-    private Boolean detailFetched;
+    private Integer runtime;
 
     @Column(name="comment_count",nullable = false)
     private long commentCount=0;
@@ -42,6 +41,9 @@ public abstract class BaseMediaEntity {
     @Column(name = "poster_path")
     private String posterPath;
 
+    @Column(name = "backdrop_path")
+    private String backdropPath;
+
     protected BaseMediaEntity(
             Integer code,
             String title,
@@ -49,8 +51,7 @@ public abstract class BaseMediaEntity {
             String certification,
             String overview,
             LocalDate releaseDate,
-            List<String> country,
-            Boolean detailFetched
+            List<String> country
     ) {
         this.code = code;
         this.title = title;
@@ -59,6 +60,9 @@ public abstract class BaseMediaEntity {
         this.overview = overview;
         this.releaseDate = releaseDate;
         this.country = country;
-        this.detailFetched = detailFetched;
+    }
+
+    protected void updateCountryAndRuntime(List<String> country) {
+        this.country = country;
     }
 }

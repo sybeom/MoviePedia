@@ -17,7 +17,9 @@ import syb.moviepedia.common.SortType;
 import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.movie.repository.GenreRepository;
-import syb.moviepedia.tv.domain.*;
+import syb.moviepedia.tv.domain.QTVSeries;
+import syb.moviepedia.tv.domain.QTVSeriesGenre;
+import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
@@ -25,7 +27,6 @@ import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import java.time.LocalDate;
 import java.util.List;
 
-import static syb.moviepedia.movie.domain.QMovie.movie;
 import static syb.moviepedia.tv.domain.QTV.tV;
 
 @Service
@@ -35,6 +36,9 @@ public class TVService {
     private final GenreRepository genreRepo;
     private final JPAQueryFactory query;
 
+    // TODO: Movie BaseEntity 상속하도록하기
+    // TODO: 상세화면 만들기
+    // TODO: 영화쪽 TMDB 클래스 한데 묶기
     @Transactional
     public List<TVPopularResponse> getPopularTVList() {
         return tvCategoryRepo.findAll().stream().map(category ->

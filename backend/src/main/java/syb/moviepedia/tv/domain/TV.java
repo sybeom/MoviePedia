@@ -5,9 +5,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import syb.moviepedia.media.BaseMediaEntity;
-import syb.moviepedia.tv.service.TVService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -54,11 +52,9 @@ public class TV extends BaseMediaEntity {
             String contentRating,
             String overview,
             LocalDate releaseDate,
-            List<String> country,
-            Boolean detailFetched
-
+            List<String> country
     ) {
-        super(code, title, posterPath, contentRating, overview, releaseDate, country, detailFetched);
+        super(code, title, posterPath, contentRating, overview, releaseDate, country);
         this.seasonNum = seasonNum;
         this.episodeCnt = episodeCnt;
     }

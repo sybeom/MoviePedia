@@ -135,7 +135,6 @@ public class TVInitService {
                                 .posterPath(season.posterPath())
                                 .overview(season.overview())
                                 .country(countryRepo.findNameByCodeIn(series.countries()))
-                                .detailFetched(false)
                                 .build()
                         )
                 )
