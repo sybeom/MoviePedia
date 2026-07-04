@@ -36,7 +36,6 @@ public class TVService {
     private final GenreRepository genreRepo;
     private final JPAQueryFactory query;
 
-    // TODO: Movie BaseEntity 상속하도록하기
     // TODO: 상세화면 만들기
     // TODO: 영화쪽 TMDB 클래스 한데 묶기
     @Transactional

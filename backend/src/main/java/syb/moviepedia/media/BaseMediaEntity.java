@@ -22,21 +22,12 @@ public abstract class BaseMediaEntity {
 
     private String certification; // 관람 등급은 All, 미정 등 문자열도 있으므로 String 타입
 
-    @Column(columnDefinition = "TEXT")
-    private String overview;
-
-    @Column(name = "release_date")
-    private LocalDate releaseDate;
-
     private List<String> country;
 
     private Integer runtime;
 
-    @Column(name="comment_count",nullable = false)
-    private long commentCount=0;
-
-    @Column(name = "like_count", nullable = false)
-    private long likeCount=0;
+    @Column(columnDefinition = "TEXT")
+    private String overview;
 
     @Column(name = "poster_path")
     private String posterPath;
@@ -47,19 +38,34 @@ public abstract class BaseMediaEntity {
     protected BaseMediaEntity(
             Integer code,
             String title,
-            String posterPath,
             String certification,
+            List<String> country,
             String overview,
-            LocalDate releaseDate,
-            List<String> country
+            String posterPath
     ) {
         this.code = code;
         this.title = title;
+        this.certification = certification;
+        this.country = country;
+        this.overview = overview;
         this.posterPath = posterPath;
+    }
+
+    public BaseMediaEntity(
+            Integer code,
+            String title,
+            String certification,
+            List<String> country,
+            String overview,
+            String posterPath,
+            String backdropPath) {
+        this.code = code;
+        this.title = title;
         this.certification = certification;
         this.overview = overview;
-        this.releaseDate = releaseDate;
         this.country = country;
+        this.posterPath = posterPath;
+        this.backdropPath = backdropPath;
     }
 
     protected void updateCountryAndRuntime(List<String> country) {

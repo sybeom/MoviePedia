@@ -10,15 +10,15 @@ public record AllTVsResponse(
         String posterPath,
         String title,
         Integer seasonNum,
-        String contentRating
+        String certification
 ) {
     public static AllTVsResponse from(TV tv) {
         return AllTVsResponse.builder()
-                .code(tv.getCode())
+                .code(tv.getSeriesCode())
                 .posterPath(tv.getPosterPath())
-                .title(tv.getTitle())
+                .title(tv.getSeries().getTitle())
                 .seasonNum(tv.getSeasonNum())
-                .contentRating(tv.getSeries().getContentRating())
+                .certification(tv.getSeries().getCertification())
                 .build();
     }
 }

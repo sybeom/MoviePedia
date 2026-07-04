@@ -37,6 +37,9 @@ public class Movie extends BaseMediaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "release_date")
+    LocalDate releaseDate;
+
     Integer runtime;
 
     @Column(name="comment_count",nullable = false)
@@ -49,17 +52,17 @@ public class Movie extends BaseMediaEntity {
     public Movie(
             Integer code,
             String title,
-            String posterPath,
-            String backdropPath,
             String certification,
-            String overview,
             LocalDate releaseDate,
             List<String> country,
+            String posterPath,
+            String backdropPath,
+            String overview,
             Integer runtime,
             long commentCount,
             long likeCount) {
-        super(code, title, posterPath, certification, overview, releaseDate, country);
-
+        super(code, title, certification, country, overview, posterPath);
+        this.releaseDate = releaseDate;
         this.commentCount = commentCount;
         this.likeCount = likeCount;
         this.runtime = runtime;

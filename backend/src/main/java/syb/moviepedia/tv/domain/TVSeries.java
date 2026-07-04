@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import syb.moviepedia.media.BaseMediaEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -14,27 +16,29 @@ import java.util.List;
 @Table(name = "tv_series")
 @Entity
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TVSeries {
+@AttributeOverrides({
+        @AttributeOverride(
+                name = "code",
+                column = @Column(name = "series_code", unique = true)
+        )
+})
+public class TVSeries extends BaseMediaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "series_code", unique = true)
-    Integer code;
+    @Builder
+    public TVSeries(
+            Integer code,
+            String title,
+            String certification,
+            List<String> country,
+            String overview,
+            String posterPath,
+            String backdropPath) {
+        super(code, title, certification, country, overview, posterPath, backdropPath);
 
-    @Column(unique = true)
-    String title;
-
-    List<Integer> genres;
-
-    List<String> countries;
-
-    String contentRating;
-
-    public void setContentRating(String contentRating) {
-        this.contentRating = contentRating;
     }
 }

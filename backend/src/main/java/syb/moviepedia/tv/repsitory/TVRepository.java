@@ -12,10 +12,10 @@ public interface TVRepository extends JpaRepository<TV, Integer> {
     @Query("""
         select tv1
         from TV tv1
-        where tv1.code in :seriesIds and tv1.seasonNum = (
+        where tv1.seriesCode in :seriesIds and tv1.seasonNum = (
             select max(tv2.seasonNum)
             from TV tv2
-            where tv2.code=tv1.code
+            where tv2.seriesCode=tv1.seriesCode
         )
     """)
     List<TV> findByPopularSeason(Set<Integer> seriesIds);

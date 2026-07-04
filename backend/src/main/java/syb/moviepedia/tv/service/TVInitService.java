@@ -2,34 +2,23 @@ package syb.moviepedia.tv.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaCategoryType;
-import syb.moviepedia.movie.domain.Genre;
 import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVCategory;
-import syb.moviepedia.tv.domain.TVSeries;
-import syb.moviepedia.tv.domain.TVSeriesGenre;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
-import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesGenreRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesRepository;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,50 +33,6 @@ public class TVInitService {
     private final CountryRepository countryRepo;
     private final GenreRepository genreRepo;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
-
-
-    public void init() {
-        List<TVSeries> seriesList = tvSeriesRepo.findByContentRatingIsNull();
-
-        for (TVSeries series : seriesList) {
-            TmdbContentRating tmdbContentRating =
-                    tmdbTVClient.fetchContentRating(series.getCode());
-
-            String contentRating = getContentRating(tmdbContentRating);
-
-            series.setContentRating(contentRating);
-        }
-    }
-
-    public void initTVGenres() {
-        List<TVSeries> tvSeriesList = tvSeriesRepo.findAll();
-
-        List<Integer> genreCodes = tvSeriesList.stream()
-                .flatMap(tvSeries -> tvSeries.getGenres().stream())
-                .distinct()
-                .toList();
-
-        List<Genre> genres = genreRepo.findByCodeIn(genreCodes);
-
-        Map<Integer, Genre> genreMap = genres.stream()
-                .collect(Collectors.toMap(
-                        Genre::getCode,
-                        genre -> genre
-                ));
-
-        List<TVSeriesGenre> tvSeriesGenres = tvSeriesList.stream()
-                .flatMap(tvSeries -> tvSeries.getGenres().stream()
-                        .map(genreMap::get)
-                        .filter(Objects::nonNull)
-                        .map(genre -> TVSeriesGenre.builder()
-                                .tvSeries(tvSeries)
-                                .genre(genre)
-                                .build())
-                )
-                .toList();
-
-        tvSeriesGenreRepo.saveAll(tvSeriesGenres);
-    }
 
     public void initCategories() {
 //        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()
@@ -128,13 +73,9 @@ public class TVInitService {
                 .flatMap(series -> series.seasons().stream()
                         .filter(season -> season.seasonNumber() != 0)
                         .map(season -> TV.builder()
-                                .code(series.code())
-                                .title(series.title())
+                                .seriesCode(series.code())
                                 .seasonNum(season.seasonNumber())
                                 .episodeCnt(season.episodeCnt())
-                                .posterPath(season.posterPath())
-                                .overview(season.overview())
-                                .country(countryRepo.findNameByCodeIn(series.countries()))
                                 .build()
                         )
                 )
@@ -144,21 +85,7 @@ public class TVInitService {
 
     }
 
-    public void initSeries(int page) {
-        TmdbTVDiscover tmdbSeries = tmdbTVClient.fetchTVSeries(page);
-        List<TVSeries> series = tmdbSeries.results().stream()
-                .filter(result -> isTitleMatch(result.title()))
-                .map(result -> TVSeries.builder()
-                        .code(result.code())
-                        .title(result.title())
-                        .genres(result.genreIds())
-                        .countries(countryRepo.findNameByCodeIn(result.countries()))
-                        .contentRating(getContentRating(tmdbTVClient.fetchContentRating(result.code())))
-                        .build()).toList();
-        tvSeriesRepo.saveAll(series);
-    }
-
-    private String getContentRating(TmdbContentRating tmdbContentRating) {
+    private String getCertification(TmdbContentRating tmdbContentRating) {
         return tmdbContentRating.results().stream()
                 .filter(info -> "KR".equals(info.countryCode()))
                 .map(info -> info.rating())
