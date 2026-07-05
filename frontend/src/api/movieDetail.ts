@@ -20,8 +20,17 @@ function getMediaResourcePath(mediaType: MediaType) {
   return MEDIA_CONFIGS[mediaType].resourcePath
 }
 
-export async function fetchMovieDetail(movieId: string, mediaType: MediaType = 'movie') {
-  const response = await request<unknown>(`${getMediaResourcePath(mediaType)}/${movieId}`, {
+export async function fetchMovieDetail(
+  movieId: string,
+  mediaType: MediaType = 'movie',
+  seasonNum = '',
+) {
+  const detailPath =
+    mediaType === 'series' && seasonNum
+      ? `${getMediaResourcePath(mediaType)}/${movieId}/${seasonNum}`
+      : `${getMediaResourcePath(mediaType)}/${movieId}`
+
+  const response = await request<unknown>(detailPath, {
     method: 'GET',
   })
 

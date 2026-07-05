@@ -364,12 +364,7 @@ function normalizePopularMovies(data: unknown): PopularMovie[] {
       const poster = getImageSource(getStringValue(value, ['poster', 'posterPath', 'poster_path']))
       const genres = getStringArrayValue(value, ['genres', 'genre'])
       const certification =
-        getStringValue(value, [
-        'contentRating',
-        'certification',
-        'rating',
-        'ageRating',
-      ]) || '등급 미정'
+        getStringValue(value, ['certification', 'rating', 'ageRating']) || '등급 미정'
 
       return { code, title, seasonNum, poster, genres, certification }
     })
@@ -773,6 +768,7 @@ function HomePage() {
           id: movie.code,
           title: movie.title,
           poster: 'poster' in movie ? movie.poster : '',
+          seasonNum: 'seasonNum' in movie ? movie.seasonNum : '',
         },
       },
     })

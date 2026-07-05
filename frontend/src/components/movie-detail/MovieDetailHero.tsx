@@ -43,14 +43,14 @@ function MetaFragments({ parts }: { parts: string[] }) {
 }
 
 function MovieDetailHero({ movieDetail, isLoading, message, onBack }: MovieDetailHeroProps) {
-  const heroImage = movieDetail.poster || movieDetail.backdrop
+  const heroImage = movieDetail.poster
   const certificationIcon = getCertificationIcon(movieDetail.certification)
   const firstLineParts = getMetaParts([
     movieDetail.releaseDate,
-    movieDetail.originCountry,
+    movieDetail.genres,
     movieDetail.runtime ? `${movieDetail.runtime}분` : '',
   ])
-  const secondLineParts = getMetaParts([movieDetail.genres])
+  const secondLineParts = getMetaParts([movieDetail.originCountry])
 
   return (
     <section className="movie-detail-hero" aria-labelledby="movie-detail-title">

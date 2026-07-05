@@ -10,6 +10,7 @@ import type {
 
 export const STAR_COUNT = 5
 export const MAX_COMMENT_LENGTH = 300
+export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 export const STAR_ICON_PATH =
   'M12 2.8c.38 0 .73.21.9.55l2.37 4.8 5.3.77c.75.11 1.05 1.03.5 1.56l-3.83 3.73.9 5.27c.13.74-.65 1.31-1.32.96L12 17.96l-4.82 2.53c-.67.35-1.45-.22-1.32-.96l.9-5.27-3.83-3.73c-.55-.53-.25-1.45.5-1.56l5.3-.77 2.37-4.8c.17-.34.52-.55.9-.55Z'
 
@@ -120,13 +121,52 @@ export function getJoinedStringArrayValue(record: Record<string, unknown>, keys:
   return ''
 }
 
+export function getFirstScalarArrayValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+
+    if (!Array.isArray(value) || value.length === 0) {
+      continue
+    }
+
+    for (const item of value) {
+      if (typeof item === 'string' && item.trim()) {
+        return item.trim()
+      }
+
+      if (typeof item === 'number' && Number.isFinite(item)) {
+        return String(item)
+      }
+    }
+  }
+
+  return ''
+}
+
 export function getPrimaryImageUrl(imageUrl: string) {
-  return (
+  const normalizedValue =
     imageUrl
       .split('|')
       .map((url) => url.trim())
       .find(Boolean) ?? ''
-  )
+
+  if (!normalizedValue) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(normalizedValue)) {
+    return normalizedValue
+  }
+
+  if (normalizedValue.startsWith('//')) {
+    return `https:${normalizedValue}`
+  }
+
+  if (normalizedValue.startsWith('/')) {
+    return `${TMDB_IMAGE_BASE_URL}${normalizedValue}`
+  }
+
+  return normalizedValue
 }
 
 export function getCommentListValue(data: unknown) {
@@ -324,15 +364,22 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const poster = getPrimaryImageUrl(
     getStringValue(data, ['poster', 'posterUrl', 'imageUrl', 'posterPath']),
   )
-  const backdrop = getPrimaryImageUrl(
-    getStringValue(data, ['backdrop', 'backdropUrl', 'backdropPath']),
-  )
-  const certification = getStringValue(data, ['contentRating', 'certification']).toUpperCase()
+  const certification = getStringValue(data, ['certification']).toUpperCase()
   const genres = getJoinedStringArrayValue(data, ['genres', 'genre'])
   const overview = getStringValue(data, ['overview', 'plot'])
-  const releaseDate = getStringValue(data, ['releaseYear', 'releaseDate'])
-  const originCountry = getJoinedStringArrayValue(data, ['country'])
-  const runtime = getStringValue(data, ['runtime'])
+  const releaseDate = getStringValue(data, [
+    'releaseYear',
+    'releaseDate',
+    'firstAirDate',
+    'airDate',
+    'first_release_date',
+  ])
+  const originCountry =
+    getJoinedStringArrayValue(data, ['country', 'originCountry', 'originCountries', 'countries']) ||
+    getStringValue(data, ['country', 'originCountry'])
+  const runtime =
+    getStringValue(data, ['runtime', 'episodeRuntime', 'episode_run_time']) ||
+    getFirstScalarArrayValue(data, ['episodeRunTime', 'episodeRuntime', 'episode_run_time'])
   const score = getStringValue(data, ['score'])
   const rating = getStringValue(data, ['rating'])
   const globalRating = getStringValue(data, ['globalRating'])
@@ -347,7 +394,6 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     id,
     title,
     poster,
-    backdrop,
     certification,
     genres,
     overview,
@@ -426,7 +472,6 @@ export function createInitialMovieDetail(
     id: movie?.id?.trim() || movieId,
     title: movie?.title?.trim() || '영화 상세',
     poster: movie?.poster?.trim() || '',
-    backdrop: '',
     certification: '',
     genres: '',
     overview: '',

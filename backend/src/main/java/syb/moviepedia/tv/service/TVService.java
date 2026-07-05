@@ -14,15 +14,19 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaType;
 import syb.moviepedia.common.ReleaseStatus;
 import syb.moviepedia.common.SortType;
+import syb.moviepedia.common.exception.TVSeasonNotFoundException;
 import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.tv.domain.QTVSeries;
 import syb.moviepedia.tv.domain.QTVSeriesGenre;
 import syb.moviepedia.tv.domain.TV;
+import syb.moviepedia.tv.domain.TVSeries;
 import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
+import syb.moviepedia.tv.dto.response.TVSeasonResponse;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
+import syb.moviepedia.tv.repsitory.TVRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +36,7 @@ import static syb.moviepedia.tv.domain.QTV.tV;
 @Service
 @RequiredArgsConstructor
 public class TVService {
+    private final TVRepository tvRepo;
     private final TVCategoryRepository tvCategoryRepo;
     private final GenreRepository genreRepo;
     private final JPAQueryFactory query;
@@ -134,5 +139,25 @@ public class TVService {
                                 .genreCode(genre.getCode())
                                 .name(genre.getName()).build())
                 .toList();
+    }
+
+    public TVSeasonResponse getSeasonDetail(int seriesCode, int seasonNum) {
+        TV tv = tvRepo.findBySeriesCodeAndSeasonNum(seriesCode, seasonNum)
+                .orElseThrow(() -> new TVSeasonNotFoundException("TV 시즌 조회 실패"));
+        TVSeries series = tv.getSeries();
+        List<String> genres = genreRepo.findByGenreCode(series.getGenres());
+
+        return TVSeasonResponse.builder()
+                .seasonCode(tv.getSeasonNum())
+                .title(series.getTitle())
+                .genre(genres)
+                .country(series.getCountry())
+                .runtime(null)
+                .releaseDate(tv.getReleaseDate())
+                .certification(series.getCertification())
+                .posterPath(tv.getPosterPath())
+                .overview(tv.getOverview().isEmpty() ? series.getOverview() : tv.getOverview())
+                .credit(null)
+                .build();
     }
 }

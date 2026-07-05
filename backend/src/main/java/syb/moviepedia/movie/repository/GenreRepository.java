@@ -20,6 +20,13 @@ public interface GenreRepository extends JpaRepository<Genre,Long> {
     List<Genre> findByCodeIn(Collection<Integer> codes);
 
     @Query("""
+        select name
+        from Genre g
+        where g.code in :genres
+    """)
+    List<String> findByGenreCode(@Param("genres") List<Integer> genres);
+
+    @Query("""
         select g
         from Genre g
         where g.mediaType=:mediaType or g.mediaType=MediaType.BOTH

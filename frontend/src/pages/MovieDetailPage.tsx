@@ -55,6 +55,7 @@ function MovieDetailPage() {
   const resolvedMovieCode = movieCodeParam ?? seriesCodeParam ?? ''
   const state = location.state as MovieDetailState | null
   const initialMovie = state?.movie
+  const resolvedSeasonNum = initialMovie?.seasonNum ?? ''
   const mainShellRef = useRef<HTMLElement | null>(null)
   const hasLoadedDetailRef = useRef(false)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -133,11 +134,11 @@ function MovieDetailPage() {
       left: 0,
       behavior: 'auto',
     })
-  }, [resolvedMovieCode])
+  }, [resolvedMovieCode, resolvedSeasonNum])
 
   useEffect(() => {
     hasLoadedDetailRef.current = false
-  }, [resolvedMovieCode])
+  }, [resolvedMovieCode, resolvedSeasonNum])
 
   useEffect(() => {
     commentsPageRef.current = commentsPage
@@ -192,7 +193,11 @@ function MovieDetailPage() {
       setMessage(resolvedMovieCode ? '' : '?곹솕 ?뺣낫瑜?李얠쓣 ???놁뒿?덈떎.')
 
       try {
-        const normalizedDetail = await fetchMovieDetail(resolvedMovieCode, mediaConfig.type)
+        const normalizedDetail = await fetchMovieDetail(
+          resolvedMovieCode,
+          mediaConfig.type,
+          resolvedSeasonNum,
+        )
 
         if (!normalizedDetail) {
           setMessage('영화 정보를 불러오지 못했습니다.')
@@ -204,7 +209,6 @@ function MovieDetailPage() {
           id: normalizedDetail.id || resolvedMovieCode,
           title: normalizedDetail.title || initialMovie?.title?.trim() || '영화 상세',
           poster: normalizedDetail.poster || initialMovie?.poster?.trim() || '',
-          backdrop: normalizedDetail.backdrop,
           certification: normalizedDetail.certification,
           genres: normalizedDetail.genres,
           overview: normalizedDetail.overview,
@@ -246,7 +250,7 @@ function MovieDetailPage() {
 
     void loadMovieDetail()
     void loadMovieTrailersData()
-  }, [initialMovie, mediaConfig.type, resolvedMovieCode])
+  }, [initialMovie, mediaConfig.type, resolvedMovieCode, resolvedSeasonNum])
 
   useEffect(() => {
     let isMounted = true
@@ -687,8 +691,7 @@ function MovieDetailPage() {
     }
   }
 
-  const visibleMessage =
-    !isLoading && message ? message : !isLoading && !movieDetail.backdrop ? '배경 이미지가 없습니다.' : ''
+  const visibleMessage = !isLoading && message ? message : ''
 
   return (
     <div className={`home-page home-page-${theme} movie-detail-screen`}>

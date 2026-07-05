@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import syb.moviepedia.media.BaseMediaEntity;
+import syb.moviepedia.movie.domain.Genre;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -27,13 +28,17 @@ import java.util.List;
 public class TVSeries extends BaseMediaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
+
+    @Column
+    private List<Integer> genres;
 
     @Builder
     public TVSeries(
             Integer code,
             String title,
             String certification,
+            List<Genre> genres,
             List<String> country,
             String overview,
             String posterPath,

@@ -358,6 +358,7 @@ function MovieBrowsePage() {
             id: movie.code,
             title: movie.title,
             poster: 'poster' in movie ? movie.poster : '',
+            seasonNum: 'seasonNum' in movie ? movie.seasonNum : '',
           },
         },
       })

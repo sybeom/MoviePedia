@@ -20,6 +20,7 @@ import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
+import syb.moviepedia.tv.dto.response.TVSeasonResponse;
 import syb.moviepedia.tv.service.TVService;
 
 import java.util.List;
@@ -85,5 +86,21 @@ public class TVController {
         List<GenreResponse> genres = tvService.getGenres(mediaType);
         log.info("genres: {}", genres);
         return ResponseEntity.ok().body(ApiSuccessResponse.of("장르 목록 조회 성공", genres));
+    }
+
+    @Operation(summary = "TV 시즌 상세", description = "TV 시리즈 시즌 상세 화면 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "TV 시리즈 시즌 상세화면 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/{seriesCode}/{seasonNum}")
+    public ResponseEntity<ApiSuccessResponse<TVSeasonResponse>> getTVSeasonDetail(
+            @PathVariable Integer seriesCode, @PathVariable Integer seasonNum) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("TV 시즌 상세 조회 성공", tvService.getSeasonDetail(seriesCode, seasonNum)));
     }
 }

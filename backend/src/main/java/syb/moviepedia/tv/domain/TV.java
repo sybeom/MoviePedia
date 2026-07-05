@@ -33,10 +33,12 @@ public class TV {
     private Integer episodeCnt;
 
     @Column(name = "release_date")
-    LocalDate releaseDate;
+    private LocalDate releaseDate;
+
+    private String overview;
 
     @Column(name = "poster_path")
-    String posterPath;
+    private String posterPath;
 
     @Column(name="comment_count",nullable = false)
     private long commentCount=0;
@@ -46,7 +48,7 @@ public class TV {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "series_id")
-    TVSeries series;
+    private TVSeries series;
 
     public void setSeries(TVSeries series) {
         this.series = series;

@@ -2,9 +2,11 @@ package syb.moviepedia.tv.repsitory;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import syb.moviepedia.tv.domain.TV;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface TVRepository extends JpaRepository<TV, Integer> {
@@ -20,5 +22,12 @@ public interface TVRepository extends JpaRepository<TV, Integer> {
     """)
     List<TV> findByPopularSeason(Set<Integer> seriesIds);
 
-    List<TV> findBySeriesIsNull();
+
+    @Query("""
+        select t
+        from TV t
+        join fetch t.series
+        where t.series.code=:seriesCode and t.seasonNum=:seasonNum
+    """)
+    Optional<TV> findBySeriesCodeAndSeasonNum(@Param("seriesCode") Integer seriesCode, @Param("seasonNum") Integer seasonNum);
 }

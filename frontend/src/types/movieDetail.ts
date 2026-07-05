@@ -4,6 +4,7 @@ export type MovieDetailState = {
     id?: string
     title?: string
     poster?: string
+    seasonNum?: string
   }
 }
 
@@ -26,7 +27,6 @@ export type MovieDetailView = {
   id: string
   title: string
   poster: string
-  backdrop: string
   certification: string
   genres: string
   overview: string
