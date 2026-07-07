@@ -28,7 +28,7 @@ public class TmdbTVClient {
     private final static String TV_CONTENT_RATING = "/tv/{series_code}/content_ratings";
     private final static String TV_SEASON_PATH = "/tv/{series_id}/season/{season_number}";
 
-    public SeasonAirDates getSeasonDetail(Integer seasonCode, Integer seasonNum) {
+    public SeasonAirDates fetchSeasonDetail(Integer seasonCode, Integer seasonNum) {
         return get(
                 TV_SEASON_PATH,
                 SeasonAirDates.class,

@@ -9,6 +9,7 @@ import { getDisplayScorePercent } from '../../utils/movieDetail'
 
 type MovieDetailHeroProps = {
   movieDetail: MovieDetailView
+  mediaType: 'movie' | 'series'
   isLoading: boolean
   message: string
   onBack: () => void
@@ -42,13 +43,21 @@ function MetaFragments({ parts }: { parts: string[] }) {
   )
 }
 
-function MovieDetailHero({ movieDetail, isLoading, message, onBack }: MovieDetailHeroProps) {
+function MovieDetailHero({ movieDetail, mediaType, isLoading, message, onBack }: MovieDetailHeroProps) {
   const heroImage = movieDetail.poster
   const certificationIcon = getCertificationIcon(movieDetail.certification)
+  const runtimeLabel =
+    mediaType === 'series'
+      ? movieDetail.episodeCnt
+        ? `공개화수 ${movieDetail.episodeCnt}`
+        : ''
+      : movieDetail.runtime
+        ? `${movieDetail.runtime}분`
+        : ''
   const firstLineParts = getMetaParts([
     movieDetail.releaseDate,
     movieDetail.genres,
-    movieDetail.runtime ? `${movieDetail.runtime}분` : '',
+    runtimeLabel,
   ])
   const secondLineParts = getMetaParts([movieDetail.originCountry])
 

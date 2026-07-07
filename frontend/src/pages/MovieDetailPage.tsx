@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
@@ -46,6 +46,18 @@ type CommentSortOrder = 'latest' | 'oldest'
 const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
 const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
 const COMMENTS_PAGE_SIZE = 20
+
+function resetDetailScrollPosition(container: HTMLElement | null) {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  document.documentElement.scrollTop = 0
+  document.body.scrollTop = 0
+
+  container?.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'auto',
+  })
+}
 
 function MovieDetailPage() {
   const navigate = useNavigate()
@@ -128,12 +140,16 @@ function MovieDetailPage() {
     window.localStorage.setItem(HOME_THEME_STORAGE_KEY, theme)
   }, [theme])
 
-  useEffect(() => {
-    mainShellRef.current?.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'auto',
+  useLayoutEffect(() => {
+    resetDetailScrollPosition(mainShellRef.current)
+
+    const rafId = window.requestAnimationFrame(() => {
+      resetDetailScrollPosition(mainShellRef.current)
     })
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+    }
   }, [resolvedMovieCode, resolvedSeasonNum])
 
   useEffect(() => {
@@ -215,6 +231,7 @@ function MovieDetailPage() {
           releaseDate: normalizedDetail.releaseDate,
           originCountry: normalizedDetail.originCountry,
           runtime: normalizedDetail.runtime,
+          episodeCnt: normalizedDetail.episodeCnt,
           score: normalizedDetail.score,
           rating: normalizedDetail.rating,
           globalRating: normalizedDetail.globalRating,
@@ -726,6 +743,7 @@ function MovieDetailPage() {
             <section className="movie-detail-visual-section">
               <MovieDetailHero
               movieDetail={movieDetail}
+              mediaType={mediaConfig.type}
               isLoading={isLoading}
               message={visibleMessage}
               onBack={() => navigate(mediaConfig.homePath)}

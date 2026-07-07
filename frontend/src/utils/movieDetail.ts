@@ -380,6 +380,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
   const runtime =
     getStringValue(data, ['runtime', 'episodeRuntime', 'episode_run_time']) ||
     getFirstScalarArrayValue(data, ['episodeRunTime', 'episodeRuntime', 'episode_run_time'])
+  const episodeCnt = getStringValue(data, ['episodeCnt', 'episodeCount'])
   const score = getStringValue(data, ['score'])
   const rating = getStringValue(data, ['rating'])
   const globalRating = getStringValue(data, ['globalRating'])
@@ -400,6 +401,7 @@ export function normalizeMovieDetail(data: unknown): MovieDetailView | null {
     releaseDate,
     originCountry,
     runtime,
+    episodeCnt,
     score,
     rating,
     globalRating,
@@ -478,6 +480,7 @@ export function createInitialMovieDetail(
     releaseDate: '',
     originCountry: '',
     runtime: '',
+    episodeCnt: '',
     score: '',
     rating: '',
     globalRating: '',

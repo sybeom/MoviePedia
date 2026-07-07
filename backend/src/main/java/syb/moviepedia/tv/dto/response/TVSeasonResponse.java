@@ -12,7 +12,7 @@ public record TVSeasonResponse(
         String title,
         List<String> genre,
         List<String> country,
-        Integer runtime,
+        Integer episodeCnt,
         LocalDate releaseDate,
         String certification,
         String posterPath,

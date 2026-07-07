@@ -33,6 +33,7 @@ export type MovieDetailView = {
   releaseDate: string
   originCountry: string
   runtime: string
+  episodeCnt: string
   score: string
   rating: string
   globalRating: string

@@ -35,6 +35,7 @@ public class TV {
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
+    @Column(columnDefinition = "TEXT")
     private String overview;
 
     @Column(name = "poster_path")
