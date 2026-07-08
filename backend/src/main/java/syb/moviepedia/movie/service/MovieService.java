@@ -32,7 +32,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final MovieCategoryRepository movieCategoryRepository;
     private final CountryRepository countryRepository;
-    private final MovieCreditRepository movieCreditRepository;
+    private final CreditRepository creditRepository;
     private final VideoRepository videoRepository;
     private final GenreRepository genreRepository;
     private final MovieGenreRepository movieGenreRepository;
@@ -229,14 +229,14 @@ public class MovieService {
     // 출연 배우
     @Transactional
     public List<Credit> getCredit(Movie movie) {
-        Long movieId = movie.getId();
-        List<Credit> credits = movieCreditRepository.findByMovieId(movieId);
+        List<Credit> credits = creditRepository.findByCodeAndMediaType(movie.getCode(), MediaType.MOVIE);
 
         if (!credits.isEmpty()) {
             log.info("getCast(): 크레딧 정보 존재. 그대로 반환");
             return credits;
         }
 
+        log.info("getCredit(): 크레딧 정보 존재 X, Api 호출후 저장 및 응답 전달");
         // 없으면 크레딧 api 호출 후 MovieCredit 저장, 가져옴
         TmdbCredit tmdbCredit = tmdbClient.getCredit(movie.getCode());
         List<TmdbCrew> crews = tmdbCredit.crew();
@@ -244,22 +244,24 @@ public class MovieService {
 
         credits = new ArrayList<>();
 
-        // 감독 정보 Credit에 넣기
+        // 감독 추출 후 Credit에 넣기
         credits.addAll(crews.stream()
                 .filter(crew -> crew.job().equals(CreditRole.DIRECTOR.getRole()))
                 .map(crew -> Credit.builder()
+                        .mediaType(MediaType.MOVIE)
                         .role(CreditRole.DIRECTOR)
-                        .movie(movie)
+                        .code(movie.getCode())
                         .name(crew.name())
                         .profile(crew.profile())
                         .castOrder(null).build())
                 .toList());
 
-        // 출연 배우 정보 Credit에 넣기
+        // 출연 배우 추출 후 Credit에 넣기
         credits.addAll(casts.stream()
                 .map(cast -> Credit.builder()
+                        .mediaType(MediaType.MOVIE)
                         .role(CreditRole.ACTOR)
-                        .movie(movie)
+                        .code(movie.getCode())
                         .name(cast.name())
                         .profile(cast.profile())
                         .castOrder(cast.castOrder())
@@ -269,7 +271,7 @@ public class MovieService {
 
         log.info("getCast(): 영화 캐스트 api 호출");
         // 없으면 출연 정보 api 호출 후 MovieCast 저장
-        return movieCreditRepository.saveAll(credits);
+        return creditRepository.saveAll(credits);
     }
 
     @Transactional

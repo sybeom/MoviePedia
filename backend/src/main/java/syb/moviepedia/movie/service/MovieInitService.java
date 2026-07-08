@@ -34,16 +34,16 @@ import java.util.stream.Collectors;
 public class MovieInitService {
 
     private final TmdbClient tmdbClient;
-    private final MovieRepository movieRepository;
-    private final MovieCategoryRepository movieCategoryRepository;
-    private final GenreRepository genreRepository;
-    private final CountryRepository countryRepository;
-    private final MemberRepository memberRepository;
+    private final MovieRepository movieRepo;
+    private final MovieCategoryRepository movieCategoryRepo;
+    private final GenreRepository genreRepo;
+    private final CountryRepository countryRepo;
+    private final MemberRepository memberRepo;
     private final PasswordEncoder passwordEncoder;
-    private final CommentRepository commentRepository;
+    private final CommentRepository commentRepo;
     private final ElasticsearchOperations esOperations;
-    private final MovieGenreRepository movieGenreRepository;
-    private final MovieCreditRepository movieCreditRepository;
+    private final MovieGenreRepository movieGenreRepo;
+    private final CreditRepository creditRepo;
     private final VideoRepository videoRepository;
     private static final String INDEX_NAME = "movie_search";
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
@@ -51,7 +51,7 @@ public class MovieInitService {
     // 장르 데이터 초기화(로드)
     public void initGenres() {
         // tmdb 장르 데이터는 총 19개
-        if (genreRepository.count() > 0) {
+        if (genreRepo.count() > 0) {
             log.info("initGenres(): 장르 데이터 DB존재");
             return;
         }
@@ -59,19 +59,19 @@ public class MovieInitService {
         log.info("initGenres() 실행, 장르 데이터 변경 감지");
         List<Genre> genres = tmdbClient.getMovieGenres().genres().stream()
                 .filter(genre ->
-                        !genreRepository.existsByCode(genre.id())) // 존재하지 않는 값들만
+                        !genreRepo.existsByCode(genre.id())) // 존재하지 않는 값들만
                 .map(genre ->
                         Genre.builder()
                                 .code(genre.id())
                                 .name(genre.name())
                                 .build())
                 .toList();
-        genreRepository.saveAll(genres);
+        genreRepo.saveAll(genres);
     }
 
     // 국가 데이터 초기화
     public void initCountries() {
-        if (countryRepository.count() > 0) {
+        if (countryRepo.count() > 0) {
             log.info("initCountries(): 국가 데이터 DB존재");
             return;
         }
@@ -84,7 +84,7 @@ public class MovieInitService {
                                 .name(country.name())
                                 .build())
                 .toList();
-        countryRepository.saveAll(countries);
+        countryRepo.saveAll(countries);
     }
 
     @Transactional
@@ -99,7 +99,7 @@ public class MovieInitService {
     private void saveMovies(TmdbMovieList responses) {
         List<Integer> codes = responses.results().stream().map(tmdbMovie -> tmdbMovie.code()).toList();
         // 현재 DB에 존재하는 영화 code만 걸러냄, 속도 때문에 Set을 사용
-        Set<Long> existingCodes = movieRepository.findCodesByCodeIn(codes);
+        Set<Long> existingCodes = movieRepo.findCodesByCodeIn(codes);
 
         List<Movie> movies = responses.results().stream()
                 .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code()))// DB에 없는 영화들만
@@ -111,7 +111,7 @@ public class MovieInitService {
                             return toMovie(response, certification);
                 })
                 .toList();
-        movieRepository.saveAll(movies);
+        movieRepo.saveAll(movies);
 //        saveElasticMovies(movies); // 엘라스틱 서치 저장
     }
 
@@ -130,7 +130,7 @@ public class MovieInitService {
                 })
                 .toList();
 
-        List<Movie> savedMovies = movieRepository.saveAll(movies);
+        List<Movie> savedMovies = movieRepo.saveAll(movies);
 
         saveMovieGenres(newMovieResponses, savedMovies);
     }
@@ -139,7 +139,7 @@ public class MovieInitService {
                 .map(TmdbMovie::code)
                 .toList();
 
-        Set<Long> existingCodes = movieRepository.findCodesByCodeIn(codes);
+        Set<Long> existingCodes = movieRepo.findCodesByCodeIn(codes);
 
         return responses.results().stream()
                 .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code()))
@@ -162,7 +162,7 @@ public class MovieInitService {
             return;
         }
 
-        Map<Integer, Genre> genreMap = genreRepository.findByCodeIn(genreCodes).stream()
+        Map<Integer, Genre> genreMap = genreRepo.findByCodeIn(genreCodes).stream()
                 .collect(Collectors.toMap(Genre::getCode, genre -> genre));
 
         List<MovieGenre> movieGenres = newMovieResponses.stream()
@@ -179,7 +179,7 @@ public class MovieInitService {
                 })
                 .toList();
 
-        movieGenreRepository.saveAll(movieGenres);
+        movieGenreRepo.saveAll(movieGenres);
     }
 
     // 엘라스틱서치에 저장
@@ -191,7 +191,7 @@ public class MovieInitService {
 
         while (true) {
             // 1000개씩 조회
-            List<Movie> movies = movieRepository.findTop1000ByIdGreaterThanOrderByIdAsc(lastId);
+            List<Movie> movies = movieRepo.findTop1000ByIdGreaterThanOrderByIdAsc(lastId);
 
             if (movies.isEmpty()) {
                 break;
@@ -240,7 +240,7 @@ public class MovieInitService {
     // 카테고리 별 영화 목록 초기화
     public void initCategoryMovies() {
         log.info("initCategoryMovies() 카테고리 영화 초기 데이터 호출");
-        if (movieCategoryRepository.count() > 0) {
+        if (movieCategoryRepo.count() > 0) {
             return;
         }
         refreshAllCategoryMovies();
@@ -250,7 +250,7 @@ public class MovieInitService {
     private void refreshCategoryMovies(MediaCategoryType category, TmdbMovieList responses) {
         log.info("RefreshCategoryMovies 호출 : {}", category);
         // 기존 카테고리 영화 모두 삭제 (카테고리 목록들을 모두 삭제하고 다시 저장하는 방식으로 갱신한다)
-        movieCategoryRepository.deleteByCategoryType(category);
+        movieCategoryRepo.deleteByCategoryType(category);
 
         // 카테고리별 영화 새로 갱신
         for (TmdbMovie response: responses.results()) {
@@ -265,7 +265,7 @@ public class MovieInitService {
                     .movie(movie)
                     .build();
 
-            movieCategoryRepository.save(mc);
+            movieCategoryRepo.save(mc);
         }
     }
 
@@ -296,11 +296,11 @@ public class MovieInitService {
     private Movie saveOrUpdateMovie(TmdbMovie tmdbMovie) {
         String certification = extractCertification(tmdbMovie); // 관람 등급
 
-        return movieRepository.findByCode(tmdbMovie.code()) // 영화 code에 해당하는 영화 찾기
+        return movieRepo.findByCode(tmdbMovie.code()) // 영화 code에 해당하는 영화 찾기
                 .map(movie -> {
                     log.info("saveOrUpdateMovie(): 영화 정보 갱신");
                     return movie;})
-                .orElseGet(() -> movieRepository.save(toMovie(tmdbMovie, certification))); // 존재하지 않으면 db 저장
+                .orElseGet(() -> movieRepo.save(toMovie(tmdbMovie, certification))); // 존재하지 않으면 db 저장
     }
 
     // 관람 등급 추출
@@ -319,7 +319,7 @@ public class MovieInitService {
 
     // 더미 회원 생성
     public void createMember() {
-        if (memberRepository.count() > 0)
+        if (memberRepo.count() > 0)
             return;
 
         log.info("createMember(): 더미 멤버 생성 시작");
@@ -336,20 +336,20 @@ public class MovieInitService {
                     .build();
             list.add(member);
         }
-        memberRepository.saveAll(list);
+        memberRepo.saveAll(list);
     }
 
     // 더미 코멘트 생성
     public void createComment() {
-        if (commentRepository.count() > 0) return;
+        if (commentRepo.count() > 0) return;
 
         log.info("createComment(): 코멘트 더미 데이터 생성 시작");
-        Movie movie = movieRepository.findByCode(350).get();
+        Movie movie = movieRepo.findByCode(350).get();
 
         List<Comment> list = new ArrayList<>();
 
         for (int i = 7; i < 100; i++) {
-            Member member = memberRepository.findByLoginId("test" + i).get();
+            Member member = memberRepo.findByLoginId("test" + i).get();
             ReactionType reactionType = Math.random() < 0.5 ? ReactionType.LIKE : ReactionType.DISLIKE;
             Comment comment = Comment.builder()
                     .nickname(member.getNickname())
@@ -361,6 +361,7 @@ public class MovieInitService {
             list.add(comment);
             movie.increaseCommentStats(reactionType); // 코멘트 수, 좋아요 수 업데이트
         }
-        commentRepository.saveAll(list);
+        commentRepo.saveAll(list);
     }
+
 }
