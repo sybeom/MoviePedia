@@ -22,9 +22,15 @@ public class Credit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //
+    @Enumerated(EnumType.STRING)
+    @Column(name = "media_type")
+    private MediaType mediaType;
+
     @Column
     private Integer code;
+
+    @Column(name = "season_number")
+    private Integer seasonNum;
 
     // 이름
     @Column(nullable = false)
@@ -41,8 +47,4 @@ public class Credit {
     // 배우 순서
     @Column(name = "cast_order")
     private Integer castOrder;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "media_type")
-    private MediaType mediaType;
 }

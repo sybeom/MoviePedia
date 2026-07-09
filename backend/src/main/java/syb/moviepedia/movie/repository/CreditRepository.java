@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface CreditRepository extends JpaRepository<Credit, Long> {
     List<Credit> findByCodeAndMediaType(Integer code, MediaType mediaType);
+
+    List<Credit> findByMediaTypeAndCodeAndSeasonNum(MediaType mediaType, Integer code, Integer seasonNumber);
 }

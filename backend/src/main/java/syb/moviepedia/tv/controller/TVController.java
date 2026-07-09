@@ -20,6 +20,7 @@ import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
+import syb.moviepedia.tv.dto.response.TVSeasonCreditResponse;
 import syb.moviepedia.tv.dto.response.TVSeasonResponse;
 import syb.moviepedia.tv.service.TVService;
 
@@ -102,5 +103,26 @@ public class TVController {
     public ResponseEntity<ApiSuccessResponse<TVSeasonResponse>> getTVSeasonDetail(
             @PathVariable Integer seriesCode, @PathVariable Integer seasonNum) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("TV 시즌 상세 조회 성공", tvService.getSeasonDetail(seriesCode, seasonNum)));
+    }
+
+    @Operation(summary = "TV 시즌 크레딧", description = "TV 시리즈 시즌 감독 및 출연 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "TV 시리즈 시즌 크레딧 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "외부 TMDB APi 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/{seriesCode}/{seasonNum}/credits")
+    public ResponseEntity<ApiSuccessResponse<List<TVSeasonCreditResponse>>> getSeasonCredit(
+            @PathVariable Integer seriesCode,
+            @PathVariable Integer seasonNum
+    ) {
+        log.info("크레딧 컨트롤러 진입");
+        return ResponseEntity.ok().body(ApiSuccessResponse.of(
+                "TV 크레딧 조회 성공",
+                tvService.getSeasonCredit(seriesCode, seasonNum)));
     }
 }

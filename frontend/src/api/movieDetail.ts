@@ -10,6 +10,7 @@ import type {
   UpdateCommentRequest,
 } from '../types/movieDetail'
 import {
+  getCreditValue,
   normalizeMovieCommentDetail,
   normalizeMovieComments,
   normalizeMovieDetail,
@@ -43,6 +44,31 @@ export async function fetchMovieTrailers(movieCode: string, mediaType: MediaType
   })
 
   return normalizeMovieTrailers(response)
+}
+
+export async function fetchMovieCredits(
+  movieId: string,
+  mediaType: MediaType = 'movie',
+  seasonNum = '',
+) {
+  const creditsPath =
+    mediaType === 'series' && seasonNum
+      ? `${getMediaResourcePath(mediaType)}/${movieId}/${seasonNum}/credits`
+      : `${getMediaResourcePath(mediaType)}/${movieId}/credits`
+
+  const response = await request<unknown>(creditsPath, {
+    method: 'GET',
+  })
+
+  if (Array.isArray(response)) {
+    return getCreditValue({ data: response })
+  }
+
+  if (!response || typeof response !== 'object') {
+    return []
+  }
+
+  return getCreditValue(response as Record<string, unknown>)
 }
 
 export function fetchMovieComments(

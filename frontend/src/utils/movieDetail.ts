@@ -200,7 +200,20 @@ export function getCommentContainerValue(data: unknown) {
 }
 
 export function getCreditValue(record: Record<string, unknown>) {
-  const creditValue = record.credit
+  const creditCandidates = [
+    record.credit,
+    record.credits,
+    record.cast,
+    record.items,
+    record.data,
+    isRecord(record.data) ? record.data.credit : null,
+    isRecord(record.data) ? record.data.credits : null,
+    isRecord(record.data) ? record.data.cast : null,
+    isRecord(record.result) ? record.result.credit : null,
+    isRecord(record.result) ? record.result.credits : null,
+    isRecord(record.result) ? record.result.cast : null,
+  ]
+  const creditValue = creditCandidates.find(Array.isArray)
 
   if (!Array.isArray(creditValue)) {
     return []
@@ -209,17 +222,19 @@ export function getCreditValue(record: Record<string, unknown>) {
   return creditValue
     .filter(isRecord)
     .map((member) => {
-      const role = getStringValue(member, ['role']).toUpperCase()
+      const role = getStringValue(member, ['role', 'job', 'department']).toUpperCase()
+      const name = getStringValue(member, ['name'])
+      const profile = getPrimaryImageUrl(
+        getStringValue(member, ['profile', 'profileUrl', 'profilePath', 'profile_path']),
+      )
 
-      if (role !== 'DIRECTOR' && role !== 'ACTOR') {
+      if (!name && !profile) {
         return null
       }
 
       return {
-        name: getStringValue(member, ['name']),
-        profile: getPrimaryImageUrl(
-          getStringValue(member, ['profile', 'profileUrl', 'profilePath']),
-        ),
+        name,
+        profile,
         roleLabel: role === 'DIRECTOR' ? '감독' : '',
       }
     })

@@ -10,6 +10,7 @@ import {
   deleteMovieComment,
   fetchMovieCommentForEdit,
   fetchMovieComments,
+  fetchMovieCredits,
   fetchMovieDetail,
   fetchMovieTrailers,
   updateMovieComment,
@@ -235,7 +236,10 @@ function MovieDetailPage() {
           score: normalizedDetail.score,
           rating: normalizedDetail.rating,
           globalRating: normalizedDetail.globalRating,
-          credits: normalizedDetail.credits,
+          credits:
+            normalizedDetail.credits.length > 0
+              ? normalizedDetail.credits
+              : previousMovieDetail.credits,
         }))
         setMessage('')
       } catch {
@@ -265,8 +269,33 @@ function MovieDetailPage() {
       }
     }
 
+    async function loadMovieCreditsData() {
+      if (mediaConfig.type !== 'series') {
+        return
+      }
+
+      try {
+        const credits = await fetchMovieCredits(
+          resolvedMovieCode,
+          mediaConfig.type,
+          resolvedSeasonNum,
+        )
+
+        setMovieDetail((previousMovieDetail) => ({
+          ...previousMovieDetail,
+          credits,
+        }))
+      } catch {
+        setMovieDetail((previousMovieDetail) => ({
+          ...previousMovieDetail,
+          credits: [],
+        }))
+      }
+    }
+
     void loadMovieDetail()
     void loadMovieTrailersData()
+    void loadMovieCreditsData()
   }, [initialMovie, mediaConfig.type, resolvedMovieCode, resolvedSeasonNum])
 
   useEffect(() => {

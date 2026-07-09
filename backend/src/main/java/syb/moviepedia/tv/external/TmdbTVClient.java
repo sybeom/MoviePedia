@@ -6,13 +6,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
-import syb.moviepedia.tv.external.dto.TmdbContentRating;
-import syb.moviepedia.tv.external.dto.TmdbTVCategory;
-import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
-import syb.moviepedia.tv.external.dto.TmdbTVSeries;
+import syb.moviepedia.tv.external.dto.*;
 
 import java.net.URI;
-import java.time.LocalDate;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -27,22 +23,7 @@ public class TmdbTVClient {
     private final static String TV_POPULAR = "/tv/popular";
     private final static String TV_CONTENT_RATING = "/tv/{series_code}/content_ratings";
     private final static String TV_SEASON_PATH = "/tv/{series_id}/season/{season_number}";
-
-    public SeasonAirDates fetchSeasonDetail(Integer seasonCode, Integer seasonNum) {
-        return get(
-                TV_SEASON_PATH,
-                SeasonAirDates.class,
-                "TMDB TV 시즌 api ",
-                uriBuilder -> uriBuilder
-                        .queryParam("language", "ko-KR"),
-                seasonCode,seasonNum
-        );
-    }
-
-    public record SeasonAirDates(
-            LocalDate air_date) {
-    }
-
+    private final static String TV_SEASON_CREDIT = "/tv/{series_id}/season/{season_number}/credits";
 
      // TV 시리즈 목록 api
     public TmdbTVDiscover fetchTVSeries(int page) {
@@ -90,6 +71,18 @@ public class TmdbTVClient {
                 "Tmdb TV 관람 등급 api 호출 실패",
                 null,
                 code
+        );
+    }
+
+    // TV 시리즈 시즌 크레딧
+    public TmdbTVCredit fetchTVSeriesCredits(Integer seriesCode, Integer seasonNum) {
+        return get(
+                TV_SEASON_CREDIT,
+                TmdbTVCredit.class,
+                "Tmdb TV 시즌 크레딧 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                seriesCode, seasonNum
         );
     }
 
