@@ -79,8 +79,8 @@ public class TmdbClient {
     }
 
     // 비디오(트레일러) 정보
-    public TmdbVideoResponse getVideos(Integer mvCode) {
-        return fetchMovieVideos(mvCode);
+    public TmdbVideoResponse getVideos(Integer mvCode, String languge) {
+        return fetchMovieVideos(mvCode, languge);
     }
 
     // 초기 영화 호출
@@ -170,13 +170,13 @@ public class TmdbClient {
     }
 
     // 영화 트레일러 api
-    private TmdbVideoResponse fetchMovieVideos(Integer mvCode) {
+    private TmdbVideoResponse fetchMovieVideos(Integer mvCode, String language) {
         return get(
                 TRAILER_PATH,
                 TmdbVideoResponse.class,
                 "TMDB 트레일러 API 호출 실패",
                 uriBuilder -> uriBuilder
-                        .queryParam("language", "ko-KR"),
+                        .queryParam("language", language),
                 mvCode
         );
     }

@@ -18,7 +18,12 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     @Query("""
         select v
         from Video v
-        where v.code=:movieCode and v.mediaType=:mediaType and v.seasonNum=:seasonNum
+        where v.code=:movieCode 
+            and v.mediaType=:mediaType 
+            and (
+                (:seasonNum is null and v.seasonNum is null)
+                 or v.seasonNum = :seasonNum
+            )
         order by 
             case
                 when v.videoType = syb.moviepedia.common.VideoType.TRAILER then 0

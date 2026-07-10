@@ -276,23 +276,26 @@ public class MovieService {
 
     @Transactional
     public List<VideoResponse> getVideos(Integer movieCode) {
-        Movie movie = movieRepository.findByCode(movieCode)
-                .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드 :" + movieCode));
 
         // 없으면 api 호출 후 DB 저장후 반환
-        if(!videoRepository.existsByMediaTypeAndCode(MediaType.MOVIE, movie.getCode())) {
+        if(!videoRepository.existsByMediaTypeAndCode(MediaType.MOVIE, movieCode)) {
             log.info("비디오 api 호출후 반환");
-            TmdbVideoResponse tmdbVideoResponse = tmdbClient.getVideos(movieCode);
-            saveVideo(tmdbVideoResponse, movie);
+            TmdbVideoResponse response = tmdbClient.getVideos(movieCode, "ko-KR");
+
+            if (response.results().isEmpty()) { // 한국판 트레일러가 없다면 영어판 불러오기
+                response = tmdbClient.getVideos(movieCode, "en-US");
+            }
+
+            saveVideo(response, movieCode);
         }
 
         // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
-        List<Video> videos = videoRepository.findByVideo(MediaType.MOVIE, movie.getCode(), null);
+        List<Video> videos = videoRepository.findByVideo(MediaType.MOVIE, movieCode, null);
         return toVideoResponse(videos);
     }
 
     // 영상 저장
-    private void saveVideo(TmdbVideoResponse response, Movie movie) {
+    private void saveVideo(TmdbVideoResponse response, Integer movieCode) {
         List<Video> videoList = response.results().stream()
                 .filter(result -> // 공식이고 트레일러 또는 티저 영상만. 사이트는 유튜브인 곳만.
                         result.official()
@@ -301,7 +304,7 @@ public class MovieService {
                 .map(result ->
                         Video.builder()
                                 .mediaType(MediaType.MOVIE)
-                                .code(movie.getCode())
+                                .code(movieCode)
                                 .key(result.key())
                                 .videoType(result.type())
                                 .publishedAt(result.publishedAt())
