@@ -12,7 +12,7 @@ public record VideoResponse(
     public static VideoResponse from(Video v) {
         return VideoResponse.builder()
                 .key(v.getKey())
-                .type(v.getType())
+                .type(v.getVideoType())
                 .build();
     }
 }

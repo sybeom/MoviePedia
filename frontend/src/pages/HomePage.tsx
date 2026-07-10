@@ -1,5 +1,5 @@
-﻿import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
 import loadingIcon from '../assets/icons/loading.svg'
@@ -27,6 +27,7 @@ import './HomePage.css'
 type SearchMovie = {
   code: string
   title: string
+  seasonNum?: string
 }
 
 type PopularMovie = {
@@ -49,6 +50,12 @@ type MovieListPage = {
   hasMore: boolean
 }
 
+type HomeListSnapshot = {
+  movies: PopularMovie[]
+  page: number
+  hasMore: boolean
+}
+
 type HomeTheme = 'dark' | 'light'
 type MovieSortFilter = '최신순' | '오래된순'
 type MovieReleaseFilter = '전체' | '개봉' | '미개봉'
@@ -65,6 +72,8 @@ const BANNER_TRANSITION_MS = 520
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 const HOME_SORT_FILTERS: MovieSortFilter[] = ['최신순', '오래된순']
 const HOME_RELEASE_FILTERS: MovieReleaseFilter[] = ['전체', '개봉', '미개봉']
+const HOME_SCROLL_STORAGE_KEY_PREFIX = 'moviepedia.home.scroll:'
+const HOME_LIST_STORAGE_KEY_PREFIX = 'moviepedia.home.list:'
 const HOME_CERTIFICATION_ICON_MAP: Record<string, string> = {
   '12': rating12Icon,
   '15': rating15Icon,
@@ -270,6 +279,170 @@ function getReleaseFilterLabel(mediaType: 'movie' | 'series', filter: MovieRelea
   return filter
 }
 
+function getInitialGenreFilters(searchParams: URLSearchParams) {
+  const genres = searchParams.getAll('genre').filter(Boolean)
+  return genres.length > 0 ? genres : ['ALL']
+}
+
+function getInitialSortFilter(searchParams: URLSearchParams): MovieSortFilter {
+  return searchParams.get('sort') === 'OLDEST' ? '오래된순' : '최신순'
+}
+
+function getInitialReleaseFilter(searchParams: URLSearchParams): MovieReleaseFilter {
+  const releaseStatus = searchParams.get('releaseStatus')
+
+  if (releaseStatus === 'RELEASED') {
+    return '개봉'
+  }
+
+  if (releaseStatus === 'UNRELEASED') {
+    return '미개봉'
+  }
+
+  return '전체'
+}
+
+function getScrollStorageKey(pathname: string, search: string) {
+  return `${HOME_SCROLL_STORAGE_KEY_PREFIX}${pathname}${search}`
+}
+
+function getListStorageKey(pathname: string, search: string) {
+  return `${HOME_LIST_STORAGE_KEY_PREFIX}${pathname}${search}`
+}
+
+function isScrollableContainer(container: HTMLElement | null) {
+  return Boolean(container && container.scrollHeight > container.clientHeight + 1)
+}
+
+function saveScrollPosition(storageKey: string, container: HTMLElement | null) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const scrollTop = isScrollableContainer(container) ? container?.scrollTop ?? 0 : window.scrollY ?? 0
+  window.sessionStorage.setItem(storageKey, String(scrollTop))
+}
+
+function restoreScrollPosition(storageKey: string, container: HTMLElement | null) {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  const savedValue = window.sessionStorage.getItem(storageKey)
+
+  if (!savedValue) {
+    return true
+  }
+
+  const targetScrollTop = Number(savedValue)
+
+  if (!Number.isFinite(targetScrollTop) || targetScrollTop <= 0) {
+    window.sessionStorage.removeItem(storageKey)
+    return true
+  }
+
+  window.scrollTo({ top: targetScrollTop, left: 0, behavior: 'auto' })
+  if (isScrollableContainer(container)) {
+    container?.scrollTo({ top: targetScrollTop, left: 0, behavior: 'auto' })
+  }
+
+  const currentScrollTop = isScrollableContainer(container)
+    ? container?.scrollTop ?? 0
+    : window.scrollY ?? 0
+  const isRestored = Math.abs(currentScrollTop - targetScrollTop) < 4
+
+  if (isRestored) {
+    window.sessionStorage.removeItem(storageKey)
+  }
+
+  return isRestored
+}
+
+function readHomeListSnapshot(storageKey: string): HomeListSnapshot | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const rawValue = window.sessionStorage.getItem(storageKey)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue) as HomeListSnapshot
+
+    if (!Array.isArray(parsedValue.movies)) {
+      return null
+    }
+
+    return {
+      movies: parsedValue.movies,
+      page: Number.isFinite(parsedValue.page) ? parsedValue.page : 0,
+      hasMore: Boolean(parsedValue.hasMore),
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeHomeListSnapshot(storageKey: string, snapshot: HomeListSnapshot) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.setItem(storageKey, JSON.stringify(snapshot))
+}
+
+function markCurrentHistoryEntryForRestore() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const currentHistoryState = window.history.state ?? {}
+  const currentUserState =
+    currentHistoryState.usr && typeof currentHistoryState.usr === 'object'
+      ? currentHistoryState.usr
+      : {}
+
+  window.history.replaceState(
+    {
+      ...currentHistoryState,
+      usr: {
+        ...currentUserState,
+        restoreFromDetail: true,
+      },
+    },
+    '',
+  )
+}
+
+function clearCurrentHistoryEntryRestoreMark() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const currentHistoryState = window.history.state ?? {}
+  const currentUserState =
+    currentHistoryState.usr && typeof currentHistoryState.usr === 'object'
+      ? { ...currentHistoryState.usr }
+      : null
+
+  if (!currentUserState || !('restoreFromDetail' in currentUserState)) {
+    return
+  }
+
+  delete currentUserState.restoreFromDetail
+
+  window.history.replaceState(
+    {
+      ...currentHistoryState,
+      usr: currentUserState,
+    },
+    '',
+  )
+}
+
 function normalizeGenreOptions(data: unknown): GenreOption[] {
   const source = Array.isArray(data)
     ? data
@@ -414,11 +587,24 @@ function normalizeBannerMovies(data: unknown): BannerMovie[] {
 function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const mediaConfig = getMediaConfigByPath(location.pathname)
+  const shouldRestoreFromDetail =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'restoreFromDetail' in location.state &&
+    location.state.restoreFromDetail === true
+  const scrollStorageKey = getScrollStorageKey(location.pathname, location.search)
+  const listStorageKey = getListStorageKey(location.pathname, location.search)
+  const initialListSnapshot = useMemo(
+    () => (shouldRestoreFromDetail ? readHomeListSnapshot(listStorageKey) : null),
+    [listStorageKey, shouldRestoreFromDetail],
+  )
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
   const mainShellRef = useRef<HTMLElement | null>(null)
   const allMoviesLoadTriggerRef = useRef<HTMLDivElement | null>(null)
   const allMoviesSectionRef = useRef<HTMLElement | null>(null)
+  const shouldRestoreScrollRef = useRef(true)
 
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getAuthSession())
   const [theme, setTheme] = useState<HomeTheme>(() => {
@@ -449,18 +635,30 @@ function HomePage() {
   const [bannerPage, setBannerPage] = useState(0)
   const [bannerDirection, setBannerDirection] = useState<'next' | 'previous'>('next')
   const [isBannerSliding, setIsBannerSliding] = useState(false)
-  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['ALL'])
-  const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>('최신순')
-  const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MovieReleaseFilter>('전체')
+  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(() =>
+    getInitialGenreFilters(searchParams),
+  )
+  const [selectedSortFilter, setSelectedSortFilter] = useState<MovieSortFilter>(() =>
+    getInitialSortFilter(searchParams),
+  )
+  const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MovieReleaseFilter>(() =>
+    getInitialReleaseFilter(searchParams),
+  )
   const [isExpandedMovieView, setIsExpandedMovieView] = useState(false)
-  const [allMovies, setAllMovies] = useState<PopularMovie[]>([])
-  const [allMoviesPage, setAllMoviesPage] = useState(0)
-  const [hasMoreAllMovies, setHasMoreAllMovies] = useState(true)
-  const [isAllMoviesLoading, setIsAllMoviesLoading] = useState(true)
+  const [allMovies, setAllMovies] = useState<PopularMovie[]>(
+    () => initialListSnapshot?.movies ?? [],
+  )
+  const [allMoviesPage, setAllMoviesPage] = useState(() => initialListSnapshot?.page ?? 0)
+  const [hasMoreAllMovies, setHasMoreAllMovies] = useState(
+    () => initialListSnapshot?.hasMore ?? true,
+  )
+  const [isAllMoviesLoading, setIsAllMoviesLoading] = useState(
+    () => initialListSnapshot === null,
+  )
   const [isLoadingMoreAllMovies, setIsLoadingMoreAllMovies] = useState(false)
   const bannerTransitionTimeoutRef = useRef<number | null>(null)
-  const allMoviesPageRef = useRef(0)
-  const hasMoreAllMoviesRef = useRef(true)
+  const allMoviesPageRef = useRef(initialListSnapshot?.page ?? 0)
+  const hasMoreAllMoviesRef = useRef(initialListSnapshot?.hasMore ?? true)
   const isLoadingMoreAllMoviesRef = useRef(false)
 
   function toggleGenreFilter(genreValue: string) {
@@ -478,6 +676,34 @@ function HomePage() {
 
       return [...nextFilters, genreValue]
     })
+  }
+
+  function handlePrimaryNavClick(nextPath: '/' | '/series') {
+    setSelectedGenreFilters(['ALL'])
+    setSelectedSortFilter('최신순')
+    setSelectedReleaseFilter('전체')
+    setQuery('')
+    setMessage('')
+    setSearchMovies([])
+    setIsSearchResultsOpen(false)
+    setActiveSearchIndex(-1)
+    setIsExpandedMovieView(false)
+    setAllMovies([])
+    setAllMoviesPage(0)
+    setHasMoreAllMovies(true)
+    setIsAllMoviesLoading(true)
+    allMoviesPageRef.current = 0
+    hasMoreAllMoviesRef.current = true
+    clearCurrentHistoryEntryRestoreMark()
+    window.sessionStorage.removeItem(getScrollStorageKey(nextPath, ''))
+    window.sessionStorage.removeItem(getListStorageKey(nextPath, ''))
+
+    if (location.pathname === nextPath) {
+      setSearchParams(new URLSearchParams(), { replace: true })
+      return
+    }
+
+    navigate(nextPath)
   }
 
   useEffect(() => {
@@ -505,6 +731,60 @@ function HomePage() {
   }, [isLoadingMoreAllMovies])
 
   useEffect(() => {
+    shouldRestoreScrollRef.current = true
+  }, [scrollStorageKey])
+
+  useEffect(() => {
+    if (shouldRestoreFromDetail) {
+      return
+    }
+
+    window.sessionStorage.removeItem(scrollStorageKey)
+    window.sessionStorage.removeItem(listStorageKey)
+    clearCurrentHistoryEntryRestoreMark()
+  }, [listStorageKey, scrollStorageKey, shouldRestoreFromDetail])
+
+  useEffect(() => {
+    if (!shouldRestoreFromDetail) {
+      return
+    }
+
+    return () => {
+      writeHomeListSnapshot(listStorageKey, {
+        movies: allMovies,
+        page: allMoviesPageRef.current,
+        hasMore: hasMoreAllMoviesRef.current,
+      })
+    }
+  }, [allMovies, listStorageKey, shouldRestoreFromDetail])
+
+  useEffect(() => {
+    const nextSearchParams = new URLSearchParams()
+
+    getGenreQueryValues(selectedGenreFilters).forEach((genreValue) => {
+      nextSearchParams.append('genre', genreValue)
+    })
+
+    nextSearchParams.set('sort', getSortQueryValue(selectedSortFilter))
+
+    const releaseValue = getReleaseQueryValue(selectedReleaseFilter)
+
+    if (releaseValue) {
+      nextSearchParams.set('releaseStatus', releaseValue)
+    }
+
+    if (nextSearchParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextSearchParams, { replace: true })
+    }
+  }, [
+    searchParams,
+    selectedGenreFilters,
+    selectedReleaseFilter,
+    selectedSortFilter,
+    setSearchParams,
+  ])
+
+  useEffect(() => {
     if (!isExpandedMovieView || !mainShellRef.current || !allMoviesSectionRef.current) {
       return
     }
@@ -514,6 +794,35 @@ function HomePage() {
       behavior: 'smooth',
     })
   }, [isExpandedMovieView])
+
+  useEffect(() => {
+    const currentMainShell = mainShellRef.current
+
+    return () => {
+      saveScrollPosition(scrollStorageKey, currentMainShell)
+    }
+  }, [scrollStorageKey])
+
+  useLayoutEffect(() => {
+    if (shouldRestoreScrollRef.current === false) {
+      return
+    }
+
+    if (!shouldRestoreFromDetail || isGenresLoading || isAllMoviesLoading) {
+      return
+    }
+
+    const rafId = window.requestAnimationFrame(() => {
+      if (restoreScrollPosition(scrollStorageKey, mainShellRef.current)) {
+        shouldRestoreScrollRef.current = false
+        clearCurrentHistoryEntryRestoreMark()
+      }
+    })
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+    }
+  }, [allMovies.length, isAllMoviesLoading, isGenresLoading, scrollStorageKey, shouldRestoreFromDetail])
 
   useEffect(() => {
     let isMounted = true
@@ -654,6 +963,18 @@ function HomePage() {
     let isMounted = true
 
     async function loadInitialAllMovies() {
+      const cachedSnapshot = shouldRestoreFromDetail ? initialListSnapshot : null
+
+      if (cachedSnapshot) {
+        setAllMovies(cachedSnapshot.movies)
+        setAllMoviesPage(cachedSnapshot.page)
+        setHasMoreAllMovies(cachedSnapshot.hasMore)
+        allMoviesPageRef.current = cachedSnapshot.page
+        hasMoreAllMoviesRef.current = cachedSnapshot.hasMore
+        setIsAllMoviesLoading(false)
+        return
+      }
+
       setIsAllMoviesLoading(true)
       setAllMovies([])
       setAllMoviesPage(0)
@@ -689,7 +1010,15 @@ function HomePage() {
     return () => {
       isMounted = false
     }
-  }, [loadAllMoviesPage, selectedGenreFilters, selectedReleaseFilter, selectedSortFilter])
+  }, [
+    initialListSnapshot,
+    listStorageKey,
+    loadAllMoviesPage,
+    selectedGenreFilters,
+    selectedReleaseFilter,
+    selectedSortFilter,
+    shouldRestoreFromDetail,
+  ])
 
   useEffect(() => {
     const trimmedQuery = query.trim()
@@ -762,13 +1091,23 @@ function HomePage() {
   function moveToMovieDetail(movie: SearchMovie | PopularMovie | BannerMovie) {
     setIsSearchResultsOpen(false)
     setActiveSearchIndex(-1)
-    navigate(mediaConfig.detailPath(movie.code), {
+    saveScrollPosition(scrollStorageKey, mainShellRef.current)
+    markCurrentHistoryEntryForRestore()
+    writeHomeListSnapshot(listStorageKey, {
+      movies: allMovies,
+      page: allMoviesPageRef.current,
+      hasMore: hasMoreAllMoviesRef.current,
+    })
+    const seasonNum = 'seasonNum' in movie ? movie.seasonNum : ''
+
+    navigate(mediaConfig.detailPath(movie.code, seasonNum), {
       state: {
+        from: `${location.pathname}${location.search}`,
         movie: {
           id: movie.code,
           title: movie.title,
           poster: 'poster' in movie ? movie.poster : '',
-          seasonNum: 'seasonNum' in movie ? movie.seasonNum : '',
+          seasonNum,
         },
       },
     })
@@ -948,7 +1287,12 @@ function HomePage() {
           return
         }
 
-        if (isAllMoviesLoading || isLoadingMoreAllMoviesRef.current || !hasMoreAllMoviesRef.current) {
+        if (
+          shouldRestoreScrollRef.current ||
+          isAllMoviesLoading ||
+          isLoadingMoreAllMoviesRef.current ||
+          !hasMoreAllMoviesRef.current
+        ) {
           return
         }
 
@@ -1266,7 +1610,16 @@ function HomePage() {
                 <button
                   className="home-expand-view-button"
                   type="button"
-                  onClick={() => navigate(mediaConfig.browsePath)}
+                  onClick={() => {
+                    saveScrollPosition(scrollStorageKey, mainShellRef.current)
+                    markCurrentHistoryEntryForRestore()
+                    writeHomeListSnapshot(listStorageKey, {
+                      movies: allMovies,
+                      page: allMoviesPageRef.current,
+                      hasMore: hasMoreAllMoviesRef.current,
+                    })
+                    navigate(`${mediaConfig.browsePath}${location.search}`)
+                  }}
                   aria-pressed="false"
                 >
                   펼쳐보기
@@ -1433,7 +1786,7 @@ function HomePage() {
               }`}
               type="button"
               key={item}
-              onClick={() => navigate(item === 'TV 시리즈' ? '/series' : '/')}
+              onClick={() => handlePrimaryNavClick(item === 'TV 시리즈' ? '/series' : '/')}
             >
               <span>{item}</span>
             </button>

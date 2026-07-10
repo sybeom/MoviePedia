@@ -6,6 +6,7 @@ import ratingAllIcon from '../assets/ratings/all.svg'
 export type SearchMediaItem = {
   code: string
   title: string
+  seasonNum?: string
 }
 
 export type MediaCard = {
@@ -303,8 +304,9 @@ export function normalizeSearchMediaItems(data: unknown): SearchMediaItem[] {
     .map((value) => {
       const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd', 'seriesCode'])
       const title = getStringValue(value, ['title', 'movieNm', 'name', 'seriesNm'])
+      const seasonNum = getScalarStringValue(value, ['seasonNum', 'season', 'seasonNumber'])
 
-      return { code, title }
+      return { code, title, seasonNum }
     })
     .filter((value) => value.code && value.title)
 }

@@ -64,11 +64,12 @@ function MovieDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const mediaConfig = getMediaConfigByPath(location.pathname)
-  const { movieCode: movieCodeParam, seriesCode: seriesCodeParam } = useParams()
+  const { movieCode: movieCodeParam, seriesCode: seriesCodeParam, seasonNum: seasonNumParam } = useParams()
   const resolvedMovieCode = movieCodeParam ?? seriesCodeParam ?? ''
   const state = location.state as MovieDetailState | null
+  const previousPath = state?.from
   const initialMovie = state?.movie
-  const resolvedSeasonNum = initialMovie?.seasonNum ?? ''
+  const resolvedSeasonNum = seasonNumParam ?? initialMovie?.seasonNum ?? ''
   const mainShellRef = useRef<HTMLElement | null>(null)
   const hasLoadedDetailRef = useRef(false)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -775,7 +776,14 @@ function MovieDetailPage() {
               mediaType={mediaConfig.type}
               isLoading={isLoading}
               message={visibleMessage}
-              onBack={() => navigate(mediaConfig.homePath)}
+              onBack={() => {
+                if (previousPath) {
+                  navigate(-1)
+                  return
+                }
+
+                navigate(mediaConfig.homePath)
+              }}
               />
             </section>
 

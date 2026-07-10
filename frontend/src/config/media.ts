@@ -5,7 +5,7 @@ export type MediaConfig = {
   resourcePath: '/movies' | '/tv'
   homePath: '/' | '/series'
   browsePath: '/movies' | '/series/browse'
-  detailPath: (code: string) => string
+  detailPath: (code: string, seasonNum?: string) => string
   navLabel: string
   searchLabel: string
   searchPlaceholder: string
@@ -41,7 +41,7 @@ export const MEDIA_CONFIGS: Record<MediaType, MediaConfig> = {
     resourcePath: '/tv',
     homePath: '/series',
     browsePath: '/series/browse',
-    detailPath: (code) => `/series/${code}`,
+    detailPath: (code, seasonNum) => (seasonNum ? `/series/${code}/${seasonNum}` : `/series/${code}`),
     navLabel: 'TV 시리즈',
     searchLabel: '시리즈 검색',
     searchPlaceholder: '시리즈 제목을 입력해보세요',

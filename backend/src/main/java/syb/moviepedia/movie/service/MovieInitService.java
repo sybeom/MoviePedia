@@ -363,5 +363,4 @@ public class MovieInitService {
         }
         commentRepo.saveAll(list);
     }
-
 }

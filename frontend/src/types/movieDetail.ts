@@ -1,5 +1,6 @@
 // 상세 이동 상태 타입 정의
 export type MovieDetailState = {
+  from?: string
   movie?: {
     id?: string
     title?: string

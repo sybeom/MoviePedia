@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbVideo;
 import syb.moviepedia.tv.external.dto.*;
 
 import java.net.URI;
@@ -24,6 +25,7 @@ public class TmdbTVClient {
     private final static String TV_CONTENT_RATING = "/tv/{series_code}/content_ratings";
     private final static String TV_SEASON_PATH = "/tv/{series_id}/season/{season_number}";
     private final static String TV_SEASON_CREDIT = "/tv/{series_id}/season/{season_number}/credits";
+    private final static String TV_SEASON_VIDEO = "/tv/{series_id}/season/{season_number";
 
      // TV 시리즈 목록 api
     public TmdbTVDiscover fetchTVSeries(int page) {
@@ -80,6 +82,18 @@ public class TmdbTVClient {
                 TV_SEASON_CREDIT,
                 TmdbTVCredit.class,
                 "Tmdb TV 시즌 크레딧 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                seriesCode, seasonNum
+        );
+    }
+
+    // TV 시리즈 시즌
+    public TmdbVideo fetchSeasonVideo(Integer seriesCode, Integer seasonNum) {
+        return get(
+                TV_SEASON_VIDEO,
+                TmdbVideo.class,
+                "Tmdb TV 시즌 비디오 호출 실패",
                 uriBuilder -> uriBuilder
                         .queryParam("language", "ko-KR"),
                 seriesCode, seasonNum

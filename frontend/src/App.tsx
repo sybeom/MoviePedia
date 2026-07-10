@@ -56,7 +56,7 @@ function App() {
       <Route path="/movies" element={<MovieBrowsePage key="movie-browse" />} />
       <Route path="/series/browse" element={<MovieBrowsePage key="series-browse" />} />
       <Route path="/movies/:movieCode" element={<MovieDetailPage key="movie-detail" />} />
-      <Route path="/series/:seriesCode" element={<MovieDetailPage key="series-detail" />} />
+      <Route path="/series/:seriesCode/:seasonNum" element={<MovieDetailPage key="series-detail" />} />
       <Route path="/cookie" element={<CookiePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />

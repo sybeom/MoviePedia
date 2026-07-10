@@ -23,8 +23,10 @@ import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.movie.dto.response.MovieCreditResponse;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbCredit;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbVideo;
 import syb.moviepedia.movie.repository.CreditRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
+import syb.moviepedia.movie.repository.VideoRepository;
 import syb.moviepedia.tv.domain.QTVSeries;
 import syb.moviepedia.tv.domain.QTVSeriesGenre;
 import syb.moviepedia.tv.domain.TV;
@@ -52,6 +54,7 @@ public class TVService {
     private final GenreRepository genreRepo;
     private final CreditRepository creditRepo;
     private final JPAQueryFactory query;
+
 
     private final TmdbTVClient tmdbTVClient;
 
@@ -200,7 +203,7 @@ public class TVService {
             // 출연 배우 추출 후 Credit에 넣기
             credits.addAll(tmdbTVCredit.cast().stream()
                     .map(cast -> Credit.builder()
-                            .mediaType(MediaType.MOVIE)
+                            .mediaType(MediaType.TV)
                             .role(CreditRole.ACTOR)
                             .code(seriesCode)
                             .name(cast.name())
@@ -212,8 +215,11 @@ public class TVService {
             creditRepo.saveAll(credits);
         }
 
-        // 존재하지 않으면 API 호출 후 저장 및 응답
-
         return credits.stream().map(credit -> TVSeasonCreditResponse.from(credit)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public void getTVSeasonVideos(Integer seriesCode, Integer seasonNum) {
+        tmdbTVClient.fetchSeasonVideo(seriesCode, seasonNum);
     }
 }

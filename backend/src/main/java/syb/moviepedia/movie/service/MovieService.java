@@ -280,14 +280,14 @@ public class MovieService {
                 .orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드 :" + movieCode));
 
         // 없으면 api 호출 후 DB 저장후 반환
-        if(!videoRepository.existsByMovie(movie)) {
+        if(!videoRepository.existsByMediaTypeAndCode(MediaType.MOVIE, movie.getCode())) {
             log.info("비디오 api 호출후 반환");
             TmdbVideoResponse tmdbVideoResponse = tmdbClient.getVideos(movieCode);
             saveVideo(tmdbVideoResponse, movie);
         }
 
         // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
-        List<Video> videos = videoRepository.findByVideo(movie);
+        List<Video> videos = videoRepository.findByVideo(MediaType.MOVIE, movie.getCode());
         return toVideoResponse(videos);
     }
 
@@ -300,9 +300,10 @@ public class MovieService {
                                 && result.site().equals("YouTube"))
                 .map(result ->
                         Video.builder()
+                                .mediaType(MediaType.MOVIE)
+                                .code(movie.getCode())
                                 .key(result.key())
-                                .movie(movie)
-                                .type(result.type())
+                                .videoType(result.type())
                                 .publishedAt(result.publishedAt())
                                 .build())
                 .toList();

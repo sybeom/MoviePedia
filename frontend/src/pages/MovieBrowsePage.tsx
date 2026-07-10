@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
 import loadingIcon from '../assets/icons/loading.svg'
@@ -31,6 +31,8 @@ import './MovieBrowsePage.css'
 type BrowseTheme = 'dark' | 'light'
 
 const BROWSE_PAGE_SIZE = 30
+const BROWSE_SCROLL_STORAGE_KEY_PREFIX = 'moviepedia.browse.scroll:'
+const BROWSE_LIST_STORAGE_KEY_PREFIX = 'moviepedia.browse.list:'
 
 function getReleaseFilterLabel(mediaType: 'movie' | 'series', filter: MediaReleaseFilter) {
   if (mediaType === 'series') {
@@ -46,16 +48,206 @@ function getReleaseFilterLabel(mediaType: 'movie' | 'series', filter: MediaRelea
   return filter
 }
 
+function getInitialGenreFilters(searchParams: URLSearchParams) {
+  const genres = searchParams.getAll('genre').filter(Boolean)
+  return genres.length > 0 ? genres : ['ALL']
+}
+
+function getInitialSortFilter(searchParams: URLSearchParams): MediaSortFilter {
+  return searchParams.get('sort') === 'OLDEST' ? '오래된순' : '최신순'
+}
+
+function getInitialReleaseFilter(searchParams: URLSearchParams): MediaReleaseFilter {
+  const releaseStatus = searchParams.get('releaseStatus')
+
+  if (releaseStatus === 'RELEASED') {
+    return '개봉'
+  }
+
+  if (releaseStatus === 'UNRELEASED') {
+    return '미개봉'
+  }
+
+  return '전체'
+}
+
+function getBrowseScrollStorageKey(pathname: string, search: string) {
+  return `${BROWSE_SCROLL_STORAGE_KEY_PREFIX}${pathname}${search}`
+}
+
+function getBrowseListStorageKey(pathname: string, search: string) {
+  return `${BROWSE_LIST_STORAGE_KEY_PREFIX}${pathname}${search}`
+}
+
+function isScrollableBrowseContainer(container: HTMLElement | null) {
+  return Boolean(container && container.scrollHeight > container.clientHeight + 1)
+}
+
+function saveBrowseScrollPosition(storageKey: string, container: HTMLElement | null) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const scrollTop = isScrollableBrowseContainer(container)
+    ? container?.scrollTop ?? 0
+    : window.scrollY ?? 0
+  window.sessionStorage.setItem(storageKey, String(scrollTop))
+}
+
+function restoreBrowseScrollPosition(storageKey: string, container: HTMLElement | null) {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  const savedValue = window.sessionStorage.getItem(storageKey)
+
+  if (!savedValue) {
+    return true
+  }
+
+  const targetScrollTop = Number(savedValue)
+
+  if (!Number.isFinite(targetScrollTop) || targetScrollTop <= 0) {
+    window.sessionStorage.removeItem(storageKey)
+    return true
+  }
+
+  window.scrollTo({ top: targetScrollTop, left: 0, behavior: 'auto' })
+  if (isScrollableBrowseContainer(container)) {
+    container?.scrollTo({ top: targetScrollTop, left: 0, behavior: 'auto' })
+  }
+
+  const currentScrollTop = isScrollableBrowseContainer(container)
+    ? container?.scrollTop ?? 0
+    : window.scrollY ?? 0
+  const isRestored = Math.abs(currentScrollTop - targetScrollTop) < 4
+
+  if (isRestored) {
+    window.sessionStorage.removeItem(storageKey)
+  }
+
+  return isRestored
+}
+
+function readBrowseListSnapshot(storageKey: string) {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const rawValue = window.sessionStorage.getItem(storageKey)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue) as {
+      movies: MediaCard[]
+      page: number
+      hasMore: boolean
+    }
+
+    if (!Array.isArray(parsedValue.movies)) {
+      return null
+    }
+
+    return {
+      movies: parsedValue.movies,
+      page: Number.isFinite(parsedValue.page) ? parsedValue.page : 0,
+      hasMore: Boolean(parsedValue.hasMore),
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeBrowseListSnapshot(
+  storageKey: string,
+  snapshot: {
+    movies: MediaCard[]
+    page: number
+    hasMore: boolean
+  },
+) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.setItem(storageKey, JSON.stringify(snapshot))
+}
+
+function markCurrentBrowseHistoryEntryForRestore() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const currentHistoryState = window.history.state ?? {}
+  const currentUserState =
+    currentHistoryState.usr && typeof currentHistoryState.usr === 'object'
+      ? currentHistoryState.usr
+      : {}
+
+  window.history.replaceState(
+    {
+      ...currentHistoryState,
+      usr: {
+        ...currentUserState,
+        restoreFromDetail: true,
+      },
+    },
+    '',
+  )
+}
+
+function clearCurrentBrowseHistoryEntryRestoreMark() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const currentHistoryState = window.history.state ?? {}
+  const currentUserState =
+    currentHistoryState.usr && typeof currentHistoryState.usr === 'object'
+      ? { ...currentHistoryState.usr }
+      : null
+
+  if (!currentUserState || !('restoreFromDetail' in currentUserState)) {
+    return
+  }
+
+  delete currentUserState.restoreFromDetail
+
+  window.history.replaceState(
+    {
+      ...currentHistoryState,
+      usr: currentUserState,
+    },
+    '',
+  )
+}
+
 function MovieBrowsePage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const mediaConfig = getMediaConfigByPath(location.pathname)
+  const shouldRestoreFromDetail =
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'restoreFromDetail' in location.state &&
+    location.state.restoreFromDetail === true
+  const scrollStorageKey = getBrowseScrollStorageKey(location.pathname, location.search)
+  const listStorageKey = getBrowseListStorageKey(location.pathname, location.search)
+  const initialListSnapshot = useMemo(
+    () => (shouldRestoreFromDetail ? readBrowseListSnapshot(listStorageKey) : null),
+    [listStorageKey, shouldRestoreFromDetail],
+  )
   const mainRef = useRef<HTMLElement | null>(null)
   const loadTriggerRef = useRef<HTMLDivElement | null>(null)
   const searchBoxRef = useRef<HTMLDivElement | null>(null)
-  const pageRef = useRef(0)
-  const hasMoreRef = useRef(true)
+  const pageRef = useRef(initialListSnapshot?.page ?? 0)
+  const hasMoreRef = useRef(initialListSnapshot?.hasMore ?? true)
   const isLoadingMoreRef = useRef(false)
+  const shouldRestoreScrollRef = useRef(true)
 
   const [theme, setTheme] = useState<BrowseTheme>(() => {
     if (typeof window === 'undefined') {
@@ -65,17 +257,23 @@ function MovieBrowsePage() {
     return window.localStorage.getItem(HOME_THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark'
   })
   const [genreOptions, setGenreOptions] = useState<GenreOption[]>([{ label: '전체', value: 'ALL' }])
-  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(['ALL'])
-  const [selectedSortFilter, setSelectedSortFilter] = useState<MediaSortFilter>('최신순')
-  const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MediaReleaseFilter>('전체')
+  const [selectedGenreFilters, setSelectedGenreFilters] = useState<string[]>(() =>
+    getInitialGenreFilters(searchParams),
+  )
+  const [selectedSortFilter, setSelectedSortFilter] = useState<MediaSortFilter>(() =>
+    getInitialSortFilter(searchParams),
+  )
+  const [selectedReleaseFilter, setSelectedReleaseFilter] = useState<MediaReleaseFilter>(() =>
+    getInitialReleaseFilter(searchParams),
+  )
   const [query, setQuery] = useState('')
   const [isSearchLoading, setIsSearchLoading] = useState(false)
   const [searchMovies, setSearchMovies] = useState<SearchMediaItem[]>([])
   const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
-  const [movies, setMovies] = useState<MediaCard[]>([])
+  const [movies, setMovies] = useState<MediaCard[]>(() => initialListSnapshot?.movies ?? [])
   const [isGenresLoading, setIsGenresLoading] = useState(true)
-  const [isMoviesLoading, setIsMoviesLoading] = useState(true)
+  const [isMoviesLoading, setIsMoviesLoading] = useState(() => initialListSnapshot === null)
   const [isLoadingMoreMovies, setIsLoadingMoreMovies] = useState(false)
 
   const toggleGenreFilter = useCallback((genreValue: string) => {
@@ -100,6 +298,60 @@ function MovieBrowsePage() {
   }, [theme])
 
   useEffect(() => {
+    shouldRestoreScrollRef.current = true
+  }, [scrollStorageKey])
+
+  useEffect(() => {
+    if (shouldRestoreFromDetail) {
+      return
+    }
+
+    window.sessionStorage.removeItem(scrollStorageKey)
+    window.sessionStorage.removeItem(listStorageKey)
+    clearCurrentBrowseHistoryEntryRestoreMark()
+  }, [listStorageKey, scrollStorageKey, shouldRestoreFromDetail])
+
+  useEffect(() => {
+    if (!shouldRestoreFromDetail) {
+      return
+    }
+
+    return () => {
+      writeBrowseListSnapshot(listStorageKey, {
+        movies,
+        page: pageRef.current,
+        hasMore: hasMoreRef.current,
+      })
+    }
+  }, [listStorageKey, movies, shouldRestoreFromDetail])
+
+  useEffect(() => {
+    const nextSearchParams = new URLSearchParams()
+
+    getGenreQueryValues(selectedGenreFilters).forEach((genreValue) => {
+      nextSearchParams.append('genre', genreValue)
+    })
+
+    nextSearchParams.set('sort', getSortQueryValue(selectedSortFilter))
+
+    const releaseValue = getReleaseQueryValue(selectedReleaseFilter)
+
+    if (releaseValue) {
+      nextSearchParams.set('releaseStatus', releaseValue)
+    }
+
+    if (nextSearchParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextSearchParams, { replace: true })
+    }
+  }, [
+    searchParams,
+    selectedGenreFilters,
+    selectedReleaseFilter,
+    selectedSortFilter,
+    setSearchParams,
+  ])
+
+  useEffect(() => {
     document.documentElement.classList.add('movie-browse-root')
     document.documentElement.classList.toggle('movie-browse-root-light', theme === 'light')
     document.documentElement.classList.toggle('movie-browse-root-dark', theme === 'dark')
@@ -120,6 +372,35 @@ function MovieBrowsePage() {
       )
     }
   }, [theme])
+
+  useEffect(() => {
+    const currentMainRef = mainRef.current
+
+    return () => {
+      saveBrowseScrollPosition(scrollStorageKey, currentMainRef)
+    }
+  }, [scrollStorageKey])
+
+  useLayoutEffect(() => {
+    if (shouldRestoreScrollRef.current === false) {
+      return
+    }
+
+    if (!shouldRestoreFromDetail || isGenresLoading || isMoviesLoading) {
+      return
+    }
+
+    const rafId = window.requestAnimationFrame(() => {
+      if (restoreBrowseScrollPosition(scrollStorageKey, mainRef.current)) {
+        shouldRestoreScrollRef.current = false
+        clearCurrentBrowseHistoryEntryRestoreMark()
+      }
+    })
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+    }
+  }, [isGenresLoading, isMoviesLoading, movies.length, scrollStorageKey, shouldRestoreFromDetail])
 
   useEffect(() => {
     let isMounted = true
@@ -200,6 +481,16 @@ function MovieBrowsePage() {
     let isMounted = true
 
     async function loadInitialMovies() {
+      const cachedSnapshot = shouldRestoreFromDetail ? initialListSnapshot : null
+
+      if (cachedSnapshot) {
+        setMovies(cachedSnapshot.movies)
+        pageRef.current = cachedSnapshot.page
+        hasMoreRef.current = cachedSnapshot.hasMore
+        setIsMoviesLoading(false)
+        return
+      }
+
       setIsMoviesLoading(true)
       setMovies([])
       pageRef.current = 0
@@ -232,7 +523,15 @@ function MovieBrowsePage() {
     return () => {
       isMounted = false
     }
-  }, [loadMoviesPage, selectedGenreFilters, selectedReleaseFilter, selectedSortFilter])
+  }, [
+    initialListSnapshot,
+    listStorageKey,
+    loadMoviesPage,
+    selectedGenreFilters,
+    selectedReleaseFilter,
+    selectedSortFilter,
+    shouldRestoreFromDetail,
+  ])
 
   useEffect(() => {
     const trimmedQuery = query.trim()
@@ -312,7 +611,12 @@ function MovieBrowsePage() {
           return
         }
 
-        if (isMoviesLoading || isLoadingMoreRef.current || !hasMoreRef.current) {
+        if (
+          shouldRestoreScrollRef.current ||
+          isMoviesLoading ||
+          isLoadingMoreRef.current ||
+          !hasMoreRef.current
+        ) {
           return
         }
 
@@ -352,18 +656,28 @@ function MovieBrowsePage() {
     (movie: MediaCard | SearchMediaItem) => {
       setIsSearchResultsOpen(false)
       setActiveSearchIndex(-1)
-      navigate(mediaConfig.detailPath(movie.code), {
+      saveBrowseScrollPosition(scrollStorageKey, mainRef.current)
+      markCurrentBrowseHistoryEntryForRestore()
+      writeBrowseListSnapshot(listStorageKey, {
+        movies,
+        page: pageRef.current,
+        hasMore: hasMoreRef.current,
+      })
+      const seasonNum = 'seasonNum' in movie ? movie.seasonNum : ''
+
+      navigate(mediaConfig.detailPath(movie.code, seasonNum), {
         state: {
+          from: `${location.pathname}${location.search}`,
           movie: {
             id: movie.code,
             title: movie.title,
             poster: 'poster' in movie ? movie.poster : '',
-            seasonNum: 'seasonNum' in movie ? movie.seasonNum : '',
+            seasonNum,
           },
         },
       })
     },
-    [mediaConfig, navigate],
+    [location.pathname, location.search, listStorageKey, mediaConfig, movies, navigate, scrollStorageKey],
   )
 
   async function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
@@ -413,7 +727,15 @@ function MovieBrowsePage() {
         <button
           className="movie-browse-hero-brand"
           type="button"
-          onClick={() => navigate(mediaConfig.homePath)}
+          onClick={() => {
+            saveBrowseScrollPosition(scrollStorageKey, mainRef.current)
+            writeBrowseListSnapshot(listStorageKey, {
+              movies,
+              page: pageRef.current,
+              hasMore: hasMoreRef.current,
+            })
+            navigate(mediaConfig.homePath)
+          }}
         >
           <img className="movie-browse-hero-back-icon" src={arrowBackIcon} alt="" aria-hidden="true" />
           <span className="sr-only">홈으로 이동</span>
