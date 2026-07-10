@@ -254,7 +254,11 @@ function MovieDetailPage() {
       setIsTrailersLoading(Boolean(resolvedMovieCode))
 
       try {
-        const trailers = await fetchMovieTrailers(resolvedMovieCode, mediaConfig.type)
+        const trailers = await fetchMovieTrailers(
+          resolvedMovieCode,
+          mediaConfig.type,
+          resolvedSeasonNum,
+        )
 
         setMovieDetail((previousMovieDetail) => ({
           ...previousMovieDetail,

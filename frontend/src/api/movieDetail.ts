@@ -38,8 +38,17 @@ export async function fetchMovieDetail(
   return normalizeMovieDetail(response)
 }
 
-export async function fetchMovieTrailers(movieCode: string, mediaType: MediaType = 'movie') {
-  const response = await request<unknown>(`${getMediaResourcePath(mediaType)}/${movieCode}/videos`, {
+export async function fetchMovieTrailers(
+  movieCode: string,
+  mediaType: MediaType = 'movie',
+  seasonNum = '',
+) {
+  const videosPath =
+    mediaType === 'series' && seasonNum
+      ? `${getMediaResourcePath(mediaType)}/${movieCode}/${seasonNum}/videos`
+      : `${getMediaResourcePath(mediaType)}/${movieCode}/videos`
+
+  const response = await request<unknown>(videosPath, {
     method: 'GET',
   })
 

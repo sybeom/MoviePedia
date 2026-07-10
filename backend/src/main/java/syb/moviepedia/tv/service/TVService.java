@@ -12,18 +12,14 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import syb.moviepedia.common.CreditRole;
-import syb.moviepedia.common.MediaType;
-import syb.moviepedia.common.ReleaseStatus;
-import syb.moviepedia.common.SortType;
+import syb.moviepedia.common.*;
 import syb.moviepedia.common.exception.TVSeasonNotFoundException;
 import syb.moviepedia.movie.domain.Credit;
+import syb.moviepedia.movie.domain.Video;
 import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
-import syb.moviepedia.movie.dto.response.MovieCreditResponse;
-import syb.moviepedia.movie.external.tmdb.TmdbClient;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbCredit;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbVideo;
+import syb.moviepedia.movie.dto.response.VideoResponse;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbVideoResponse;
 import syb.moviepedia.movie.repository.CreditRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.VideoRepository;
@@ -54,7 +50,7 @@ public class TVService {
     private final GenreRepository genreRepo;
     private final CreditRepository creditRepo;
     private final JPAQueryFactory query;
-
+    private final VideoRepository videoRepo;
 
     private final TmdbTVClient tmdbTVClient;
 
@@ -218,8 +214,39 @@ public class TVService {
         return credits.stream().map(credit -> TVSeasonCreditResponse.from(credit)).toList();
     }
 
-    @Transactional(readOnly = true)
-    public void getTVSeasonVideos(Integer seriesCode, Integer seasonNum) {
-        tmdbTVClient.fetchSeasonVideo(seriesCode, seasonNum);
+    @Transactional
+    public List<VideoResponse> getTVSeasonVideos(Integer seriesCode, Integer seasonNum) {
+
+        // 없으면 api 호출 후 DB 저장후 반환
+        if(!videoRepo.existsByMediaTypeAndCodeAndSeasonNum(MediaType.TV, seriesCode, seasonNum)) {
+            log.info("비디오 api 호출후 반환");
+            TmdbVideoResponse response = tmdbTVClient.fetchSeasonVideo(seriesCode, seasonNum, "ko-kr");
+
+            if (response.results().isEmpty()) { // 한국어 트레일러 없으면 영어 버전이라도 저장하기
+                response = tmdbTVClient.fetchSeasonVideo(seriesCode, seasonNum, "en-US");
+            }
+
+            List<Video> videoList = response.results().stream()
+                    .filter(result -> // 공식이고 트레일러 또는 티저 영상만. 사이트는 유튜브인 곳만.
+                            result.official()
+                                    && (result.type()== VideoType.TRAILER || result.type() == VideoType.TEASER)
+                                    && result.site().equals("YouTube"))
+                    .map(result ->
+                            Video.builder()
+                                    .mediaType(MediaType.TV)
+                                    .code(seriesCode)
+                                    .seasonNum(seasonNum)
+                                    .key(result.key())
+                                    .videoType(result.type())
+                                    .publishedAt(result.publishedAt())
+                                    .build())
+                    .toList();
+            videoRepo.saveAll(videoList);
+        }
+
+        // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
+        List<Video> videos = videoRepo.findByVideo(MediaType.TV, seriesCode, seasonNum);
+
+        return videos.stream().map(video -> VideoResponse.from(video)).toList();
     }
 }

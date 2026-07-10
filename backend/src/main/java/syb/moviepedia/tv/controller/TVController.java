@@ -18,6 +18,7 @@ import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
+import syb.moviepedia.movie.dto.response.VideoResponse;
 import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.dto.response.TVPopularResponse;
 import syb.moviepedia.tv.dto.response.TVSeasonCreditResponse;
@@ -76,7 +77,7 @@ public class TVController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "장르 데이터 조회 성공"),
             @ApiResponse(
-                    responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    responseCode = "502", description = "외부 TMDB 장르 API 호출 실패",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )
@@ -93,7 +94,7 @@ public class TVController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "TV 시리즈 시즌 상세화면 조회 성공"),
             @ApiResponse(
-                    responseCode = "502", description = "외부 TMDB API 호출 실패",
+                    responseCode = "502", description = "외부 TMDB 상세 API 호출 실패",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )
@@ -109,7 +110,7 @@ public class TVController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "TV 시리즈 시즌 크레딧 조회 성공"),
             @ApiResponse(
-                    responseCode = "502", description = "외부 TMDB APi 호출 실패",
+                    responseCode = "502", description = "외부 TMDB 크레딧 API 호출 실패",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )
@@ -124,5 +125,25 @@ public class TVController {
         return ResponseEntity.ok().body(ApiSuccessResponse.of(
                 "TV 크레딧 조회 성공",
                 tvService.getSeasonCredit(seriesCode, seasonNum)));
+    }
+
+    @Operation(summary = "TV 시즌 트레일러", description = "TV 시리즈 시즌 트레일러 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "TV 시리즈 시즌 트레일러 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "TMDB 트레일러 API 호출 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/{seriesCode}/{seasonNum}/videos")
+    public ResponseEntity<ApiSuccessResponse<List<VideoResponse>>> getVideos(
+            @PathVariable Integer seriesCode,
+            @PathVariable Integer seasonNum
+    ) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of(
+                "TV 시즌 트레일러 조회 성공",
+                tvService.getTVSeasonVideos(seriesCode, seasonNum)));
     }
 }

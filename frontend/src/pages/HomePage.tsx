@@ -739,6 +739,7 @@ function HomePage() {
       return
     }
 
+    shouldRestoreScrollRef.current = false
     window.sessionStorage.removeItem(scrollStorageKey)
     window.sessionStorage.removeItem(listStorageKey)
     clearCurrentHistoryEntryRestoreMark()

@@ -33,11 +33,13 @@ public class Video {
     @JoinColumn(name = "movie_id")
     private String key;
 
-    @Column(name = "video_type", nullable = false, unique = true)
+    @Column(name = "video_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private VideoType videoType;
 
     @Column(name = "published_at")
     private Instant publishedAt;
 
+    @Column(name = "season_number")
+    private Integer seasonNum;
 }

@@ -287,7 +287,7 @@ public class MovieService {
         }
 
         // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
-        List<Video> videos = videoRepository.findByVideo(MediaType.MOVIE, movie.getCode());
+        List<Video> videos = videoRepository.findByVideo(MediaType.MOVIE, movie.getCode(), null);
         return toVideoResponse(videos);
     }
 
