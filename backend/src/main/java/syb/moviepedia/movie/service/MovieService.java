@@ -188,6 +188,16 @@ public class MovieService {
             return savedMovie;
         });
 
+        // 상세 정보 업데이트 안되어있으면,
+        if(!movie.isDetailFetched()) {
+            tmdbClient.getMovieDetail(mvCode);
+
+            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
+            List<String> countries = countryRepository.findNameByCodeIn(detail.country());
+
+            movie.setDetail(detail.runtime(), countries);
+        }
+
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
         List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
 

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import syb.moviepedia.movie.domain.Country;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -74,5 +75,9 @@ public abstract class BaseMediaEntity {
         this.overview = overview;
         this.posterPath = posterPath;
         this.backdropPath = backdropPath;
+    }
+
+    protected void setCountries(List<String> countries) {
+        this.country = countries;
     }
 }

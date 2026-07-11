@@ -48,6 +48,9 @@ public class Movie extends BaseMediaEntity {
     @Column(name = "like_count", nullable = false)
     private long likeCount=0;
 
+    @Column(name = "detail_fetched", nullable = false)
+    private boolean detailFetched = false;
+
     @Builder
     public Movie(
             Integer code,
@@ -66,6 +69,7 @@ public class Movie extends BaseMediaEntity {
         this.commentCount = commentCount;
         this.likeCount = likeCount;
         this.runtime = runtime;
+        this.detailFetched = false;
     }
 
     // 상세 정보 업데이트
@@ -91,5 +95,11 @@ public class Movie extends BaseMediaEntity {
             return 0;
         }
         return (int) Math.round((double) likeCount / commentCount * 100);
+    }
+
+    public void setDetail(Integer runtime, List<String> countries) {
+        this.runtime = runtime;
+        super.setCountries(countries);
+        this.detailFetched = true;
     }
 }
