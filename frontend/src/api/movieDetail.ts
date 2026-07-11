@@ -21,6 +21,10 @@ function getMediaResourcePath(mediaType: MediaType) {
   return MEDIA_CONFIGS[mediaType].resourcePath
 }
 
+function getCommentMediaTypeValue(mediaType: MediaType) {
+  return mediaType === 'series' ? 'TV' : 'MOVIE'
+}
+
 export async function fetchMovieDetail(
   movieId: string,
   mediaType: MediaType = 'movie',
@@ -88,10 +92,12 @@ export function fetchMovieComments(
 ) {
   const session = getAuthSession()
   const sortParam = sort === 'oldest' ? 'OLDEST' : 'LATEST'
+  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
   const searchParams = new URLSearchParams({
     page: String(page),
     size: '20',
     sort: sortParam,
+    mediaType: mediaTypeValue,
   })
 
   return request<unknown>(
@@ -112,10 +118,15 @@ export function createMovieComment(
   body: CreateCommentRequest,
   mediaType: MediaType = 'movie',
 ) {
-  return authRequest<CreateCommentRequest>(`${getMediaResourcePath(mediaType)}/${movieId}/comments`, {
-    method: 'POST',
-    body,
-  })
+  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+
+  return authRequest<CreateCommentRequest>(
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments?mediaType=${mediaTypeValue}`,
+    {
+      method: 'POST',
+      body,
+    },
+  )
 }
 
 export function updateMovieComment(
@@ -124,8 +135,10 @@ export function updateMovieComment(
   body: UpdateCommentRequest,
   mediaType: MediaType = 'movie',
 ) {
+  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+
   return authRequest<UpdateCommentRequest>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}`,
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}?mediaType=${mediaTypeValue}`,
     {
       method: 'PATCH',
       body,
@@ -139,8 +152,10 @@ export function deleteMovieComment(
   body: DeleteCommentRequest,
   mediaType: MediaType = 'movie',
 ) {
+  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+
   return authRequest<DeleteCommentRequest>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}`,
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}?mediaType=${mediaTypeValue}`,
     {
       method: 'DELETE',
       body,
@@ -153,10 +168,12 @@ export function fetchMovieCommentForEdit(
   commentId: string,
   mediaType: MediaType = 'movie',
 ) {
+  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+
   return authRequest<unknown>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}/edit`,
+    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}/edit?mediaType=${mediaTypeValue}`,
     {
-    method: 'GET',
+      method: 'GET',
     },
   ).then((response) => normalizeMovieCommentDetail(response))
 }

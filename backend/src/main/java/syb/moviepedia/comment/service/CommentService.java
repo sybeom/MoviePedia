@@ -15,15 +15,15 @@ import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.dto.response.CommentResponse;
 import syb.moviepedia.comment.repository.CommentRepository;
+import syb.moviepedia.common.MediaType;
 import syb.moviepedia.common.SortType;
-import syb.moviepedia.common.exception.CommentAlreadyExistsException;
-import syb.moviepedia.common.exception.CommentNotFoundException;
-import syb.moviepedia.common.exception.MemberNotFoundException;
-import syb.moviepedia.common.exception.MovieNotFoundException;
+import syb.moviepedia.common.exception.*;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.movie.repository.MovieRepository;
+import syb.moviepedia.tv.domain.TV;
+import syb.moviepedia.tv.repsitory.TVRepository;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +33,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CommentService {
     private final MovieRepository movieRepository;
+    private final TVRepository tvRepo;
     private final MemberRepository memberRepository;
     private final CommentRepository commentRepository;
 
@@ -71,29 +72,45 @@ public class CommentService {
 
     // 저장
     @Transactional
-    public void saveComment(Integer mvCode, CommentSaveRequest dto) {
-        Movie movie = movieRepository.findByCode(mvCode).orElseThrow(
-                () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
-
+    public void saveComment(Integer code, Integer seasonNum, MediaType mediaType, CommentSaveRequest dto) {
         Member member = memberRepository.findByNickname(dto.nickname()).orElseThrow(
                 () -> new MemberNotFoundException("멤버를 찾을 수 없습니다. 닉네임:" + dto.nickname()));
 
-        // 영화당 1코멘트만 가능하도록 하기 위함
-        if (commentRepository.existsByMovieIdAndMemberId(movie.getId(), member.getId())) {
-            throw new CommentAlreadyExistsException("이미 해당 영화에 코멘트를 작성하였습니다.");
+        Comment.CommentBuilder builder = Comment.builder();
+
+        if (mediaType == MediaType.MOVIE) {
+            // 영화당 1 코멘트만 가능하도록 하기 위함
+            if (commentRepository.existsByMediaTypeAndCodeAndMemberId(mediaType, code, member.getId())) {
+                throw new CommentAlreadyExistsException("이미 해당 영화에 코멘트를 작성하였습니다.");
+            }
+            Movie movie = movieRepository.findByCode(code).orElseThrow(
+                    () -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + code));
+            builder.movie(movie);
+        } else if(mediaType == MediaType.TV) {
+            // TV 시즌 당 하나의 코멘트만 가능하도록 하기 위함
+            if (commentRepository.existsByMediaTypeAndCodeAndSeasonNumAndMemberId(mediaType, code, seasonNum, member.getId())) {
+                throw new CommentAlreadyExistsException("이미 해당 TV 시즌에 코멘트를 작성하였습니다.");
+            }
+            TV tv = tvRepo.findBySeriesCodeAndSeasonNum(code, seasonNum).orElseThrow(
+                    () -> new TVSeasonNotFoundException("TV 시즌을 찾을 수 없습니다. 시리즈 코드: " + code + ", 시즌: " + seasonNum));
+            builder.seasonNum(seasonNum);
+            builder.tv(tv);
+        } else {
+            throw new IllegalArgumentException("잘못된 미디어 타입입니다.");
         }
 
         // 코멘트 엔티티 생성
-        Comment comment = Comment.builder()
+        Comment comment = builder
+                .mediaType(mediaType)
+                .code(code)
                 .nickname(dto.nickname())
                 .content(dto.content())
-                .movie(movie)
                 .member(member)
                 .reactionType(dto.reactionType())
                 .build();
         commentRepository.save(comment);
 
-        movie.increaseCommentStats(dto.reactionType()); // 코멘트 수, 좋아요 수 상태 업데이트
+//        movie.increaseCommentStats(dto.reactionType()); // 코멘트 수, 좋아요 수 상태 업데이트
     }
 
     @Transactional

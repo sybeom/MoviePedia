@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +22,7 @@ import syb.moviepedia.comment.dto.request.CommentUpdateRequest;
 import syb.moviepedia.comment.dto.response.CommentEditResponse;
 import syb.moviepedia.comment.dto.response.CommentListResponse;
 import syb.moviepedia.comment.service.CommentService;
+import syb.moviepedia.common.MediaType;
 import syb.moviepedia.common.SortType;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
@@ -86,9 +89,11 @@ public class CommentController {
     @PostMapping
     public ResponseEntity<ApiSuccessResponse<Void>> saveComment(
             @PathVariable Integer movieCode,
-            @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외에서 처리
+            @PathVariable(required = false) Integer seasonNum,
+            @RequestParam MediaType mediaType,
+            @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외 클래스의 @Valid 검증 예외에서 처리
 
-        commentService.saveComment(movieCode, dto);
+        commentService.saveComment(movieCode, seasonNum, mediaType, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("코멘트 저장 성공"));
     }
 
