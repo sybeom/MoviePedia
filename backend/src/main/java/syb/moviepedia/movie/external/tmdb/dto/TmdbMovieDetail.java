@@ -2,7 +2,7 @@ package syb.moviepedia.movie.external.tmdb.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
-
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList.TmdbGenre;
 import java.time.LocalDate;
 import java.util.List;
 

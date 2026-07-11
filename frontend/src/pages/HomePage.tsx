@@ -679,6 +679,15 @@ function HomePage() {
   }
 
   function handlePrimaryNavClick(nextPath: '/' | '/series') {
+    clearCurrentHistoryEntryRestoreMark()
+    window.sessionStorage.removeItem(getScrollStorageKey(nextPath, ''))
+    window.sessionStorage.removeItem(getListStorageKey(nextPath, ''))
+
+    if (location.pathname !== nextPath) {
+      navigate(nextPath)
+      return
+    }
+
     setSelectedGenreFilters(['ALL'])
     setSelectedSortFilter('최신순')
     setSelectedReleaseFilter('전체')
@@ -694,16 +703,7 @@ function HomePage() {
     setIsAllMoviesLoading(true)
     allMoviesPageRef.current = 0
     hasMoreAllMoviesRef.current = true
-    clearCurrentHistoryEntryRestoreMark()
-    window.sessionStorage.removeItem(getScrollStorageKey(nextPath, ''))
-    window.sessionStorage.removeItem(getListStorageKey(nextPath, ''))
-
-    if (location.pathname === nextPath) {
-      setSearchParams(new URLSearchParams(), { replace: true })
-      return
-    }
-
-    navigate(nextPath)
+    setSearchParams(new URLSearchParams(), { replace: true })
   }
 
   useEffect(() => {

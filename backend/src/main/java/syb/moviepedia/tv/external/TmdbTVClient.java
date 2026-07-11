@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import syb.moviepedia.common.exception.TmdbApiException;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbVideo;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbVideoResponse;
 import syb.moviepedia.tv.external.dto.*;
 

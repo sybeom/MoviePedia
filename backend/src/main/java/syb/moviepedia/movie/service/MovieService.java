@@ -6,22 +6,25 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.*;
-import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.*;
 import syb.moviepedia.movie.external.tmdb.TmdbClient;
 import syb.moviepedia.movie.external.tmdb.dto.*;
 import syb.moviepedia.movie.repository.*;
-
+import syb.moviepedia.movie.external.tmdb.dto.TmdbCredit.TmdbCrew;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbCredit.TmdbCast;
+import syb.moviepedia.movie.external.tmdb.dto.TmdbGenreList.TmdbGenre;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
 import static syb.moviepedia.movie.domain.QMovie.movie;
 
 @Slf4j
