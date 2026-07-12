@@ -1,6 +1,5 @@
 package syb.moviepedia.comment.service;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -42,8 +41,12 @@ public class CommentService {
 
     // 수정 코멘트 조회
     @Transactional
-    public CommentEditResponse getEditComment(Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow(
+    public CommentEditResponse getEditComment(Long id, MediaType mediaType) {
+        if (mediaType != MediaType.MOVIE && mediaType != MediaType.TV) {
+            throw new IllegalArgumentException("잘못된 미디어 타입입니다. : " + mediaType);
+        }
+
+        Comment comment = commentRepository.findByIdAndMediaType(id, mediaType).orElseThrow(
                 () -> new CommentNotFoundException("코멘트를 찾을 수 없습니다. id: " + id));
 
         return toEditCommentDto(comment);
@@ -190,29 +193,26 @@ public class CommentService {
     }
 
     @Transactional
-    public void update(Long mvCode, String loginId, CommentUpdateRequest dto) {
+    public void update(Long commentId, MediaType mediaType, CommentUpdateRequest dto) {
 
         // 내가 작성한 코멘트찾기
-        Comment comment = findMyCommentWithMovie(mvCode, dto.movieId(), loginId);
+        Comment comment = commentRepository.findByIdAndMediaType(commentId, mediaType)
+                .orElseThrow(() -> new CommentNotFoundException("코멘트를 찾을 수 없습니다."));
 
         comment.update(dto);
     }
 
     @Transactional
     public void delete(Long mvCode, Long movieId, String loginId) {
-
-        Comment comment = findMyCommentWithMovie(mvCode, movieId, loginId);
-        commentRepository.delete(comment);
-
-        Movie movie = comment.getMovie();
-        movie.decreaseCommentStats(); // 코멘트 수, 좋아요 수 상태 감소
+//
+//
+//        Comment comment = findMyCommentWithMovie(mvCode, movieId, loginId);
+//        commentRepository.delete(comment);
+//
+//        Movie movie = comment.getMovie();
+//        movie.decreaseCommentStats(); // 코멘트 수, 좋아요 수 상태 감소
     }
 
-    // 내가 작성한 코멘트 조회시 영화도 함께 가져오기 (fetch join)
-    private Comment findMyCommentWithMovie(Long mvCode, Long movieId, String loginId) {
-        return commentRepository.findMyCommentWithMovie(mvCode, movieId, loginId)
-                .orElseThrow(() -> new CommentNotFoundException("코멘트를 찾을 수 없습니다."));
-    }
 
     // 엔티티 -> 수정 Comment Dto로 가공
     private CommentEditResponse toEditCommentDto(Comment comment) {

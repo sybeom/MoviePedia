@@ -108,6 +108,7 @@ function MovieDetailPage() {
   const [selectedRating, setSelectedRating] = useState(0)
   const [canWriteComment, setCanWriteComment] = useState(false)
   const [isCheckingCommentAuth, setIsCheckingCommentAuth] = useState(false)
+  const [isLoadingCommentDetail, setIsLoadingCommentDetail] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [commentModalMode, setCommentModalMode] = useState<CommentModalMode>(null)
   const [commentSortOrder, setCommentSortOrder] = useState<CommentSortOrder>('latest')
@@ -582,6 +583,7 @@ function MovieDetailPage() {
   function handleCloseCommentModal() {
     setCommentModalMode(null)
     setEditingCommentTarget(null)
+    setIsLoadingCommentDetail(false)
   }
 
   function applyEditableComment(comment: MovieCommentDetail) {
@@ -590,22 +592,34 @@ function MovieDetailPage() {
   }
 
   async function handleCommentEditClick(comment: MovieComment) {
+    const targetMovieId = comment.movieId || resolvedMovieRecordId || movieDetail.id
+    const targetCommentId = comment.commentId || comment.id
+
+    if (!resolvedMovieCode || !targetCommentId) {
+      return
+    }
+
+    setEditingCommentTarget({
+      movieId: targetMovieId,
+      commentId: targetCommentId,
+    })
+    setCommentDraft('')
+    setSelectedRating(0)
+    setCanWriteComment(false)
+    setIsLoadingCommentDetail(true)
+    setCommentModalMode('edit')
+
     try {
-      const targetMovieId = comment.movieId || resolvedMovieRecordId
-      const targetCommentId = comment.commentId || comment.id
-
-      if (!targetMovieId || !targetCommentId) {
-        return
-      }
-
       const detail = await fetchMovieCommentForEdit(
-        targetMovieId,
+        resolvedMovieCode,
         targetCommentId,
         mediaConfig.type,
         resolvedSeasonNum,
       )
 
       if (!detail) {
+        setCommentModalMode(null)
+        setEditingCommentTarget(null)
         return
       }
 
@@ -615,17 +629,20 @@ function MovieDetailPage() {
       })
       setCanWriteComment(true)
       applyEditableComment(detail)
-      setCommentModalMode('edit')
     } catch {
-      // no-op
+      setCommentModalMode(null)
+      setEditingCommentTarget(null)
+      alert('코멘트 수정 정보를 불러오지 못했습니다.')
+    } finally {
+      setIsLoadingCommentDetail(false)
     }
   }
 
   async function handleCommentDeleteClick(comment: MovieComment) {
-    const targetMovieId = comment.movieId || resolvedMovieRecordId
+    const targetMovieId = comment.movieId || resolvedMovieRecordId || movieDetail.id
     const targetCommentId = comment.commentId || comment.id
 
-    if (!targetMovieId || !targetCommentId) {
+    if (!resolvedMovieCode || !targetCommentId) {
       return
     }
 
@@ -635,12 +652,17 @@ function MovieDetailPage() {
       return
     }
 
+    if (!targetMovieId) {
+      alert('코멘트 삭제 대상 정보를 찾을 수 없습니다.')
+      return
+    }
+
     try {
       await deleteMovieComment(
         resolvedMovieCode,
         targetCommentId,
         {
-          movieId: targetMovieId,
+          movieCode: resolvedMovieCode,
         },
         mediaConfig.type,
         resolvedSeasonNum,
@@ -650,7 +672,7 @@ function MovieDetailPage() {
         previousComments.filter((previousComment) => previousComment.id !== comment.id),
       )
     } catch {
-      // no-op
+      alert('코멘트 삭제에 실패했습니다.')
     }
   }
 
@@ -685,7 +707,7 @@ function MovieDetailPage() {
           resolvedMovieCode,
           editingCommentTarget.commentId,
           {
-            movieId: editingCommentTarget.movieId || movieDetail.id,
+            movieCode: resolvedMovieCode,
             content: trimmedCommentDraft,
             reactionType: selectedReactionType,
           },
@@ -724,7 +746,7 @@ function MovieDetailPage() {
       await createMovieComment(
         resolvedMovieCode,
         {
-          movieId: targetMovieRecordId,
+          movieCode: resolvedMovieCode,
           nickname: session.nickname,
           content: trimmedCommentDraft,
           reactionType: selectedReactionType,
@@ -953,6 +975,7 @@ function MovieDetailPage() {
           selectedRating={selectedRating}
           showReactionSelector={!isEditMode}
           canWriteComment={isEditMode || canWriteComment}
+          isLoadingDetail={isLoadingCommentDetail}
           isSubmittingComment={isSubmittingComment}
           isCheckingCommentAuth={isCheckingCommentAuth}
           submitLabel={commentModalSubmitLabel}

@@ -13,7 +13,6 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-
     // 영화 이미 작성된 코멘트인지 판별
     Boolean existsByMediaTypeAndCodeAndMemberId(MediaType mediaType, Integer movieCode, Long memberId);
 
@@ -30,7 +29,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         where c.movie.id = :movieId
             and c.member.loginId=:loginId     
     """)
-    Optional<Comment> findByMovieIdAndLoginId(@Param("movieId") Long mvId, @Param("loginId") String loginId);
+    Optional<Comment> findByMovieIdAndLoginId(@Param("movieCode") Long mvId, @Param("loginId") String loginId);
 
     // 코멘트 작성자 찾기
     @Query("""
@@ -69,7 +68,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         from Comment c
         where c.movie.id=:movieId
     """)
-    Long findCommentsCountByMovieId(@Param("movieId") Long mvId);
+    Long findCommentsCountByMovieId(@Param("movieCode") Long mvId);
 
     // 코멘트 조회시 영화도 함께 가져오기
     @Query("""
@@ -82,7 +81,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     """)
     Optional<Comment> findMyCommentWithMovie(
             @Param("mvCode") Long mvCode,
-            @Param("movieId") Long movieId,
+            @Param("movieCode") Long movieId,
             @Param("loginId") String loginId
     );
+
+    Optional<Comment> findByIdAndMediaType(Long id, MediaType mediaType);
 }

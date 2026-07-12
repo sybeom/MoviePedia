@@ -1014,6 +1014,26 @@
   margin-top: 12px;
 }
 
+.movie-detail-comment-modal-loading {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  min-height: 240px;
+  padding: 24px 0;
+}
+
+.movie-detail-comment-modal-loading p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.home-page-dark .movie-detail-comment-modal-loading p {
+  color: #9ca3af;
+}
+
 .movie-detail-comment-modal.movie-detail-comment-modal-detail .movie-detail-comment-form {
   display: flex;
   flex: 1 1 auto;

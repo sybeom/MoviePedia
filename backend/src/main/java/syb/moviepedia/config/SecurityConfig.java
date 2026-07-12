@@ -103,8 +103,8 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/auth/me").authenticated() // 로그인 여부 확인
-                        .requestMatchers(HttpMethod.POST, "/movies/{movieId}/comments").authenticated() // 코멘트 작성
-                        .requestMatchers(HttpMethod.GET, "/movies/{movieId}/comments/{commentId}/edit").authenticated() // 코멘트 수정 조회
+                        .requestMatchers(HttpMethod.POST, "/movies/{movieCode}/comments").authenticated() // 코멘트 작성
+                        .requestMatchers(HttpMethod.GET, "/movies/{movieCode}/comments/{commentId}/edit").authenticated() // 코멘트 수정 조회
                         .anyRequest().permitAll());
 
         // 커스텀 필터 추가

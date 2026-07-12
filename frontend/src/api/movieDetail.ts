@@ -160,12 +160,14 @@ export function updateMovieComment(
   commentId: string,
   body: UpdateCommentRequest,
   mediaType: MediaType = 'movie',
-  seasonNum = '',
+  _seasonNum = '',
 ) {
+  void movieId
+  void _seasonNum
   const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<UpdateCommentRequest>(
-    `${getCommentResourcePath(mediaType, movieId, seasonNum)}/${commentId}/edit?${searchParams.toString()}`,
+    `/comments/${commentId}?${searchParams.toString()}`,
     {
       method: 'PATCH',
       body,
@@ -195,12 +197,14 @@ export function fetchMovieCommentForEdit(
   movieId: string,
   commentId: string,
   mediaType: MediaType = 'movie',
-  seasonNum = '',
+  _seasonNum = '',
 ) {
+  void movieId
+  void _seasonNum
   const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<unknown>(
-    `${getCommentResourcePath(mediaType, movieId, seasonNum)}/${commentId}/edit?${searchParams.toString()}`,
+    `/comments/${commentId}/edit?${searchParams.toString()}`,
     {
       method: 'GET',
     },

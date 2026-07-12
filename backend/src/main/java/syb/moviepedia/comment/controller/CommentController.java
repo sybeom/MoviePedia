@@ -169,9 +169,13 @@ public class CommentController {
                     )
             )
     })
-    @GetMapping("/{commentId}/edit")
-    public ResponseEntity<ApiSuccessResponse<CommentEditResponse>> getEditComment(@PathVariable Long commentId) {
-        return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 조회 성공", commentService.getEditComment(commentId)));
+    @GetMapping("/comments/{commentId}/edit")
+    public ResponseEntity<ApiSuccessResponse<CommentEditResponse>> getEditComment(
+            @PathVariable Long commentId,
+            @RequestParam MediaType mediaType) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of(
+                "코멘트 조회 성공",
+                commentService.getEditComment(commentId, mediaType)));
     }
 
     @Operation(summary = "코멘트 수정", description = "코멘트를 수정한다")
@@ -195,16 +199,16 @@ public class CommentController {
                     )
             )
     })
-    @PatchMapping("/{commentId}")
+    @PatchMapping("/comments/{commentId}")
     public ResponseEntity<ApiSuccessResponse<Void>> updateComment(
-            @PathVariable("code") Long code,
-            @Valid @RequestBody CommentUpdateRequest dto,
-            Authentication authentication
+            @PathVariable("commentId") Long id,
+            @RequestParam MediaType mediaType,
+            @Valid @RequestBody CommentUpdateRequest dto
     ) {
-        String loginId = authentication.getName();
         if (dto.content() != null) {
-            commentService.update(code, loginId, dto);
+            commentService.update(id, mediaType, dto);
         }
+
         return ResponseEntity.ok().body(ApiSuccessResponse.of(("코멘트 업데이트 성공")));
     }
 

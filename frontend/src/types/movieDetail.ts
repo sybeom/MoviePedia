@@ -50,7 +50,7 @@ export type AuthMeResponse = {
 
 // 코멘트 작성 요청 타입 정의
 export type CreateCommentRequest = {
-  movieId: string
+  movieCode: string
   nickname: string
   content: string
   reactionType: 'LIKE' | 'DISLIKE'
@@ -58,14 +58,14 @@ export type CreateCommentRequest = {
 
 // 코멘트 수정 요청 데이터 타입 정의
 export type UpdateCommentRequest = {
-  movieId: string
+  movieCode: string
   content: string
   reactionType: 'LIKE' | 'DISLIKE'
 }
 
 // 코멘트 삭제 요청 데이터 타입 정의
 export type DeleteCommentRequest = {
-  movieId: string
+  movieCode: string
 }
 
 // 코멘트 수정 및 상세 조회 응답 타입 정의

@@ -1,4 +1,5 @@
 import type { FormEvent, RefObject } from 'react'
+import loadingIcon from '../../assets/icons/loading.svg'
 import MovieCommentForm from './MovieCommentForm'
 
 type MovieCommentModalProps = {
@@ -7,6 +8,7 @@ type MovieCommentModalProps = {
   selectedRating: number
   showReactionSelector: boolean
   canWriteComment: boolean
+  isLoadingDetail: boolean
   isSubmittingComment: boolean
   isCheckingCommentAuth: boolean
   submitLabel: string
@@ -24,6 +26,7 @@ function MovieCommentModal({
   selectedRating,
   showReactionSelector,
   canWriteComment,
+  isLoadingDetail,
   isSubmittingComment,
   isCheckingCommentAuth,
   submitLabel,
@@ -64,19 +67,31 @@ function MovieCommentModal({
           </button>
         </div>
 
-        <MovieCommentForm
-          commentDraft={commentDraft}
-          selectedRating={selectedRating}
-          showReactionSelector={showReactionSelector}
-          canWriteComment={canWriteComment}
-          isSubmittingComment={isSubmittingComment}
-          isCheckingCommentAuth={isCheckingCommentAuth}
-          submitLabel={submitLabel}
-          commentInputRef={commentInputRef}
-          onCommentDraftChange={onCommentDraftChange}
-          onSelectedRatingChange={onSelectedRatingChange}
-          onSubmit={onSubmit}
-        />
+        {isLoadingDetail ? (
+          <div className="movie-detail-comment-modal-loading" aria-live="polite">
+            <img
+              className="movie-detail-section-loading-icon"
+              src={loadingIcon}
+              alt=""
+              aria-hidden="true"
+            />
+            <p>코멘트를 불러오는 중입니다...</p>
+          </div>
+        ) : (
+          <MovieCommentForm
+            commentDraft={commentDraft}
+            selectedRating={selectedRating}
+            showReactionSelector={showReactionSelector}
+            canWriteComment={canWriteComment}
+            isSubmittingComment={isSubmittingComment}
+            isCheckingCommentAuth={isCheckingCommentAuth}
+            submitLabel={submitLabel}
+            commentInputRef={commentInputRef}
+            onCommentDraftChange={onCommentDraftChange}
+            onSelectedRatingChange={onSelectedRatingChange}
+            onSubmit={onSubmit}
+          />
+        )}
       </div>
     </div>
   )
