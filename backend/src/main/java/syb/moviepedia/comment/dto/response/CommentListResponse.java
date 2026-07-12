@@ -9,7 +9,7 @@ import java.util.List;
  */
 @Builder
 public record CommentListResponse(
-        Long movieId, // 코멘트 수정, 삭제시 필요
+        Long id, // 코멘트 수정, 삭제시 필요
         List<CommentResponse> comments
 ) {
 }

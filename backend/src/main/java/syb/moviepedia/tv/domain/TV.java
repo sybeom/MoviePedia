@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import syb.moviepedia.common.ReactionType;
 
 import java.time.LocalDate;
 
@@ -53,5 +54,13 @@ public class TV {
 
     public void setSeries(TVSeries series) {
         this.series = series;
+    }
+
+    // 코멘트 개수 및 좋아요 수 상태 업데이트
+    public void increaseCommentStats(ReactionType reactionType) {
+        this.commentCount++;
+
+        if (reactionType==ReactionType.LIKE)
+            this.likeCount++;
     }
 }

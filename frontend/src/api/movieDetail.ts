@@ -25,6 +25,32 @@ function getCommentMediaTypeValue(mediaType: MediaType) {
   return mediaType === 'series' ? 'TV' : 'MOVIE'
 }
 
+function getCommentApiBasePath(mediaType: MediaType) {
+  return mediaType === 'series' ? '/series' : getMediaResourcePath(mediaType)
+}
+
+function getCommentResourcePath(
+  mediaType: MediaType,
+  movieId: string,
+  seasonNum = '',
+) {
+  return mediaType === 'series' && seasonNum
+    ? `${getCommentApiBasePath(mediaType)}/${movieId}/${seasonNum}/comments`
+    : `${getCommentApiBasePath(mediaType)}/${movieId}/comments`
+}
+
+function createCommentSearchParams(
+  mediaType: MediaType,
+  extraParams?: Record<string, string>,
+) {
+  const searchParams = new URLSearchParams({
+    mediaType: getCommentMediaTypeValue(mediaType),
+    ...extraParams,
+  })
+
+  return searchParams
+}
+
 export async function fetchMovieDetail(
   movieId: string,
   mediaType: MediaType = 'movie',
@@ -89,19 +115,18 @@ export function fetchMovieComments(
   page = 0,
   sort: 'latest' | 'oldest' = 'latest',
   mediaType: MediaType = 'movie',
+  seasonNum = '',
 ) {
   const session = getAuthSession()
   const sortParam = sort === 'oldest' ? 'OLDEST' : 'LATEST'
-  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
-  const searchParams = new URLSearchParams({
+  const searchParams = createCommentSearchParams(mediaType, {
     page: String(page),
     size: '20',
     sort: sortParam,
-    mediaType: mediaTypeValue,
   })
 
   return request<unknown>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments?${searchParams.toString()}`,
+    `${getCommentResourcePath(mediaType, movieId, seasonNum)}?${searchParams.toString()}`,
     {
       method: 'GET',
       headers: session?.accessToken
@@ -117,11 +142,12 @@ export function createMovieComment(
   movieId: string,
   body: CreateCommentRequest,
   mediaType: MediaType = 'movie',
+  seasonNum = '',
 ) {
-  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+  const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<CreateCommentRequest>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments?mediaType=${mediaTypeValue}`,
+    `${getCommentResourcePath(mediaType, movieId, seasonNum)}?${searchParams.toString()}`,
     {
       method: 'POST',
       body,
@@ -134,11 +160,12 @@ export function updateMovieComment(
   commentId: string,
   body: UpdateCommentRequest,
   mediaType: MediaType = 'movie',
+  seasonNum = '',
 ) {
-  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+  const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<UpdateCommentRequest>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}?mediaType=${mediaTypeValue}`,
+    `${getCommentResourcePath(mediaType, movieId, seasonNum)}/${commentId}/edit?${searchParams.toString()}`,
     {
       method: 'PATCH',
       body,
@@ -151,11 +178,12 @@ export function deleteMovieComment(
   commentId: string,
   body: DeleteCommentRequest,
   mediaType: MediaType = 'movie',
+  seasonNum = '',
 ) {
-  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+  const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<DeleteCommentRequest>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}?mediaType=${mediaTypeValue}`,
+    `${getCommentResourcePath(mediaType, movieId, seasonNum)}/${commentId}?${searchParams.toString()}`,
     {
       method: 'DELETE',
       body,
@@ -167,11 +195,12 @@ export function fetchMovieCommentForEdit(
   movieId: string,
   commentId: string,
   mediaType: MediaType = 'movie',
+  seasonNum = '',
 ) {
-  const mediaTypeValue = getCommentMediaTypeValue(mediaType)
+  const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<unknown>(
-    `${getMediaResourcePath(mediaType)}/${movieId}/comments/${commentId}/edit?mediaType=${mediaTypeValue}`,
+    `${getCommentResourcePath(mediaType, movieId, seasonNum)}/${commentId}/edit?${searchParams.toString()}`,
     {
       method: 'GET',
     },

@@ -33,7 +33,7 @@ import syb.moviepedia.movie.dto.request.MovieIdRequest;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/movies/{movieCode}/comments")
+@RequestMapping
 public class CommentController {
 
     private final CommentService commentService;
@@ -49,10 +49,11 @@ public class CommentController {
                     )
             )
     })
-    @GetMapping
-    public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getCommentList(
+    @GetMapping("/movies/{movieCode}/comments")
+    public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getMovieCommentList(
             @PathVariable Integer movieCode,
             @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam MediaType mediaType,
             @RequestParam(defaultValue = "LATEST") SortType sort,
             Authentication auth) {
         // 작성자 코멘트를 찾기 위한 로그인 판별. 아이디가 있으면 로그인 상태, null이면 비로그인
@@ -62,13 +63,13 @@ public class CommentController {
         return ResponseEntity.ok().body(
                 ApiSuccessResponse.of(
                         "코멘트 목록 조회 성공",
-                        commentService.getAllComments(movieCode, pageable, loinId, sort)));
+                        commentService.getMovieComments(mediaType, movieCode, pageable, loinId, sort)));
     }
 
-    @Operation(summary = "코멘트 작성", description = "코멘트를 작성하여 저장한다")
+    @Operation(summary = "영화 코멘트 작성", description = "영화 코멘트를 작성하여 저장한다")
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "201", description = "코멘트 목록 조회 성공",
+                    responseCode = "201", description = "코멘트 작성 성공",
                     content = @Content(
                             schema = @Schema(implementation = SwaggerApiResponse.class)
                     )
@@ -86,15 +87,75 @@ public class CommentController {
                     )
             )
     })
-    @PostMapping
-    public ResponseEntity<ApiSuccessResponse<Void>> saveComment(
+    @PostMapping("/movies/{movieCode}/comments")
+    public ResponseEntity<ApiSuccessResponse<Void>> saveMovieComment(
             @PathVariable Integer movieCode,
-            @PathVariable(required = false) Integer seasonNum,
             @RequestParam MediaType mediaType,
             @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외 클래스의 @Valid 검증 예외에서 처리
 
-        commentService.saveComment(movieCode, seasonNum, mediaType, dto);
+        commentService.saveMovieComment(movieCode, mediaType, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("코멘트 저장 성공"));
+    }
+
+    @Operation(summary = "TV 코멘트 작성", description = "TV 코멘트를 작성하여 저장한다")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201", description = "코멘트 작성 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "잘못된 코멘트 값",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerFailResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "DB 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @PostMapping("/series/{seriesCode}/{seasonNum}/comments")
+    public ResponseEntity<ApiSuccessResponse<Void>> saveTVComment(
+            @PathVariable Integer seriesCode,
+            @PathVariable Integer seasonNum,
+            @RequestParam MediaType mediaType,
+            @Valid @RequestBody CommentSaveRequest dto) { // 검증은 글로벌 예외 클래스의 @Valid 검증 예외에서 처리
+
+        commentService.saveTVComment(seriesCode, seasonNum, mediaType, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiSuccessResponse.of("코멘트 저장 성공"));
+    }
+
+    @Operation(summary = "코멘트 목록 조회", description = "영화 상세페이지 코멘트 목록을 조회한다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "코멘트 목록 조회 성공"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "DB 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping("/series/{seriesCode}/{seasonNum}/comments")
+    public ResponseEntity<ApiSuccessResponse<CommentListResponse>> getTVCommentList(
+            @PathVariable Integer seriesCode,
+            @PathVariable Integer seasonNum,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam MediaType mediaType,
+            @RequestParam(defaultValue = "LATEST") SortType sort,
+            Authentication auth) {
+        // 작성자 코멘트를 찾기 위한 로그인 판별. 아이디가 있으면 로그인 상태, null이면 비로그인
+        // 로그인 아이디를 바탕으로 작성자 코멘트를 찾는다.
+        String loinId = auth != null ? auth.getName() : null;
+
+        return ResponseEntity.ok().body(
+                ApiSuccessResponse.of(
+                        "코멘트 목록 조회 성공",
+                        commentService.getTVComments(mediaType, seriesCode, seasonNum, pageable, loinId, sort)));
     }
 
     // 수정 화면 데이터 조회
@@ -136,13 +197,13 @@ public class CommentController {
     })
     @PatchMapping("/{commentId}")
     public ResponseEntity<ApiSuccessResponse<Void>> updateComment(
-            @PathVariable("movieCode") Long mvCode,
+            @PathVariable("code") Long code,
             @Valid @RequestBody CommentUpdateRequest dto,
             Authentication authentication
     ) {
         String loginId = authentication.getName();
         if (dto.content() != null) {
-            commentService.update(mvCode, loginId, dto);
+            commentService.update(code, loginId, dto);
         }
         return ResponseEntity.ok().body(ApiSuccessResponse.of(("코멘트 업데이트 성공")));
     }
@@ -166,12 +227,12 @@ public class CommentController {
     })
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteComment(
-            @PathVariable Long movieCode,
+            @PathVariable Long code,
             @RequestBody MovieIdRequest movieIdRequest,
             Authentication authentication) {
 
         String loginId = authentication.getName();
-        commentService.delete(movieCode, movieIdRequest.movieId(), loginId);
+        commentService.delete(code, movieIdRequest.movieId(), loginId);
         return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 삭제 완료"));
     }
 }

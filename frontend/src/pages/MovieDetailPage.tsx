@@ -181,6 +181,7 @@ function MovieDetailPage() {
         page,
         sortOrder,
         mediaConfig.type,
+        resolvedSeasonNum,
       )
 
       const nextComments = response.comments
@@ -195,7 +196,7 @@ function MovieDetailPage() {
       commentsPageRef.current = page
       hasMoreCommentsRef.current = nextComments.length === COMMENTS_PAGE_SIZE
     },
-    [mediaConfig.type, resolvedMovieCode],
+    [mediaConfig.type, resolvedMovieCode, resolvedSeasonNum],
   )
 
   useEffect(() => {
@@ -221,6 +222,8 @@ function MovieDetailPage() {
           setMessage('영화 정보를 불러오지 못했습니다.')
           return
         }
+
+        setResolvedMovieRecordId(normalizedDetail.id || '')
 
         setMovieDetail((previousMovieDetail) => ({
           ...previousMovieDetail,
@@ -599,6 +602,7 @@ function MovieDetailPage() {
         targetMovieId,
         targetCommentId,
         mediaConfig.type,
+        resolvedSeasonNum,
       )
 
       if (!detail) {
@@ -639,6 +643,7 @@ function MovieDetailPage() {
           movieId: targetMovieId,
         },
         mediaConfig.type,
+        resolvedSeasonNum,
       )
 
       setComments((previousComments) =>
@@ -685,6 +690,7 @@ function MovieDetailPage() {
             reactionType: selectedReactionType,
           },
           mediaConfig.type,
+          resolvedSeasonNum,
         )
 
         setCommentDraft('')
@@ -708,19 +714,23 @@ function MovieDetailPage() {
     setIsSubmittingComment(true)
 
     try {
-      if (!resolvedMovieRecordId) {
+      const targetMovieRecordId = resolvedMovieRecordId || movieDetail.id
+
+      if (!targetMovieRecordId) {
+        alert('코멘트 작성 대상 정보를 찾을 수 없습니다.')
         return
       }
 
       await createMovieComment(
         resolvedMovieCode,
         {
-          movieId: resolvedMovieRecordId,
+          movieId: targetMovieRecordId,
           nickname: session.nickname,
           content: trimmedCommentDraft,
           reactionType: selectedReactionType,
         },
         mediaConfig.type,
+        resolvedSeasonNum,
       )
 
       setCommentDraft('')

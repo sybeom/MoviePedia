@@ -13,7 +13,6 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    Boolean existsByMovieIdAndMemberId(Long  mvId, Long memberId);
 
     // 영화 이미 작성된 코멘트인지 판별
     Boolean existsByMediaTypeAndCodeAndMemberId(MediaType mediaType, Integer movieCode, Long memberId);
@@ -41,7 +40,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     """)
     Optional<Member> findByCommentId(@Param("commentId")Long id);
 
-    // 코멘트 목록
+    // 코멘트 목록 (영화)
     @Query("""
         select c
         from Comment c
@@ -49,7 +48,20 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         join fetch c.member member
         where movie.code = :movieCode
     """)
-    Slice<Comment> findByCommentsMovieId(@Param("movieCode") Integer mvCode, Pageable pageable);
+    Slice<Comment> findByCommentsMovieCode(@Param("movieCode") Integer mvCode, Pageable pageable);
+
+    // 코멘틑 목록 (TV 시즌)
+    @Query("""
+        select c
+        from Comment c
+        join c.tv t
+        join fetch c.member m
+        where t.seriesCode = :seriesCode
+    """)
+    Slice<Comment> findByCommentsSeriesCodeAndSeasonNum(
+            @Param("seriesCode") Integer seriesCode,
+            @Param("seasonNum") Integer seasonNum,
+            Pageable pageable);
 
     // 영화에 달린 코멘트 개수
     @Query("""
