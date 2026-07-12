@@ -182,10 +182,12 @@ export function deleteMovieComment(
   mediaType: MediaType = 'movie',
   seasonNum = '',
 ) {
+  void movieId
+  void seasonNum
   const searchParams = createCommentSearchParams(mediaType)
 
   return authRequest<DeleteCommentRequest>(
-    `${getCommentResourcePath(mediaType, movieId, seasonNum)}/${commentId}?${searchParams.toString()}`,
+    `/comments/${commentId}?${searchParams.toString()}`,
     {
       method: 'DELETE',
       body,

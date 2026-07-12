@@ -229,14 +229,12 @@ public class CommentController {
                     )
             )
     })
-    @DeleteMapping("/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<ApiSuccessResponse<Void>> deleteComment(
-            @PathVariable Long code,
-            @RequestBody MovieIdRequest movieIdRequest,
-            Authentication authentication) {
-
-        String loginId = authentication.getName();
-        commentService.delete(code, movieIdRequest.movieId(), loginId);
+            @PathVariable Long commentId,
+            @RequestParam MediaType mediaType) {
+        log.info("삭제 요청");
+        commentService.delete(commentId, mediaType);
         return ResponseEntity.ok().body(ApiSuccessResponse.of("코멘트 삭제 완료"));
     }
 }

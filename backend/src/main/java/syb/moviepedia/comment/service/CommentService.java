@@ -203,14 +203,21 @@ public class CommentService {
     }
 
     @Transactional
-    public void delete(Long mvCode, Long movieId, String loginId) {
-//
-//
-//        Comment comment = findMyCommentWithMovie(mvCode, movieId, loginId);
-//        commentRepository.delete(comment);
-//
-//        Movie movie = comment.getMovie();
-//        movie.decreaseCommentStats(); // 코멘트 수, 좋아요 수 상태 감소
+    public void delete(Long commentId, MediaType mediaType) {
+        Comment comment = commentRepository.findByIdAndMediaType(commentId, mediaType)
+                .orElseThrow(() -> new CommentNotFoundException("코멘트를 찾지 못했습니다."));
+
+        if (mediaType == MediaType.MOVIE) {
+            Movie movie = comment.getMovie();
+            movie.decreaseCommentStats(); // 코멘트 수, 좋아요 수 상태 감소
+        } else if (mediaType == MediaType.TV) {
+            TV tv = comment.getTv();
+            tv.decreaseCommentStats();
+        } else {
+            throw new IllegalArgumentException("잘못된 미디어 타입입니다.");
+        }
+
+        commentRepository.delete(comment);
     }
 
 

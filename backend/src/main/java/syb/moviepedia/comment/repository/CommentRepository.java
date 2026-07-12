@@ -85,5 +85,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             @Param("loginId") String loginId
     );
 
+    // 코멘트 수정
     Optional<Comment> findByIdAndMediaType(Long id, MediaType mediaType);
+
+    // 코멘트 삭제
+    Optional<Comment> deleteByIdAndMediaType(Long commentId, MediaType mediaType);
 }

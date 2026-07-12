@@ -63,4 +63,9 @@ public class TV {
         if (reactionType==ReactionType.LIKE)
             this.likeCount++;
     }
+
+    public void decreaseCommentStats() {
+        this.commentCount--;
+        this.likeCount--;
+    }
 }
