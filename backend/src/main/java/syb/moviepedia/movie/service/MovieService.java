@@ -32,31 +32,31 @@ import static syb.moviepedia.movie.domain.QMovie.movie;
 @Service
 public class MovieService {
     private final TmdbClient tmdbClient;
-    private final MovieRepository movieRepository;
-    private final MovieCategoryRepository movieCategoryRepository;
-    private final CountryRepository countryRepository;
-    private final CreditRepository creditRepository;
-    private final VideoRepository videoRepository;
-    private final GenreRepository genreRepository;
-    private final MovieGenreRepository movieGenreRepository;
+    private final MovieRepository mvRepo;
+    private final MovieCategoryRepository mvCategoryRepo;
+    private final CountryRepository countryRepo;
+    private final CreditRepository creditRepo;
+    private final VideoRepository videoRepo;
+    private final GenreRepository genreRepo;
+    private final MovieGenreRepository movieGenreRepo;
     private final JPAQueryFactory query;
 
     @Transactional(readOnly = true)
     public SliceImpl<AllMoviesResponse> getAllMovies(FilterRequest filter, SortType sortType, Pageable pageable) {
-        QMovie movie = QMovie.movie;
+        QMovie qMovie = QMovie.movie;
 
         OrderSpecifier<?> orderSpecifier = switch (sortType) {
-            case LATEST -> movie.releaseDate.desc();
-            case OLDEST -> movie.releaseDate.asc();
+            case LATEST -> qMovie.releaseDate.desc();
+            case OLDEST -> qMovie.releaseDate.asc();
         };
 
         int pageSize = pageable.getPageSize();
 
         List<Movie> movies = query
-                .select(movie)
-                .from(movie)
+                .select(qMovie)
+                .from(qMovie)
                 .where(
-                        genreExists(movie, filter.genre()),
+                        genreExists(qMovie, filter.genre()),
                         releasedCondition(filter.releaseStatus())
                 )
                 .orderBy(orderSpecifier)
@@ -87,7 +87,7 @@ public class MovieService {
     }
 
     // 장르 필터
-    private BooleanExpression genreExists(QMovie movie, List<Integer> genres) {
+    private BooleanExpression genreExists(QMovie qMovie, List<Integer> genres) {
         if (genres == null || genres.isEmpty()) {
             return null;
         }
@@ -97,7 +97,7 @@ public class MovieService {
                 .selectOne()
                 .from(mg)
                 .where(
-                        mg.movie.eq(movie), // 현재 검사할 영화가 해당 장르(필터)를 가지고 있는지 여부
+                        mg.movie.eq(qMovie), // 현재 검사할 영화가 해당 장르(필터)를 가지고 있는지 여부
                         mg.genre.code.in(genres)
                 )
                 .exists();
@@ -120,7 +120,7 @@ public class MovieService {
     @Transactional(readOnly = true)
     public List<MovieBannerResponse> getBannerMovies() {
         List<MovieCategory> mvCategoryList =
-                movieCategoryRepository.findByCategoryTypeOrderByPopularity(MediaCategoryType.POPULAR);
+                mvCategoryRepo.findByCategoryTypeOrderByPopularity(MediaCategoryType.POPULAR);
         return mvCategoryList.stream().map(mvCategory -> mvCategory.getMovie())
                 .map(movie -> MovieBannerResponse.builder()
                         .movieCode(movie.getCode())
@@ -133,15 +133,15 @@ public class MovieService {
 
     @Transactional(readOnly = true)
     public MovieCategoriesResponse getCategoryMovies() {
-        log.info("영화 엔티티 수: {}", movieRepository.count());
-        List<MovieCategory> popularList = movieCategoryRepository.findByCategoryTypeOrderByPopularity(MediaCategoryType.POPULAR);
-        List<MovieCategory> upcomingList = movieCategoryRepository.findByCategoryTypeOrderByPopularity(MediaCategoryType.UPCOMING);
-        List<MovieCategory> nowPlayingList = movieCategoryRepository.findByCategoryTypeOrderByPopularity(MediaCategoryType.NOW_PLAYING);
+        log.info("영화 엔티티 수: {}", mvRepo.count());
+        List<MovieCategory> popularList = mvCategoryRepo.findByCategoryTypeOrderByPopularity(MediaCategoryType.POPULAR);
+        List<MovieCategory> upcomingList = mvCategoryRepo.findByCategoryTypeOrderByPopularity(MediaCategoryType.UPCOMING);
+        List<MovieCategory> nowPlayingList = mvCategoryRepo.findByCategoryTypeOrderByPopularity(MediaCategoryType.NOW_PLAYING);
 
         // DTO로 가공
-        List<MovieSummaryResponse> popularListDto = popularList.stream().map(response -> toMovieSummaryDto(response)).toList();
-        List<MovieSummaryResponse> upcomingListDto = upcomingList.stream().map(response -> toMovieSummaryDto(response)).toList();
-        List<MovieSummaryResponse> nowPlayingListDto = nowPlayingList.stream().map(response -> toMovieSummaryDto(response)).toList();
+        List<MovieSummaryResponse> popularListDto = popularList.stream().map(res -> toMovieSummaryDto(res)).toList();
+        List<MovieSummaryResponse> upcomingListDto = upcomingList.stream().map(res -> toMovieSummaryDto(res)).toList();
+        List<MovieSummaryResponse> nowPlayingListDto = nowPlayingList.stream().map(res -> toMovieSummaryDto(res)).toList();
 
         log.info("Popular movies found: {}", popularList);
         return MovieCategoriesResponse.builder()
@@ -156,7 +156,7 @@ public class MovieService {
     public List<GenreResponse> getGenres(MediaType mediaType) {
         log.info("장르 목록 조회 성공");
 
-        return genreRepository.findAllByMediaType(mediaType).stream().map(genre ->
+        return genreRepo.findAllByMediaType(mediaType).stream().map(genre ->
                 GenreResponse.builder()
                         .genreCode(genre.getCode())
                         .name(genre.getName()).build())
@@ -171,15 +171,15 @@ public class MovieService {
     @Transactional
     public MovieDetailResponse getMovieDetail(Integer mvCode) {
         // 영화 상세. 영화가 DB에 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
-        Movie movie = movieRepository.findByCode(mvCode).orElseGet(() -> {
+        Movie movie = mvRepo.findByCode(mvCode).orElseGet(() -> {
             log.info("DB 영화 존재 X, DB 저장");
 
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
             String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
-            List<String> countries = countryRepository.findNameByCodeIn(detail.country());
+            List<String> countries = countryRepo.findNameByCodeIn(detail.country());
 
             // 영화 저장
-            Movie savedMovie = movieRepository.save(
+            Movie savedMovie = mvRepo.save(
                     toMovieFromTmdbDetail(detail, certification, countries)
             );
 
@@ -193,7 +193,7 @@ public class MovieService {
             tmdbClient.getMovieDetail(mvCode);
 
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
-            List<String> countries = countryRepository.findNameByCodeIn(detail.country());
+            List<String> countries = countryRepo.findNameByCodeIn(detail.country());
 
             movie.setDetail(detail.runtime(), countries);
         }
@@ -208,7 +208,7 @@ public class MovieService {
         }
 
         // 장르
-        List<String> genreNames = movieGenreRepository.findGenresByMovieId(movie.getId())
+        List<String> genreNames = movieGenreRepo.findGenresByMovieId(movie.getId())
                 .stream()
                 .map(Genre::getName)
                 .toList();
@@ -224,7 +224,7 @@ public class MovieService {
         // 장르 추출
         List<MovieGenre> movieGenres = detail.genres().stream()
                 .map(tmdbGenre -> {
-                    Genre genre = genreRepository.findByCode(tmdbGenre.id())
+                    Genre genre = genreRepo.findByCode(tmdbGenre.id())
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "존재하지 않는 장르입니다. tmdbGenreId=" + tmdbGenre.id()
                             ));
@@ -236,13 +236,13 @@ public class MovieService {
                 })
                 .toList();
 
-        movieGenreRepository.saveAll(movieGenres);
+        movieGenreRepo.saveAll(movieGenres);
     }
 
     // 출연 배우
     @Transactional
     public List<Credit> getCredit(Movie movie) {
-        List<Credit> credits = creditRepository.findByCodeAndMediaType(movie.getCode(), MediaType.MOVIE);
+        List<Credit> credits = creditRepo.findByCodeAndMediaType(movie.getCode(), MediaType.MOVIE);
 
         if (!credits.isEmpty()) {
             log.info("getCast(): 크레딧 정보 존재. 그대로 반환");
@@ -284,26 +284,26 @@ public class MovieService {
 
         log.info("getCast(): 영화 캐스트 api 호출");
         // 없으면 출연 정보 api 호출 후 MovieCast 저장
-        return creditRepository.saveAll(credits);
+        return creditRepo.saveAll(credits);
     }
 
     @Transactional
     public List<VideoResponse> getVideos(Integer movieCode) {
 
         // 없으면 api 호출 후 DB 저장후 반환
-        if(!videoRepository.existsByMediaTypeAndCode(MediaType.MOVIE, movieCode)) {
+        if(!videoRepo.existsByMediaTypeAndCode(MediaType.MOVIE, movieCode)) {
             log.info("비디오 api 호출후 반환");
-            TmdbVideoResponse response = tmdbClient.getVideos(movieCode, "ko-KR");
+            TmdbVideoResponse res = tmdbClient.getVideos(movieCode, "ko-KR");
 
-            if (response.results().isEmpty()) { // 한국판 트레일러가 없다면 영어판 불러오기
-                response = tmdbClient.getVideos(movieCode, "en-US");
+            if (res.results().isEmpty()) { // 한국판 트레일러가 없다면 영어판 불러오기
+                res = tmdbClient.getVideos(movieCode, "en-US");
             }
 
-            saveVideo(response, movieCode);
+            saveVideo(res, movieCode);
         }
 
         // db에 해당 영화의 Video가 이미 존재하면 그대로 반환
-        List<Video> videos = videoRepository.findByVideo(MediaType.MOVIE, movieCode, null);
+        List<Video> videos = videoRepo.findByVideo(MediaType.MOVIE, movieCode, null);
         return toVideoResponse(videos);
     }
 
@@ -323,7 +323,7 @@ public class MovieService {
                                 .publishedAt(result.publishedAt())
                                 .build())
                 .toList();
-        videoRepository.saveAll(videoList);
+        videoRepo.saveAll(videoList);
     }
 
     // 응답  가공
@@ -364,7 +364,7 @@ public class MovieService {
     // 영화 추가 정보(국가, 런타임 등) 업데이트
     private void updateMovie(Movie movie, TmdbMovieDetail detail) {
         // 상세 api 호출 (국가정보, 런타임)
-        List<String> countries = countryRepository.findNameByCodeIn(detail.country()); // 국가 코드 한국어 매핑
+        List<String> countries = countryRepo.findNameByCodeIn(detail.country()); // 국가 코드 한국어 매핑
         Integer runtime = detail.runtime();
 
         movie.updateCountryAndRuntime(countries, runtime);

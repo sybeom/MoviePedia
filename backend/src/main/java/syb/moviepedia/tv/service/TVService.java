@@ -54,9 +54,6 @@ public class TVService {
 
     private final TmdbTVClient tmdbTVClient;
 
-    // TODO: 상세화면 만들기
-    // TODO: 영화쪽 TMDB 클래스 한데 묶기
-    // TODO: 영화 애니메이션 화수 주기적으로 체크해보기. 화수가 진행되면서 에피소드 카운트가 늘어나는지 확인
     @Transactional
     public List<TVPopularResponse> getPopularTVList() {
         return tvCategoryRepo.findAll().stream().map(category ->
