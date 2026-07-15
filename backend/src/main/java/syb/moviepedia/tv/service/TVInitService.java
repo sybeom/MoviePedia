@@ -13,6 +13,7 @@ import syb.moviepedia.tv.domain.TVCategory;
 import syb.moviepedia.tv.domain.TVSeries;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbContentRating;
+import syb.moviepedia.tv.external.dto.TmdbTVCategory;
 import syb.moviepedia.tv.external.dto.TmdbTVDiscover;
 import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
@@ -21,7 +22,11 @@ import syb.moviepedia.tv.repsitory.TVSeriesGenreRepository;
 import syb.moviepedia.tv.repsitory.TVSeriesRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -52,29 +57,44 @@ public class TVInitService {
     }
 
     public void initCategories() {
-//        Set<Integer> seriesCodes = tmdbTVClient.fetchTVPopularCategories().results().stream()
-//                .filter(result -> isTitleMatch(result.title()))
-//                .map(result -> result.code())
-//                .collect(Collectors.toSet());
-
-//        List<TV> tvList = tvRepo.findByPopularSeason(seriesCodes);
-
-//        List<TVCategory> categories = tvList.stream().map(tv -> TVCategory.builder()
-//                        .code(tv.getCode())
-//                        .title(tv.getTitle())
-//                        .backdropPath("E")
-//                        .mediaCategoryType(MediaCategoryType.POPULAR)
-//                        .tv(tv)
-//                        .build())
-//                .toList();
-        List<TVCategory> categories = tmdbTVClient.fetchTVPopularCategories().results().stream()
+        tvCategoryRepo.deleteAll();
+        List<TmdbTVCategory.TmdbTVCategoryResult> results = tmdbTVClient.fetchTVPopularCategories().results().stream()
                 .filter(result -> isTitleMatch(result.title()))
-                .map(result -> TVCategory.builder()
-                        .code(result.code())
-                        .title(result.title())
-                        .backdropPath(result.backdropPath())
-                        .mediaCategoryType(MediaCategoryType.POPULAR)
-                        .build())
+                .filter(result -> result.code() != 312949)
+                .toList();
+
+        Set<Integer> seriesCodes = results.stream()
+                .map(TmdbTVCategory.TmdbTVCategoryResult::code)
+                .collect(Collectors.toSet());
+
+        List<TV> tvList = tvRepo.findByPopularSeason(seriesCodes);
+
+        // TV의 code를 기준으로 빠르게 찾기 위한 Map
+        Map<Integer, Integer> seasonNumberByCode = tvList.stream()
+                .collect(Collectors.toMap(
+                        TV::getSeriesCode,
+                        TV::getSeasonNum
+                ));
+
+        List<TVCategory> categories = results.stream()
+                .map(result -> {
+                    Integer seasonNumber =
+                            seasonNumberByCode.get(result.code());
+
+                    if (seasonNumber == null) {
+                        throw new IllegalStateException(
+                                "TV를 찾을 수 없습니다. code: " + result.code()
+                        );
+                    }
+
+                    return TVCategory.builder()
+                            .seriesCode(result.code())
+                            .seasonNumber(seasonNumber)
+                            .title(result.title())
+                            .backdropPath(result.backdropPath())
+                            .mediaCategoryType(MediaCategoryType.POPULAR)
+                            .build();
+                })
                 .toList();
 
         tvCategoryRepo.saveAll(categories);

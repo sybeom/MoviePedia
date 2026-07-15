@@ -810,6 +810,7 @@ function MovieDetailPage() {
               <MovieDetailHero
               movieDetail={movieDetail}
               mediaType={mediaConfig.type}
+              seasonNum={resolvedSeasonNum}
               isLoading={isLoading}
               message={visibleMessage}
               onBack={() => {

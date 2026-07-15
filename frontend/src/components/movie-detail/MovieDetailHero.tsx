@@ -10,6 +10,7 @@ import { getDisplayScorePercent } from '../../utils/movieDetail'
 type MovieDetailHeroProps = {
   movieDetail: MovieDetailView
   mediaType: 'movie' | 'series'
+  seasonNum?: string
   isLoading: boolean
   message: string
   onBack: () => void
@@ -43,9 +44,18 @@ function MetaFragments({ parts }: { parts: string[] }) {
   )
 }
 
-function MovieDetailHero({ movieDetail, mediaType, isLoading, message, onBack }: MovieDetailHeroProps) {
+function MovieDetailHero({
+  movieDetail,
+  mediaType,
+  seasonNum = '',
+  isLoading,
+  message,
+  onBack,
+}: MovieDetailHeroProps) {
   const heroImage = movieDetail.poster
   const certificationIcon = getCertificationIcon(movieDetail.certification)
+  const detailTitle =
+    mediaType === 'series' && seasonNum ? `${movieDetail.title} 시즌 ${seasonNum}` : movieDetail.title
   const runtimeLabel =
     mediaType === 'series'
       ? movieDetail.episodeCnt
@@ -65,7 +75,7 @@ function MovieDetailHero({ movieDetail, mediaType, isLoading, message, onBack }:
     <section className="movie-detail-hero" aria-labelledby="movie-detail-title">
       <div className="movie-detail-backdrop-shell">
         {heroImage ? (
-          <img className="movie-detail-backdrop" src={heroImage} alt={movieDetail.title} />
+          <img className="movie-detail-backdrop" src={heroImage} alt={detailTitle} />
         ) : null}
       </div>
 
@@ -78,7 +88,7 @@ function MovieDetailHero({ movieDetail, mediaType, isLoading, message, onBack }:
 
         <div className="movie-detail-hero-copy">
           <div className="movie-detail-title-row">
-            <h1 id="movie-detail-title">{movieDetail.title}</h1>
+            <h1 id="movie-detail-title">{detailTitle}</h1>
           </div>
 
           <div className="movie-detail-meta-lines" aria-label="영화 상세 정보">

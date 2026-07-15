@@ -58,7 +58,8 @@ public class TVService {
     public List<TVPopularResponse> getPopularTVList() {
         return tvCategoryRepo.findAll().stream().map(category ->
                 TVPopularResponse.builder()
-                        .code(category.getCode())
+                        .code(category.getSeriesCode())
+                        .seasonNum(category.getSeasonNumber())
                         .title(category.getTitle())
                         .backdrop_path(category.getBackdropPath())
                         .build()).toList();

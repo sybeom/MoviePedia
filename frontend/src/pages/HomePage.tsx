@@ -42,6 +42,7 @@ type PopularMovie = {
 type BannerMovie = {
   code: string
   title: string
+  seasonNum?: string
   backdrop: string
 }
 
@@ -567,6 +568,7 @@ function normalizeBannerMovies(data: unknown): BannerMovie[] {
         'seriesCode',
       ])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
+      const seasonNum = getScalarStringValue(value, ['seasonNum', 'season', 'seasonNumber'])
       const backdrop = getImageSource(
         getStringValue(value, [
           'backdrop',
@@ -579,7 +581,7 @@ function normalizeBannerMovies(data: unknown): BannerMovie[] {
         ]),
       )
 
-      return { code, title, backdrop }
+      return { code, title, seasonNum, backdrop }
     })
     .filter((value) => value.code && value.title)
 }

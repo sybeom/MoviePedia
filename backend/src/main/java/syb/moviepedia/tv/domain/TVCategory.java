@@ -12,31 +12,32 @@ import syb.moviepedia.media.BaseMediaCategoryEntity;
 @Entity
 @NoArgsConstructor
 public class TVCategory extends BaseMediaCategoryEntity {
-    private Integer code;
+    @Column(name = "series_code")
+    private Integer seriesCode;
+
+    @Column(name = "season_number", nullable = false)
+    private Integer seasonNumber;
 
     private String title;
 
+
     @Column(name = "backdrop_path")
     private String backdropPath;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tv_id")
-    private TV tv;
 
 
 
     @Builder
     public TVCategory(
-            Integer code,
+            Integer seriesCode,
+            Integer seasonNumber,
             String title,
             String backdropPath,
-            MediaCategoryType mediaCategoryType,
-            TV tv
+            MediaCategoryType mediaCategoryType
     ) {
         super(mediaCategoryType);
-        this.code = code;
+        this.seriesCode = seriesCode;
+        this.seasonNumber = seasonNumber;
         this.title = title;
         this.backdropPath = backdropPath;
-        this.tv = tv;
     }
 }

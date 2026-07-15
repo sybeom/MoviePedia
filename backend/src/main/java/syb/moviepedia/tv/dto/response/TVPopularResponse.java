@@ -8,6 +8,7 @@ import lombok.Builder;
 @Builder
 public record TVPopularResponse(
         Integer code,
+        Integer seasonNum,
         String title,
         String backdrop_path
 ) {
