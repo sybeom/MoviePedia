@@ -416,9 +416,15 @@ function MovieBrowsePage() {
       setIsGenresLoading(true)
 
       try {
-        const response = await request<unknown>(`${mediaConfig.resourcePath}/genres`, {
-          method: 'GET',
+        const searchParams = new URLSearchParams({
+          mediaType: mediaConfig.type === 'series' ? 'TV' : 'MOVIE',
         })
+        const response = await request<unknown>(
+          `${mediaConfig.resourcePath}/genres?${searchParams.toString()}`,
+          {
+            method: 'GET',
+          },
+        )
 
         if (!isMounted) {
           return
@@ -443,7 +449,7 @@ function MovieBrowsePage() {
     return () => {
       isMounted = false
     }
-  }, [mediaConfig.resourcePath])
+  }, [mediaConfig.resourcePath, mediaConfig.type])
 
   const loadMoviesPage = useCallback(
     async (
