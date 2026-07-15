@@ -11,7 +11,7 @@
       }
     },
     "tokenizer": {
-      "movie_ngram_tokenizer": {
+      "media_ngram_tokenizer": {
         "type": "ngram",
         "min_gram": 2,
         "max_gram": 20,
@@ -25,7 +25,7 @@
       "ngram_index_analyzer": {
         "type": "custom",
         "char_filter": [],
-        "tokenizer": "movie_ngram_tokenizer",
+        "tokenizer": "media_ngram_tokenizer",
         "filter": [
           "lowercase", "nori_part_of_speech"
         ]
@@ -43,7 +43,7 @@
         "char_filter": [
           "remove_spaces_and_symbols"
         ],
-        "tokenizer": "movie_ngram_tokenizer",
+        "tokenizer": "media_ngram_tokenizer",
         "filter": [
           "lowercase", "nori_part_of_speech"
         ]

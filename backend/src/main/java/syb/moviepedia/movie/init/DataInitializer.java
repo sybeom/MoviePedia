@@ -34,5 +34,6 @@ public class DataInitializer implements CommandLineRunner {
 //        tvInitService.initTVGenres();
 //        tvInitService.init();
 //        tvInitService.initSeries();
+        tvInitService.saveElasticTV();
     }
 }

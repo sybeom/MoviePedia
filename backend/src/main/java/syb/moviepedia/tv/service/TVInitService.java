@@ -2,7 +2,10 @@ package syb.moviepedia.tv.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.IndexQuery;
+import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaCategoryType;
@@ -10,6 +13,7 @@ import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVCategory;
+import syb.moviepedia.tv.domain.TVSeasonDocument;
 import syb.moviepedia.tv.domain.TVSeries;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbContentRating;
@@ -25,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,7 +43,50 @@ public class TVInitService {
     private final TmdbTVClient tmdbTVClient;
     private final CountryRepository countryRepo;
     private final GenreRepository genreRepo;
+    private final ElasticsearchOperations esOperations;
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
+    private static final String INDEX_NAME = "tv_season_search";
+
+    // 엘라스틱서치에 저장
+    @Transactional
+    public void saveElasticTV() {
+
+        Long lastId = 0L;
+        int totalIndexedCount = 0;
+
+        while (true) {
+            // 1000개씩 조회
+            List<TV> tvs = tvRepo.findTop1000ByIdGreaterThanOrderByIdAsc(lastId);
+
+            if (tvs.isEmpty()) {
+                break;
+            }
+
+            List<IndexQuery> queries = tvs.stream()
+                    .map(tv -> {
+                        TVSeasonDocument doc = TVSeasonDocument.from(tv);
+
+                        // 문서 하나를 저장하기 위한 IndexQuery 객체를 만들어주는 빌더
+                        // 문서를 ES에 저장하기 위한 요청 객체 (즉 저장 요청 정보)
+                        return new IndexQueryBuilder()
+                                .withId(doc.getId())
+                                .withObject(doc)
+                                .build();
+                    })
+                    .toList();
+
+            esOperations.bulkIndex(queries, IndexCoordinates.of(INDEX_NAME));
+
+            totalIndexedCount += tvs.size();
+
+            lastId = tvs.get(tvs.size() - 1).getId();
+
+            log.info("Elasticsearch 영화 색인 진행 중 - lastId={}, indexedCount={}",
+                    lastId,
+                    totalIndexedCount
+            );
+        }
+    }
 
     public void initSeries() {
         List<TVSeries> seriesList = tvSeriesRepo.findAll();

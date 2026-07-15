@@ -1,7 +1,10 @@
-package syb.moviepedia.movie.domain;
+package syb.moviepedia.tv.domain;
 
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
@@ -11,8 +14,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Setting(settingPath = "elasticsearch/media-settings.json")
-@Document(indexName = "movie_search")
-public class MovieDocument {
+@Document(indexName = "tv_season_search")
+public class TVSeasonDocument {
     @Id
     private String id;
 
@@ -49,13 +52,13 @@ public class MovieDocument {
     @Field(type = FieldType.Keyword)
     private String releaseYear;
 
-    public static MovieDocument from(Movie movie) {
-        String releaseYear = extractYear(movie.getReleaseDate());
+    public static TVSeasonDocument from(TV tv) {
+        String releaseYear = extractYear(tv.getReleaseDate());
 
-        return MovieDocument.builder()
-                .id(String.valueOf(movie.getCode()))
-                .title(movie.getTitle())
-                .displayTitle(createDisplayTitle(movie.getTitle(), releaseYear))
+        return TVSeasonDocument.builder()
+                .id(String.valueOf(tv.getSeriesCode()))
+                .title(tv.getSeries().getTitle())
+                .displayTitle(createDisplayTitle(tv.getSeries().getTitle(), tv.getSeasonNum(), releaseYear))
                 .releaseYear(releaseYear)
                 .build();
     }
@@ -71,7 +74,7 @@ public class MovieDocument {
 
     // 같은 제목의 영화가 있으므로 연도로 구분.
     // 형식: 영화 (연도)
-    private static String createDisplayTitle(String title, String releaseYear) {
+    private static String createDisplayTitle(String title,Integer seasonNum, String releaseYear) {
         if (title == null || title.isBlank()) {
             return "";
         }
@@ -80,6 +83,6 @@ public class MovieDocument {
             return title;
         }
 
-        return title + " (" + releaseYear + ")";
+        return title + " 시즌" + seasonNum + " (" + releaseYear + ")";
     }
 }

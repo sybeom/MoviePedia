@@ -3,6 +3,7 @@ package syb.moviepedia.tv.repsitory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import syb.moviepedia.movie.domain.Movie;
 import syb.moviepedia.tv.domain.TV;
 
 import java.util.List;
@@ -30,4 +31,8 @@ public interface TVRepository extends JpaRepository<TV, Integer> {
         where t.series.code=:seriesCode and t.seasonNum=:seasonNum
     """)
     Optional<TV> findBySeriesCodeAndSeasonNum(@Param("seriesCode") Integer seriesCode, @Param("seasonNum") Integer seasonNum);
+
+
+    // id가 마지막 조회 id보다 큰 영화 중에서 id 오름차순으로 최대 1000개 조회
+    List<TV> findTop1000ByIdGreaterThanOrderByIdAsc(Long id);
 }
