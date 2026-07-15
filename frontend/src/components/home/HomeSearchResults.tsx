@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 type SearchMovie = {
   code: string
   title: string
+  seasonNum?: string
 }
 
 type HomeSearchResultsProps = {
@@ -12,7 +13,7 @@ type HomeSearchResultsProps = {
   isOpen: boolean
   activeIndex: number
   ariaLabel?: string
-  buildDetailPath?: (code: string) => string
+  buildDetailPath?: (code: string, seasonNum?: string) => string
 }
 
 function HomeSearchResults({
@@ -22,7 +23,7 @@ function HomeSearchResults({
   isOpen,
   activeIndex,
   ariaLabel = '검색 목록',
-  buildDetailPath = (code) => `/movies/${code}`,
+  buildDetailPath = (code, seasonNum) => (seasonNum ? `/series/${code}/${seasonNum}` : `/movies/${code}`),
 }: HomeSearchResultsProps) {
   const trimmedQuery = query.trim()
 
@@ -41,10 +42,12 @@ function HomeSearchResults({
               activeIndex === index ? ' home-search-result-item-active' : ''
             }`}
             key={`${movie.code}-${index}`}
-            to={buildDetailPath(movie.code)}
+            to={buildDetailPath(movie.code, movie.seasonNum)}
             role="option"
             aria-selected={activeIndex === index}
-            state={{ movie: { id: movie.code, title: movie.title, poster: '' } }}
+            state={{
+              movie: { id: movie.code, title: movie.title, poster: '', seasonNum: movie.seasonNum ?? '' },
+            }}
           >
             <p className="home-search-result-title">{movie.title}</p>
           </Link>

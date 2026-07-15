@@ -52,11 +52,19 @@ public class TVSeasonDocument {
     @Field(type = FieldType.Keyword)
     private String releaseYear;
 
+    @Field(type = FieldType.Keyword)
+    private String seriesCode;
+
+    @Field(type = FieldType.Keyword)
+    private String seasonNumber;
+
+
     public static TVSeasonDocument from(TV tv) {
         String releaseYear = extractYear(tv.getReleaseDate());
 
         return TVSeasonDocument.builder()
-                .id(String.valueOf(tv.getSeriesCode()))
+                .seriesCode(String.valueOf(tv.getSeriesCode()))
+                .seasonNumber(String.valueOf(tv.getSeasonNum()))
                 .title(tv.getSeries().getTitle())
                 .displayTitle(createDisplayTitle(tv.getSeries().getTitle(), tv.getSeasonNum(), releaseYear))
                 .releaseYear(releaseYear)

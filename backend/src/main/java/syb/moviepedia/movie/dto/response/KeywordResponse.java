@@ -5,6 +5,7 @@ import lombok.Builder;
 @Builder
 public record KeywordResponse(
         String code,
-        String title
+        String title,
+        String seasonNum
 ) {
 }

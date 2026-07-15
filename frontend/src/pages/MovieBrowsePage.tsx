@@ -34,6 +34,12 @@ const BROWSE_PAGE_SIZE = 30
 const BROWSE_SCROLL_STORAGE_KEY_PREFIX = 'moviepedia.browse.scroll:'
 const BROWSE_LIST_STORAGE_KEY_PREFIX = 'moviepedia.browse.list:'
 
+function getSearchRequestPath(resourcePath: string, mediaType: 'movie' | 'series', keyword: string) {
+  const searchBasePath = mediaType === 'series' ? '/tv/search' : `${resourcePath}/search`
+
+  return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
+}
+
 function getReleaseFilterLabel(mediaType: 'movie' | 'series', filter: MediaReleaseFilter) {
   if (mediaType === 'series') {
     if (filter === '개봉') {
@@ -547,7 +553,7 @@ function MovieBrowsePage() {
 
       try {
         const response = await request<unknown>(
-          `${mediaConfig.resourcePath}/search?keyword=${encodeURIComponent(trimmedQuery)}`,
+          getSearchRequestPath(mediaConfig.resourcePath, mediaConfig.type, trimmedQuery),
           { method: 'GET' },
         )
 
@@ -571,7 +577,7 @@ function MovieBrowsePage() {
       isMounted = false
       window.clearTimeout(debounceTimer)
     }
-  }, [mediaConfig.resourcePath, query])
+  }, [mediaConfig.resourcePath, mediaConfig.type, query])
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -702,7 +708,7 @@ function MovieBrowsePage() {
 
     try {
       const response = await request<unknown>(
-        `${mediaConfig.resourcePath}/search?keyword=${encodeURIComponent(trimmedQuery)}`,
+        getSearchRequestPath(mediaConfig.resourcePath, mediaConfig.type, trimmedQuery),
         { method: 'GET' },
       )
 

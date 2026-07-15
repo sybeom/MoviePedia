@@ -69,7 +69,6 @@ public class TVInitService {
                         // 문서 하나를 저장하기 위한 IndexQuery 객체를 만들어주는 빌더
                         // 문서를 ES에 저장하기 위한 요청 객체 (즉 저장 요청 정보)
                         return new IndexQueryBuilder()
-                                .withId(doc.getId())
                                 .withObject(doc)
                                 .build();
                     })

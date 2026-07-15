@@ -70,6 +70,12 @@ const HOME_THEME_STORAGE_KEY = 'moviepedia.home.theme'
 const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
 const BANNER_AUTOPLAY_MS = 5000
 const BANNER_TRANSITION_MS = 520
+
+function getSearchRequestPath(resourcePath: string, mediaType: 'movie' | 'series', keyword: string) {
+  const searchBasePath = mediaType === 'series' ? '/tv/search' : `${resourcePath}/search`
+
+  return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
+}
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/original'
 const HOME_SORT_FILTERS: MovieSortFilter[] = ['최신순', '오래된순']
 const HOME_RELEASE_FILTERS: MovieReleaseFilter[] = ['전체', '개봉', '미개봉']
@@ -511,8 +517,9 @@ function normalizeSearchMovies(data: unknown): SearchMovie[] {
     .map((value) => {
       const code = getScalarStringValue(value, ['code', 'movieCode', 'movieCd'])
       const title = getStringValue(value, ['title', 'movieNm', 'name'])
+      const seasonNum = getScalarStringValue(value, ['seasonNum', 'season', 'seasonNumber'])
 
-      return { code, title }
+      return { code, title, seasonNum }
     })
     .filter((value) => value.code && value.title)
 }
@@ -1035,10 +1042,11 @@ function HomePage() {
       setIsSearchLoading(true)
 
       try {
-        const response = await request<unknown>(
-          `${mediaConfig.resourcePath}/search?keyword=${encodeURIComponent(trimmedQuery)}`,
-          { method: 'GET' },
-        )
+        const response = await request<unknown>(getSearchRequestPath(
+          mediaConfig.resourcePath,
+          mediaConfig.type,
+          trimmedQuery,
+        ), { method: 'GET' })
 
         if (!isMounted) {
           return
@@ -1065,7 +1073,7 @@ function HomePage() {
       isMounted = false
       window.clearTimeout(debounceTimer)
     }
-  }, [mediaConfig.resourcePath, query])
+  }, [mediaConfig.resourcePath, mediaConfig.type, query])
 
   useEffect(() => {
     function handleDocumentMouseDown(event: MouseEvent) {
@@ -1184,10 +1192,11 @@ function HomePage() {
     setIsSearchLoading(true)
 
     try {
-      const response = await request<unknown>(
-        `${mediaConfig.resourcePath}/search?keyword=${encodeURIComponent(trimmedQuery)}`,
-        { method: 'GET' },
-      )
+      const response = await request<unknown>(getSearchRequestPath(
+        mediaConfig.resourcePath,
+        mediaConfig.type,
+        trimmedQuery,
+      ), { method: 'GET' })
 
       const normalizedMovies = normalizeSearchMovies(response)
       setSearchMovies(normalizedMovies)
