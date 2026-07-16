@@ -35,7 +35,8 @@ const BROWSE_SCROLL_STORAGE_KEY_PREFIX = 'moviepedia.browse.scroll:'
 const BROWSE_LIST_STORAGE_KEY_PREFIX = 'moviepedia.browse.list:'
 
 function getSearchRequestPath(resourcePath: string, mediaType: 'movie' | 'series', keyword: string) {
-  const searchBasePath = mediaType === 'series' ? '/tv/search' : `${resourcePath}/search`
+  const searchBasePath =
+    mediaType === 'series' ? '/tv/search/titles' : `${resourcePath}/search/titles`
 
   return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
 }

@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.movie.dto.response.KeywordResponse;
-import syb.moviepedia.movie.service.MovieSearchService;
 import syb.moviepedia.tv.service.TVSeasonSearchService;
 
 import java.util.List;
@@ -37,7 +36,7 @@ public class TVSeasonSearchController {
             )
 
     })
-    @GetMapping
+    @GetMapping("/titles")
     public ResponseEntity<ApiSuccessResponse<List<KeywordResponse>>> getMovieKeywords(@RequestParam String keyword) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 검색 목록", tvSearchService.getKeywords(keyword)));
     }

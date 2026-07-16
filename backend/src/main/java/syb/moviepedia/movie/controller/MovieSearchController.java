@@ -38,7 +38,7 @@ public class MovieSearchController {
             )
 
     })
-    @GetMapping
+    @GetMapping("/titles")
     public ResponseEntity<ApiSuccessResponse<List<KeywordResponse>>> getMovieKeywords(@RequestParam String keyword) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 검색 목록", movieSearchService.getKeywords(keyword)));
     }

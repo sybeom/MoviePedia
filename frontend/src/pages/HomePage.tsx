@@ -72,7 +72,8 @@ const BANNER_AUTOPLAY_MS = 5000
 const BANNER_TRANSITION_MS = 520
 
 function getSearchRequestPath(resourcePath: string, mediaType: 'movie' | 'series', keyword: string) {
-  const searchBasePath = mediaType === 'series' ? '/tv/search' : `${resourcePath}/search`
+  const searchBasePath =
+    mediaType === 'series' ? '/tv/search/titles' : `${resourcePath}/search/titles`
 
   return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
 }

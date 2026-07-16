@@ -1,7 +1,10 @@
 package syb.moviepedia.movie.domain;
 
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
