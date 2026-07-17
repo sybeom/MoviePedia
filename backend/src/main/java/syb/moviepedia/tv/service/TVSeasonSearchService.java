@@ -53,6 +53,10 @@ public class TVSeasonSearchService {
         // 키워드에 대한 TV 목록 도큐먼트 조회
         List<TVSeasonDocument> tvDocs = tvSearchRepo.findByTitle(keyword);
 
+        if (tvDocs.isEmpty()) {
+            return List.of();
+        }
+
         // 시즌 코드와 시즌 번호 별도 추출 후 저장
         List<TVSeriesAndSeason> ssList = tvDocs.stream().map(doc ->
                 new TVSeriesAndSeason(Integer.parseInt(doc.getSeriesCode()), Integer.parseInt(doc.getSeasonNumber()))
