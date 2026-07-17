@@ -21,7 +21,9 @@ import {
   getCertificationIcon,
   getGenreQueryValues,
   getReleaseQueryValue,
+  getSearchResultListValue,
   getSortQueryValue,
+  normalizeMediaCards,
   normalizeGenreOptions,
   normalizeMediaListPage,
   normalizeSearchMediaItems,
@@ -34,9 +36,23 @@ const BROWSE_PAGE_SIZE = 30
 const BROWSE_SCROLL_STORAGE_KEY_PREFIX = 'moviepedia.browse.scroll:'
 const BROWSE_LIST_STORAGE_KEY_PREFIX = 'moviepedia.browse.list:'
 
-function getSearchRequestPath(resourcePath: string, mediaType: 'movie' | 'series', keyword: string) {
+function getSearchTitlesRequestPath(
+  resourcePath: string,
+  mediaType: 'movie' | 'series',
+  keyword: string,
+) {
   const searchBasePath =
     mediaType === 'series' ? '/tv/search/titles' : `${resourcePath}/search/titles`
+
+  return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
+}
+
+function getSearchSubmitRequestPath(
+  resourcePath: string,
+  mediaType: 'movie' | 'series',
+  keyword: string,
+) {
+  const searchBasePath = mediaType === 'series' ? '/tv/search' : `${resourcePath}/search`
 
   return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
 }
@@ -276,12 +292,16 @@ function MovieBrowsePage() {
   const [query, setQuery] = useState('')
   const [isSearchLoading, setIsSearchLoading] = useState(false)
   const [searchMovies, setSearchMovies] = useState<SearchMediaItem[]>([])
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState('')
+  const [submittedSearchMovies, setSubmittedSearchMovies] = useState<MediaCard[] | null>(null)
   const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
   const [movies, setMovies] = useState<MediaCard[]>(() => initialListSnapshot?.movies ?? [])
   const [isGenresLoading, setIsGenresLoading] = useState(true)
   const [isMoviesLoading, setIsMoviesLoading] = useState(() => initialListSnapshot === null)
   const [isLoadingMoreMovies, setIsLoadingMoreMovies] = useState(false)
+  const isShowingSubmittedSearchResults = submittedSearchMovies !== null
+  const visibleMovies = submittedSearchMovies ?? movies
 
   const toggleGenreFilter = useCallback((genreValue: string) => {
     setSelectedGenreFilters((previousFilters) => {
@@ -554,13 +574,21 @@ function MovieBrowsePage() {
       return
     }
 
+    if (
+      submittedSearchMovies !== null &&
+      submittedSearchQuery.trim() &&
+      submittedSearchQuery.trim() === trimmedQuery
+    ) {
+      return
+    }
+
     let isMounted = true
     const debounceTimer = window.setTimeout(async () => {
       setIsSearchLoading(true)
 
       try {
         const response = await request<unknown>(
-          getSearchRequestPath(mediaConfig.resourcePath, mediaConfig.type, trimmedQuery),
+          getSearchTitlesRequestPath(mediaConfig.resourcePath, mediaConfig.type, trimmedQuery),
           { method: 'GET' },
         )
 
@@ -584,7 +612,7 @@ function MovieBrowsePage() {
       isMounted = false
       window.clearTimeout(debounceTimer)
     }
-  }, [mediaConfig.resourcePath, mediaConfig.type, query])
+  }, [mediaConfig.resourcePath, mediaConfig.type, query, submittedSearchMovies, submittedSearchQuery])
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -626,6 +654,7 @@ function MovieBrowsePage() {
         }
 
         if (
+          isShowingSubmittedSearchResults ||
           shouldRestoreScrollRef.current ||
           isMoviesLoading ||
           isLoadingMoreRef.current ||
@@ -664,7 +693,14 @@ function MovieBrowsePage() {
     return () => {
       observer.disconnect()
     }
-  }, [isMoviesLoading, loadMoviesPage, selectedGenreFilters, selectedReleaseFilter, selectedSortFilter])
+  }, [
+    isMoviesLoading,
+    isShowingSubmittedSearchResults,
+    loadMoviesPage,
+    selectedGenreFilters,
+    selectedReleaseFilter,
+    selectedSortFilter,
+  ])
 
   const moveToMediaDetail = useCallback(
     (movie: MediaCard | SearchMediaItem) => {
@@ -703,6 +739,8 @@ function MovieBrowsePage() {
       setSearchMovies([])
       setActiveSearchIndex(-1)
       setIsSearchResultsOpen(false)
+      setSubmittedSearchQuery('')
+      setSubmittedSearchMovies(null)
       return
     }
 
@@ -712,24 +750,23 @@ function MovieBrowsePage() {
     }
 
     setIsSearchLoading(true)
+    setSubmittedSearchQuery(trimmedQuery)
+    setSubmittedSearchMovies([])
+    setSearchMovies([])
+    setActiveSearchIndex(-1)
+    setIsSearchResultsOpen(false)
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
 
     try {
       const response = await request<unknown>(
-        getSearchRequestPath(mediaConfig.resourcePath, mediaConfig.type, trimmedQuery),
+        getSearchSubmitRequestPath(mediaConfig.resourcePath, mediaConfig.type, trimmedQuery),
         { method: 'GET' },
       )
 
-      const normalizedMovies = normalizeSearchMediaItems(response)
-      setSearchMovies(normalizedMovies)
-      setActiveSearchIndex(-1)
-      setIsSearchResultsOpen(true)
-
-      if (normalizedMovies.length === 1) {
-        moveToMediaDetail(normalizedMovies[0])
-      }
+      const normalizedMovies = normalizeMediaCards(getSearchResultListValue(response))
+      setSubmittedSearchMovies(normalizedMovies)
     } catch {
-      setSearchMovies([])
-      setActiveSearchIndex(-1)
+      setSubmittedSearchMovies([])
     } finally {
       setIsSearchLoading(false)
     }
@@ -775,6 +812,8 @@ function MovieBrowsePage() {
                   setIsSearchLoading(false)
                   setIsSearchResultsOpen(false)
                   setActiveSearchIndex(-1)
+                  setSubmittedSearchQuery('')
+                  setSubmittedSearchMovies(null)
                   return
                 }
 
@@ -859,6 +898,11 @@ function MovieBrowsePage() {
       </header>
 
       <main className="movie-browse-content" ref={mainRef}>
+        {isShowingSubmittedSearchResults ? (
+          <section className="movie-browse-search-results-hero" aria-labelledby="movie-browse-search-results-title">
+            <h1 id="movie-browse-search-results-title">{`"${submittedSearchQuery}"에 대한 검색 결과`}</h1>
+          </section>
+        ) : (
         <section className="movie-browse-filter-panel" aria-label={mediaConfig.filterAriaLabel}>
           <div className="movie-browse-filter-group">
             <span className="movie-browse-filter-label">장르</span>
@@ -918,14 +962,15 @@ function MovieBrowsePage() {
             </div>
           </div>
         </section>
+        )}
 
         {isMoviesLoading || isGenresLoading ? (
           <div className="movie-browse-loading" aria-live="polite">
             <img className="movie-browse-loading-icon" src={loadingIcon} alt="" aria-hidden="true" />
           </div>
-        ) : movies.length > 0 ? (
+        ) : visibleMovies.length > 0 ? (
           <section className="movie-browse-grid" aria-label={mediaConfig.listAriaLabel}>
-            {movies.map((movie) => (
+            {visibleMovies.map((movie) => (
               <button
                 key={`${mediaConfig.type}-browse-${movie.code}`}
                 className="movie-browse-card"
@@ -968,16 +1013,20 @@ function MovieBrowsePage() {
             ))}
           </section>
         ) : (
-          <p className="movie-browse-empty">데이터를 불러오지 못하였습니다.</p>
+          <p className="movie-browse-empty">
+            {isShowingSubmittedSearchResults ? '검색 결과가 없습니다.' : '데이터를 불러오지 못하였습니다.'}
+          </p>
         )}
 
-        {isLoadingMoreMovies ? (
+        {!isShowingSubmittedSearchResults && isLoadingMoreMovies ? (
           <div className="movie-browse-loading-more" aria-live="polite">
             <img className="movie-browse-loading-icon" src={loadingIcon} alt="" aria-hidden="true" />
           </div>
         ) : null}
 
-        <div className="movie-browse-load-trigger" ref={loadTriggerRef} aria-hidden="true" />
+        {!isShowingSubmittedSearchResults ? (
+          <div className="movie-browse-load-trigger" ref={loadTriggerRef} aria-hidden="true" />
+        ) : null}
       </main>
     </div>
   )

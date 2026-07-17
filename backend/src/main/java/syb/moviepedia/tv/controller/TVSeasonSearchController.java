@@ -14,18 +14,19 @@ import org.springframework.web.bind.annotation.RestController;
 import syb.moviepedia.common.api.ApiSuccessResponse;
 import syb.moviepedia.common.swagger.SwaggerApiResponse;
 import syb.moviepedia.movie.dto.response.KeywordResponse;
+import syb.moviepedia.tv.dto.response.AllTVsResponse;
 import syb.moviepedia.tv.service.TVSeasonSearchService;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/tv/search")
+    @RequestMapping("/tv/search")
 public class TVSeasonSearchController {
 
     private final TVSeasonSearchService tvSearchService;
 
-    @Operation(summary = "영화 검색어 목록", description = "키워드에 대한 관련 영화 검색어 목록 조회")
+    @Operation(summary = "tv 검색어 목록", description = "키워드에 대한 관련 tv 검색어 목록 조회")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "검색어 목록 조회 성공"),
             @ApiResponse(
@@ -39,5 +40,23 @@ public class TVSeasonSearchController {
     @GetMapping("/titles")
     public ResponseEntity<ApiSuccessResponse<List<KeywordResponse>>> getMovieKeywords(@RequestParam String keyword) {
         return ResponseEntity.ok().body(ApiSuccessResponse.of("영화 검색 목록", tvSearchService.getKeywords(keyword)));
+    }
+
+    // 키워드 입력 후 엔터를 쳤을 때 키워드 검색에 대한 TV 시즌 목록들을 가져온다.
+    @Operation(summary = "키워드 tv 시즌 목록", description = "입력한 키워드에 대한 tv 시즌 목록 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "키워드 TV 목록 조회 성공"),
+            @ApiResponse(
+                    responseCode = "502", description = "TV 목록 조회 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = SwaggerApiResponse.class)
+                    )
+            )
+    })
+    @GetMapping
+    public ResponseEntity<ApiSuccessResponse<List<AllTVsResponse>>> getSearchedTVs(
+            @RequestParam String keyword
+    ) {
+        return ResponseEntity.ok().body(ApiSuccessResponse.of("키워드 TV 목록 조회 성공", tvSearchService.getKeywordTVs(keyword)));
     }
 }

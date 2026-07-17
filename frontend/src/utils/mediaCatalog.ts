@@ -165,6 +165,40 @@ export function getMovieListValue(data: unknown) {
   return []
 }
 
+export function getSearchResultListValue(data: unknown) {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (!isRecord(data)) {
+    return []
+  }
+
+  const exactKeys = ['searchResults', 'results', 'matches', 'data']
+
+  for (const key of exactKeys) {
+    const value = data[key]
+
+    if (Array.isArray(value)) {
+      return value
+    }
+  }
+
+  const nestedData = data.data
+
+  if (isRecord(nestedData)) {
+    for (const key of exactKeys) {
+      const value = nestedData[key]
+
+      if (Array.isArray(value)) {
+        return value
+      }
+    }
+  }
+
+  return []
+}
+
 export function normalizeMediaListPage(data: unknown): MediaListPage {
   const movies = normalizeMediaCards(getMovieListValue(data))
 

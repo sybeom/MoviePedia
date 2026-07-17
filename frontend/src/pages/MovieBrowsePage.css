@@ -171,6 +171,14 @@ body.movie-browse-body-light::-webkit-scrollbar-thumb:hover {
   padding: 24px 28px 48px;
 }
 
+.movie-browse-search-results-hero h1 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
 .movie-browse-filter-panel {
   display: grid;
   gap: 18px;
@@ -339,6 +347,10 @@ body.movie-browse-body-light::-webkit-scrollbar-thumb:hover {
 .movie-browse-page-light .movie-browse-genres,
 .movie-browse-page-light .movie-browse-empty {
   color: #64748b;
+}
+
+.movie-browse-page-light .movie-browse-search-results-hero h1 {
+  color: #111827;
 }
 
 .movie-browse-page-light .movie-browse-title,

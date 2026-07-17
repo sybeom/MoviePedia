@@ -71,9 +71,23 @@ const PRIMARY_NAV_ITEMS = ['영화', 'TV 시리즈']
 const BANNER_AUTOPLAY_MS = 5000
 const BANNER_TRANSITION_MS = 520
 
-function getSearchRequestPath(resourcePath: string, mediaType: 'movie' | 'series', keyword: string) {
+function getSearchTitlesRequestPath(
+  resourcePath: string,
+  mediaType: 'movie' | 'series',
+  keyword: string,
+) {
   const searchBasePath =
     mediaType === 'series' ? '/tv/search/titles' : `${resourcePath}/search/titles`
+
+  return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
+}
+
+function getSearchSubmitRequestPath(
+  resourcePath: string,
+  mediaType: 'movie' | 'series',
+  keyword: string,
+) {
+  const searchBasePath = mediaType === 'series' ? '/tv/search' : `${resourcePath}/search`
 
   return `${searchBasePath}?keyword=${encodeURIComponent(keyword)}`
 }
@@ -197,6 +211,40 @@ function getMovieListValue(data: unknown) {
 
       if (Array.isArray(nestedValue)) {
         return nestedValue
+      }
+    }
+  }
+
+  return []
+}
+
+function getSearchResultListValue(data: unknown) {
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  if (!isRecord(data)) {
+    return []
+  }
+
+  const exactKeys = ['searchResults', 'results', 'matches', 'data']
+
+  for (const key of exactKeys) {
+    const value = data[key]
+
+    if (Array.isArray(value)) {
+      return value
+    }
+  }
+
+  const nestedData = data.data
+
+  if (isRecord(nestedData)) {
+    for (const key of exactKeys) {
+      const value = nestedData[key]
+
+      if (Array.isArray(value)) {
+        return value
       }
     }
   }
@@ -635,6 +683,8 @@ function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSearchLoading, setIsSearchLoading] = useState(false)
   const [searchMovies, setSearchMovies] = useState<SearchMovie[]>([])
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState('')
+  const [submittedSearchMovies, setSubmittedSearchMovies] = useState<PopularMovie[] | null>(null)
   const [isSearchResultsOpen, setIsSearchResultsOpen] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
 
@@ -670,6 +720,8 @@ function HomePage() {
   const allMoviesPageRef = useRef(initialListSnapshot?.page ?? 0)
   const hasMoreAllMoviesRef = useRef(initialListSnapshot?.hasMore ?? true)
   const isLoadingMoreAllMoviesRef = useRef(false)
+  const isShowingSubmittedSearchResults = submittedSearchMovies !== null
+  const visibleAllMovies = submittedSearchMovies ?? allMovies
 
   function toggleGenreFilter(genreValue: string) {
     setSelectedGenreFilters((previousFilters) => {
@@ -1038,12 +1090,20 @@ function HomePage() {
       return
     }
 
+    if (
+      submittedSearchMovies !== null &&
+      submittedSearchQuery.trim() &&
+      submittedSearchQuery.trim() === trimmedQuery
+    ) {
+      return
+    }
+
     let isMounted = true
     const debounceTimer = window.setTimeout(async () => {
       setIsSearchLoading(true)
 
       try {
-        const response = await request<unknown>(getSearchRequestPath(
+        const response = await request<unknown>(getSearchTitlesRequestPath(
           mediaConfig.resourcePath,
           mediaConfig.type,
           trimmedQuery,
@@ -1074,7 +1134,7 @@ function HomePage() {
       isMounted = false
       window.clearTimeout(debounceTimer)
     }
-  }, [mediaConfig.resourcePath, mediaConfig.type, query])
+  }, [mediaConfig.resourcePath, mediaConfig.type, query, submittedSearchMovies, submittedSearchQuery])
 
   useEffect(() => {
     function handleDocumentMouseDown(event: MouseEvent) {
@@ -1191,25 +1251,24 @@ function HomePage() {
 
     setIsSubmitting(true)
     setIsSearchLoading(true)
+    setSubmittedSearchQuery(trimmedQuery)
+    setSubmittedSearchMovies([])
+    setSearchMovies([])
+    setActiveSearchIndex(-1)
+    setIsSearchResultsOpen(false)
+    mainShellRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' })
 
     try {
-      const response = await request<unknown>(getSearchRequestPath(
+      const response = await request<unknown>(getSearchSubmitRequestPath(
         mediaConfig.resourcePath,
         mediaConfig.type,
         trimmedQuery,
       ), { method: 'GET' })
 
-      const normalizedMovies = normalizeSearchMovies(response)
-      setSearchMovies(normalizedMovies)
-      setActiveSearchIndex(-1)
-      setIsSearchResultsOpen(true)
-
-      if (normalizedMovies.length === 1) {
-        moveToMovieDetail(normalizedMovies[0])
-      }
+      const normalizedMovies = normalizePopularMovies(getSearchResultListValue(response))
+      setSubmittedSearchMovies(normalizedMovies)
     } catch {
-      setSearchMovies([])
-      setActiveSearchIndex(-1)
+      setSubmittedSearchMovies([])
       setMessage('검색 요청에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
@@ -1301,6 +1360,7 @@ function HomePage() {
         }
 
         if (
+          isShowingSubmittedSearchResults ||
           shouldRestoreScrollRef.current ||
           isAllMoviesLoading ||
           isLoadingMoreAllMoviesRef.current ||
@@ -1343,6 +1403,7 @@ function HomePage() {
   }, [
     isAllMoviesLoading,
     loadAllMoviesPage,
+    isShowingSubmittedSearchResults,
     selectedGenreFilters,
     selectedReleaseFilter,
     selectedSortFilter,
@@ -1435,13 +1496,15 @@ function HomePage() {
                     const nextQuery = event.target.value
                     setQuery(nextQuery)
 
-                    if (!nextQuery.trim()) {
-                      setSearchMovies([])
-                      setIsSearchLoading(false)
-                      setIsSearchResultsOpen(false)
-                      setActiveSearchIndex(-1)
-                      return
-                    }
+                if (!nextQuery.trim()) {
+                  setSearchMovies([])
+                  setIsSearchLoading(false)
+                  setIsSearchResultsOpen(false)
+                  setActiveSearchIndex(-1)
+                  setSubmittedSearchQuery('')
+                  setSubmittedSearchMovies(null)
+                  return
+                }
 
                     setActiveSearchIndex(-1)
                     setIsSearchResultsOpen(true)
@@ -1515,7 +1578,7 @@ function HomePage() {
             </section>
           ) : null}
 
-          {!isExpandedMovieView ? (
+          {!isExpandedMovieView && !isShowingSubmittedSearchResults ? (
             <section className="home-banner-section" aria-label={mediaConfig.bannerAriaLabel}>
             {isBannerLoading ? (
               <div className="home-popular-loading" aria-live="polite">
@@ -1619,27 +1682,37 @@ function HomePage() {
           >
             {isExpandedMovieView ? null : (
               <div className="home-popular-section-header">
-                <h2 id="home-all-movies-title">{mediaConfig.allItemsTitle}</h2>
-                <button
-                  className="home-expand-view-button"
-                  type="button"
-                  onClick={() => {
-                    saveScrollPosition(scrollStorageKey, mainShellRef.current)
-                    markCurrentHistoryEntryForRestore()
-                    writeHomeListSnapshot(listStorageKey, {
-                      movies: allMovies,
-                      page: allMoviesPageRef.current,
-                      hasMore: hasMoreAllMoviesRef.current,
-                    })
-                    navigate(`${mediaConfig.browsePath}${location.search}`)
-                  }}
-                  aria-pressed="false"
+                <h2
+                  id="home-all-movies-title"
+                  className={isShowingSubmittedSearchResults ? 'home-search-results-heading' : ''}
                 >
-                  펼쳐보기
-                </button>
+                  {isShowingSubmittedSearchResults
+                    ? `"${submittedSearchQuery}"에 대한 검색 결과`
+                    : mediaConfig.allItemsTitle}
+                </h2>
+                {!isShowingSubmittedSearchResults ? (
+                  <button
+                    className="home-expand-view-button"
+                    type="button"
+                    onClick={() => {
+                      saveScrollPosition(scrollStorageKey, mainShellRef.current)
+                      markCurrentHistoryEntryForRestore()
+                      writeHomeListSnapshot(listStorageKey, {
+                        movies: allMovies,
+                        page: allMoviesPageRef.current,
+                        hasMore: hasMoreAllMoviesRef.current,
+                      })
+                      navigate(`${mediaConfig.browsePath}${location.search}`)
+                    }}
+                    aria-pressed="false"
+                  >
+                    펼쳐보기
+                  </button>
+                ) : null}
               </div>
             )}
 
+            {!isShowingSubmittedSearchResults ? (
             <div className={`home-filter-panel${isExpandedMovieView ? ' home-filter-panel-expanded' : ''}`}>
               <div className="home-filter-group">
                 <span className="home-filter-group-label">장르</span>
@@ -1702,6 +1775,7 @@ function HomePage() {
                 </div>
               </div>
             </div>
+            ) : null}
 
             {isAllMoviesLoading || isGenresLoading ? (
               <div className="home-popular-loading" aria-live="polite">
@@ -1712,9 +1786,9 @@ function HomePage() {
                   aria-hidden="true"
                 />
               </div>
-            ) : allMovies.length > 0 ? (
+            ) : visibleAllMovies.length > 0 ? (
               <div className={`home-movie-grid${isExpandedMovieView ? ' home-movie-grid-expanded' : ''}`}>
-                {allMovies.map((movie) => (
+                {visibleAllMovies.map((movie) => (
                   <button
                     key={`all-movie-${movie.code}`}
                     className="home-movie-grid-card"
@@ -1763,10 +1837,12 @@ function HomePage() {
                 ))}
               </div>
             ) : (
-              <p className="home-popular-empty">데이터를 불러오지 못하였습니다.</p>
+              <p className="home-popular-empty">
+                {isShowingSubmittedSearchResults ? '검색 결과가 없습니다.' : '데이터를 불러오지 못하였습니다.'}
+              </p>
             )}
 
-            {isLoadingMoreAllMovies ? (
+            {!isShowingSubmittedSearchResults && isLoadingMoreAllMovies ? (
               <div className="home-movie-grid-loading-more" aria-live="polite">
                 <img
                   className="home-popular-loading-icon"
@@ -1777,7 +1853,9 @@ function HomePage() {
               </div>
             ) : null}
 
-            <div className="home-movie-grid-load-trigger" ref={allMoviesLoadTriggerRef} aria-hidden="true" />
+            {!isShowingSubmittedSearchResults ? (
+              <div className="home-movie-grid-load-trigger" ref={allMoviesLoadTriggerRef} aria-hidden="true" />
+            ) : null}
           </section>
         </main>
       </div>
