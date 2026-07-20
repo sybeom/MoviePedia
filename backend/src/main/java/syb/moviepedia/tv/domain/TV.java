@@ -52,10 +52,6 @@ public class TV {
     @JoinColumn(name = "series_id")
     private TVSeries series;
 
-//    public void setSeries(TVSeries series) {
-//        this.series = series;
-//    }
-
     // 코멘트 개수 및 좋아요 수 상태 업데이트
     public void increaseCommentStats(ReactionType reactionType) {
         this.commentCount++;
