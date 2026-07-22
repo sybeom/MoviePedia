@@ -17,13 +17,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     Optional<Movie> findByCode(Integer code);
 
-    @Query("""
-        select m
-        from Movie m
-    """)
-    Slice<Movie> findAllMovies(Pageable pageable);
-
-
     // codes에 존재하는 영화 코드들 찾기
     @Query("""
         select m.code
@@ -42,6 +35,4 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     // id가 마지막 조회 id보다 큰 영화 중에서 id 오름차순으로 최대 1000개 조회
     List<Movie> findTop1000ByIdGreaterThanOrderByIdAsc(Long id);
-
-    List<Movie> findAllByCodeIn(Collection<Integer> codes);
 }
