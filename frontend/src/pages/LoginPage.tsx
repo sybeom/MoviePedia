@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
+import { NAVER_OAUTH_URL } from '../api/client'
 import { isApiError } from '../api/client'
 import Header from '../components/Header'
 import { saveAuthSession } from '../utils/authStorage'
@@ -106,7 +107,7 @@ function LoginPage() {
               {isSubmitting ? '로그인 요청 중...' : '로그인'}
             </button>
 
-            <a className="secondary-action" href="http://localhost:8080/oauth2/authorization/naver">
+            <a className="secondary-action" href={NAVER_OAUTH_URL}>
               네이버로 로그인하기
             </a>
           </form>

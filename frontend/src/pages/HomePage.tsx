@@ -12,7 +12,7 @@ import rating19Icon from '../assets/ratings/19.svg'
 import ratingAllIcon from '../assets/ratings/all.svg'
 import searchIcon from '../assets/icons/search.svg'
 import { login, logout } from '../api/auth'
-import { isApiError, request } from '../api/client'
+import { isApiError, NAVER_OAUTH_URL, request } from '../api/client'
 import HomeSearchResults from '../components/home/HomeSearchResults'
 import { getMediaConfigByPath } from '../config/media'
 import {
@@ -1927,7 +1927,7 @@ function HomePage() {
                 </button>
               </div>
               <div className="home-social-login-divider" aria-hidden="true" />
-              <a className="home-social-login-button" href="http://localhost:8080/oauth2/authorization/naver">
+              <a className="home-social-login-button" href={NAVER_OAUTH_URL}>
                 <img
                   className="home-social-login-button-image"
                   src={naverLoginButtonImage}

@@ -4,7 +4,7 @@ import darkModeIcon from '../assets/icons/dark_mode.svg'
 import lightModeIcon from '../assets/icons/light_mode.svg'
 import naverLoginButtonImage from '../assets/icons/NAVER_login.png'
 import { login, logout } from '../api/auth'
-import { ApiError, isApiError } from '../api/client'
+import { ApiError, isApiError, NAVER_OAUTH_URL } from '../api/client'
 import {
   createMovieComment,
   deleteMovieComment,
@@ -940,7 +940,7 @@ function MovieDetailPage() {
                 <div className="home-social-login-divider" aria-hidden="true" />
                 <a
                   className="home-social-login-button"
-                  href="http://localhost:8080/oauth2/authorization/naver"
+                  href={NAVER_OAUTH_URL}
                 >
                   <img
                     className="home-social-login-button-image"
