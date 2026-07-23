@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import syb.moviepedia.common.ReactionType;
 import syb.moviepedia.media.BaseMediaEntity;
-import syb.moviepedia.movie.external.tmdb.dto.TmdbMovie;
 
 import java.time.LocalDate;
 import java.util.List;

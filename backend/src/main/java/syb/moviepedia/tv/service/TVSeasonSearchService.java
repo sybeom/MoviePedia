@@ -11,7 +11,6 @@ import syb.moviepedia.movie.dto.response.KeywordResponse;
 import syb.moviepedia.tv.domain.TV;
 import syb.moviepedia.tv.domain.TVSeasonDocument;
 import syb.moviepedia.tv.dto.response.AllTVsResponse;
-import syb.moviepedia.tv.dto.response.TVSeasonResponse;
 import syb.moviepedia.tv.repsitory.TVRepository;
 import syb.moviepedia.tv.repsitory.TVSeasonSearchRepository;
 

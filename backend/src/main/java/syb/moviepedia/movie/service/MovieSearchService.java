@@ -1,6 +1,5 @@
 package syb.moviepedia.movie.service;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,10 +12,6 @@ import syb.moviepedia.movie.repository.MovieRepository;
 import syb.moviepedia.movie.repository.MovieSearchRepository;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service

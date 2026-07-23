@@ -1,7 +1,5 @@
 package syb.moviepedia.config;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +23,8 @@ import syb.moviepedia.jwt.service.JwtService;
 import syb.moviepedia.member.handler.RefreshTokenLogoutHandler;
 import syb.moviepedia.security.filter.JwtFilter;
 import syb.moviepedia.security.filter.LoginFilter;
+
+import java.util.List;
 
 @EnableWebSecurity
 @Configuration
