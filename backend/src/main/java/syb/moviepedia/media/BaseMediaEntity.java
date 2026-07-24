@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import syb.moviepedia.movie.domain.Country;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -63,6 +62,22 @@ public abstract class BaseMediaEntity {
         this.certification = certification;
         this.overview = overview;
         this.country = country;
+        this.posterPath = posterPath;
+        this.backdropPath = backdropPath;
+    }
+
+    // 영화 상세 업데이트
+    protected void updateMovieDetail(
+            String title,
+            String certification,
+            List<String> countries,
+            String overview,
+            String posterPath,
+            String backdropPath) {
+        this.title = title;
+        this.certification = certification;
+        this.country = countries;
+        this.overview = overview;
         this.posterPath = posterPath;
         this.backdropPath = backdropPath;
     }

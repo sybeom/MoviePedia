@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.*;
+import syb.moviepedia.common.exception.MovieNotFoundException;
 import syb.moviepedia.movie.domain.*;
 import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.*;
@@ -170,50 +171,42 @@ public class MovieService {
      */
     @Transactional
     public MovieDetailResponse getMovieDetail(Integer mvCode) {
-        // 영화 상세. 영화가 DB에 존재하면 가져오고 아니면 상세 api 호출 후 영화 저장
-        Movie movie = mvRepo.findByCode(mvCode).orElseGet(() -> {
-            log.info("DB 영화 존재 X, DB 저장");
+        Movie mv = mvRepo.findByCode(mvCode).orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
+        // 상세 정보 업데이트 안되어있으면,api 호출 후 업데이트
+        if(!mv.isDetailFetched()) {
+            log.info("isDetailFetched() 상세 업데이트 진행");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
-            String certification = extractCertification(tmdbClient.getMovieCertification(mvCode));
             List<String> countries = countryRepo.findNameByCodeIn(detail.country());
 
-            // 영화 저장
-            Movie savedMovie = mvRepo.save(
-                    toMovieFromTmdbDetail(detail, certification, countries)
+            mv.setDetail(
+                    detail.title(),
+                    detail.releaseDate(),
+                    extractCertification(tmdbClient.getMovieCertification(mvCode)),
+                    detail.runtime(),
+                    countries,
+                    detail.overview(),
+                    detail.posterPath(),
+                    detail.backdropPath()
             );
-
-            saveMovieGenres(savedMovie, detail);
-
-            return savedMovie;
-        });
-
-        // 상세 정보 업데이트 안되어있으면,
-        if(!movie.isDetailFetched()) {
-            tmdbClient.getMovieDetail(mvCode);
-
-            TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
-            List<String> countries = countryRepo.findNameByCodeIn(detail.country());
-
-            movie.setDetail(detail.runtime(), countries);
         }
 
         // 크레딧(출연) - 없으면 api 호출후 db저장, 있으면 db에서 가져옴
-        List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(movie));
+        List<MovieCreditResponse> creditDto = toMovieCreditDto(getCredit(mv));
 
         // 영화의 코멘트가 20개 이상이면 지수 조회
         int score = 0;
-        if (movie.getCommentCount() >= 20) {
-            score = movie.getLikeRate();
+        if (mv.getCommentCount() >= 20) {
+            score = mv.getLikeRate();
         }
 
         // 장르
-        List<String> genreNames = movieGenreRepo.findGenresByMovieId(movie.getId())
+        List<String> genreNames = movieGenreRepo.findGenresByMovieId(mv.getId())
                 .stream()
                 .map(Genre::getName)
                 .toList();
 
-        return toMovieDetailResponse(movie, genreNames, creditDto, score);
+        return toMovieDetailResponse(mv, genreNames, creditDto, score);
     }
 
     private void saveMovieGenres(Movie movie, TmdbMovieDetail detail) {
@@ -345,7 +338,7 @@ public class MovieService {
                 .backdropPath(detail.backdropPath())
                 .certification(certification)
                 .overview(detail.overview())
-                .releaseDate(detail.releaseYear())
+                .releaseDate(detail.releaseDate())
                 .country(countries)
                 .runtime(detail.runtime())
                 .build();
@@ -382,7 +375,7 @@ public class MovieService {
                 .filter(releaseData -> releaseData.releaseDates() != null)
                 .flatMap(releaseDates -> releaseDates.releaseDates().stream()) // release_dates[] 평탄화
                 .filter(release -> release.certification() != null && !release.certification().isBlank())
-                .filter(release -> release.type() == 3) // type==3 : 극장 개봉
+                .filter(release -> release.type() >= 1 && release.type() <=6) // type==3 : 극장 개봉
                 .findFirst()
                 .map(info -> info.certification())
                 .orElse("등급 미정");

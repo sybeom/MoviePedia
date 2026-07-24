@@ -14,7 +14,7 @@ import java.util.List;
  * @param posterPath 포스터 경로
  * @param genres 장르
  * @param overview 개요
- * @param releaseYear 개봉연도
+ * @param releaseDate 개봉날짜
  * @param country 제작 국가 (공동 제작이 있을 수 있으므로 List 형태)
  * @param runtime 러닝 타임
  */
@@ -29,7 +29,7 @@ public record TmdbMovieDetail(
         List<TmdbGenre> genres,
         String overview,
         @JsonProperty("release_date")
-        LocalDate releaseYear,
+        LocalDate releaseDate,
         @JsonProperty("origin_country")
         List<String> country,
         Integer runtime

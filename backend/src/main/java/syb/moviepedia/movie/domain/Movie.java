@@ -96,9 +96,18 @@ public class Movie extends BaseMediaEntity {
         return (int) Math.round((double) likeCount / commentCount * 100);
     }
 
-    public void setDetail(Integer runtime, List<String> countries) {
+    public void setDetail(
+            String title,
+            LocalDate releaseDate,
+            String certification,
+            Integer runtime,
+            List<String> countries,
+            String overview,
+            String posterPath,
+            String backdropPath) {
+        super.updateMovieDetail(title, certification, countries, overview, posterPath, backdropPath);
+        this.releaseDate = releaseDate;
         this.runtime = runtime;
-        super.setCountries(countries);
         this.detailFetched = true;
     }
 }
