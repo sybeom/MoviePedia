@@ -50,7 +50,19 @@ public class TmdbTVClient {
                         .queryParam("language", "ko-KR"),
                 seriesCode
         );
+    }
 
+    // 시즌 상세 정보
+    public TmdbTVSeason fetchTVSeasonDetail(Integer seriesCode, Integer seasonNumber) {
+        return get(
+                TV_SEASON_PATH,
+                TmdbTVSeason.class,
+                "Tmdb TV 시즌 상세 api 호출 실패",
+                uriBuilder -> uriBuilder
+                        .queryParam("language", "ko-KR"),
+                seriesCode,
+                seasonNumber
+        );
     }
 
     // 인기 TV 시리즈 api

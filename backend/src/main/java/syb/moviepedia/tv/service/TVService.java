@@ -33,6 +33,7 @@ import syb.moviepedia.tv.dto.response.TVSeasonCreditResponse;
 import syb.moviepedia.tv.dto.response.TVSeasonResponse;
 import syb.moviepedia.tv.external.TmdbTVClient;
 import syb.moviepedia.tv.external.dto.TmdbTVCredit;
+import syb.moviepedia.tv.external.dto.TmdbTVSeason;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
 
@@ -110,6 +111,7 @@ public class TVService {
         );
         return new SliceImpl<>(content, sortedPageable, hasNext);
     }
+
     // 장르 필터
     private BooleanExpression genreExists(QTVSeries qSeries, List<Integer> genres) {
         if (genres == null || genres.isEmpty()) {
@@ -153,10 +155,19 @@ public class TVService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public TVSeasonResponse getSeasonDetail(int seriesCode, int seasonNum) {
         TV tv = tvRepo.findBySeriesCodeAndSeasonNum(seriesCode, seasonNum)
-                .orElseThrow(() -> new TVSeasonNotFoundException("TV 시즌 조회 실패"));
+                .orElseThrow(() -> new TVSeasonNotFoundException(
+                        "TV 시즌 조회 실패. 시리즈 코드: " + seriesCode + ", 시즌 번호: " +  seasonNum));
+
+        // 상세 패치 안되어 있는 경우
+        if(!tv.isDetailFetched()) {
+            TmdbTVSeason tvSsResponse = tmdbTVClient.fetchTVSeasonDetail(seriesCode, seasonNum);
+            String overview = tvSsResponse.overview().isEmpty() ? tv.getSeries().getOverview() : tvSsResponse.overview();
+            tv.updateDetail(overview, tvSsResponse.release_date(), tvSsResponse.episodes().length);
+        }
+
         TVSeries series = tv.getSeries();
         List<String> genres = genreRepo.findByGenreCode(series.getGenres());
 
@@ -169,7 +180,7 @@ public class TVService {
                 .releaseDate(tv.getReleaseDate())
                 .certification(series.getCertification())
                 .posterPath(tv.getPosterPath())
-                .overview(tv.getOverview().isEmpty() ? series.getOverview() : tv.getOverview())
+                .overview(tv.getOverview()==null ? series.getOverview() : tv.getOverview())
                 .credit(null)
                 .build();
     }

@@ -48,6 +48,9 @@ public class TV {
     @Column(name = "like_count", nullable = false)
     private long likeCount=0;
 
+    @Column(name = "detail_fetched", nullable = false)
+    private boolean detailFetched;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "series_id")
     private TVSeries series;
@@ -63,5 +66,12 @@ public class TV {
     public void decreaseCommentStats() {
         this.commentCount--;
         this.likeCount--;
+    }
+
+    public void updateDetail(String overview, LocalDate releaseDate, Integer episodeCnt) {
+        this.overview = overview;
+        this.releaseDate = releaseDate;
+        this.episodeCnt = episodeCnt;
+        detailFetched = true;
     }
 }

@@ -2,6 +2,8 @@ package syb.moviepedia.tv.external.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.LocalDate;
+
 public record TmdbTVSeason(
         @JsonProperty("id")
         Integer seasonCode,
@@ -15,6 +17,14 @@ public record TmdbTVSeason(
         String posterPath,
 
         @JsonProperty("season_number")
-        Integer seasonNumber
+        Integer seasonNumber,
+
+        @JsonProperty("air_date")
+        LocalDate release_date,
+
+        TmdbTVSeasonEpisodes[] episodes
 ) {
+        public record TmdbTVSeasonEpisodes(
+                Integer epNum
+        ) {}
 }

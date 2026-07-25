@@ -45,6 +45,6 @@ public class ScheduleConfig {
 ////        movieInitService.initMovies(page++);
 ////        tvInitService.initTV(page++);
 ////        tvInitService.initSeries(page++);
-//        tvInitService.initTVGenres();
+////        tvInitService.initTVGenres();
 //    }
 }
