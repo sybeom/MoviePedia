@@ -9,6 +9,7 @@ import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.MediaCategoryType;
+import syb.moviepedia.common.util.CommonUtils;
 import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.tv.domain.TV;
@@ -104,7 +105,7 @@ public class TVInitService {
     public void initCategories() {
         tvCategoryRepo.deleteAll();
         List<TmdbTVCategory.TmdbTVCategoryResult> results = tmdbTVClient.fetchTVPopularCategories().results().stream()
-                .filter(result -> isTitleMatch(result.title()))
+                .filter(result -> CommonUtils.isTitleMatch(result.title()))
                 .filter(result -> result.code() != 312949)
                 .toList();
 
@@ -151,7 +152,7 @@ public class TVInitService {
 
         List<TV> tvs = tvSeries.results().stream()
                 .map(result -> tmdbTVClient.fetchTVSeriesDetail(result.seriesCode()))
-                .filter(series -> isTitleMatch(series.title()))
+                .filter(series -> CommonUtils.isTitleMatch(series.title()))
                 .flatMap(series -> series.seasons().stream()
                         .filter(season -> season.seasonNumber() != 0)
                         .map(season -> TV.builder()
@@ -174,29 +175,10 @@ public class TVInitService {
                 .findFirst()
                 .orElseGet(() -> tmdbContentRating.results().stream()
                         .filter(info -> "US".equals(info.countryCode()))
-                        .map(info -> mapUsTvRating(info.rating()))
+                        .map(info -> CommonUtils.mapTvRating(info.rating()))
                         .filter(Objects::nonNull)
                         .findFirst()
                         .orElse(null)
                 );
-    }
-
-    private String mapUsTvRating(String rating) {
-        if (rating == null || rating.isBlank()) {
-            return null;
-        }
-
-        return switch (rating) {
-            case "TV-Y", "TV-Y7", "TV-G" -> "ALL";
-            case "TV-PG" -> "12";
-            case "TV-14" -> "15";
-            case "TV-MA" -> "19";
-            case "NR" -> null;
-            default -> null;
-        };
-    }
-
-    private boolean isTitleMatch(String title) {
-        return title.matches(TITLE_PATTERN);
     }
 }

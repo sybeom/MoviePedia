@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.common.*;
 import syb.moviepedia.common.exception.TVSeasonNotFoundException;
+import syb.moviepedia.common.util.CommonUtils;
 import syb.moviepedia.movie.domain.Credit;
 import syb.moviepedia.movie.domain.Video;
 import syb.moviepedia.movie.dto.request.FilterRequest;
@@ -282,25 +283,10 @@ public class TVService {
                 .findFirst()
                 .orElseGet(() -> res.results().stream() // 한국 등급 없는 경우 미국걸로 대체
                         .filter(info -> "US".equals(info.countryCode()))
-                        .map(info -> mapUsTvRating(info.rating()))
+                        .map(info -> CommonUtils.mapTvRating(info.rating()))
                         .filter(Objects::nonNull)
                         .findFirst()
                         .orElse(null)
                 );
-    }
-
-    private String mapUsTvRating(String rating) {
-        if (rating == null || rating.isBlank()) {
-            return null;
-        }
-
-        return switch (rating) {
-            case "TV-Y", "TV-Y7", "TV-G" -> "ALL";
-            case "TV-PG" -> "12";
-            case "TV-14" -> "15";
-            case "TV-MA" -> "19";
-            case "NR" -> null;
-            default -> null;
-        };
     }
 }

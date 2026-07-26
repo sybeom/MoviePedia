@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:9090'
+export const API_BASE_URL = 'http://localhost:8080'
 export const NAVER_OAUTH_URL = `${API_BASE_URL}/oauth2/authorization/naver`
 
 // 백엔드 공통 API 응답 타입 정의
