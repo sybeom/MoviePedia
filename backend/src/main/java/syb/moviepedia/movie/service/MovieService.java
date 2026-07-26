@@ -174,7 +174,7 @@ public class MovieService {
         Movie mv = mvRepo.findByCode(mvCode).orElseThrow(() -> new MovieNotFoundException("영화를 찾을 수 없습니다. 영화 코드: " + mvCode));
 
         // 상세 정보 업데이트 안되어있으면,api 호출 후 업데이트
-        if(!mv.isDetailFetched()) {
+        if(!mv.getDetailFetched()) {
             log.info("isDetailFetched() 상세 업데이트 진행");
             TmdbMovieDetail detail = tmdbClient.getMovieDetail(mvCode);
             List<String> countries = countryRepo.findNameByCodeIn(detail.country());
@@ -185,7 +185,7 @@ public class MovieService {
                     extractCertification(tmdbClient.getMovieCertification(mvCode)),
                     detail.runtime(),
                     countries,
-                    detail.overview(),
+                    detail.overview().isEmpty() ? null : detail.overview(),
                     detail.posterPath(),
                     detail.backdropPath()
             );

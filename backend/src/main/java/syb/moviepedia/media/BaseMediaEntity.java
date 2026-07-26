@@ -5,7 +5,6 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -33,6 +32,9 @@ public abstract class BaseMediaEntity {
     @Column(name = "backdrop_path")
     private String backdropPath;
 
+    @Column(name = "detail_fetched", nullable = false)
+    private Boolean detailFetched;
+
     protected BaseMediaEntity(
             Integer code,
             String title,
@@ -47,6 +49,7 @@ public abstract class BaseMediaEntity {
         this.country = country;
         this.overview = overview;
         this.posterPath = posterPath;
+        this.detailFetched = false;
     }
 
     public BaseMediaEntity(
@@ -80,6 +83,7 @@ public abstract class BaseMediaEntity {
         this.overview = overview;
         this.posterPath = posterPath;
         this.backdropPath = backdropPath;
+        this.detailFetched = true;
     }
 
     protected void updateCountryAndRuntime(List<String> country) {
@@ -90,6 +94,15 @@ public abstract class BaseMediaEntity {
         this.overview = overview;
         this.posterPath = posterPath;
         this.backdropPath = backdropPath;
+    }
+
+    protected void updateSeriesDetail(String certification, List<String> countries, String overview, String posterPath, String backdropPath) {
+        this.certification = certification;
+        this.country = countries;
+        this.overview = overview;
+        this.posterPath = posterPath;
+        this.backdropPath = backdropPath;
+        this.detailFetched = true;
     }
 
     protected void setCountries(List<String> countries) {

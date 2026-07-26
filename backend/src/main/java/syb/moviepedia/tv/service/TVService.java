@@ -20,6 +20,7 @@ import syb.moviepedia.movie.dto.request.FilterRequest;
 import syb.moviepedia.movie.dto.response.GenreResponse;
 import syb.moviepedia.movie.dto.response.VideoResponse;
 import syb.moviepedia.movie.external.tmdb.dto.TmdbVideoResponse;
+import syb.moviepedia.movie.repository.CountryRepository;
 import syb.moviepedia.movie.repository.CreditRepository;
 import syb.moviepedia.movie.repository.GenreRepository;
 import syb.moviepedia.movie.repository.VideoRepository;
@@ -32,13 +33,16 @@ import syb.moviepedia.tv.dto.response.TVPopularResponse;
 import syb.moviepedia.tv.dto.response.TVSeasonCreditResponse;
 import syb.moviepedia.tv.dto.response.TVSeasonResponse;
 import syb.moviepedia.tv.external.TmdbTVClient;
+import syb.moviepedia.tv.external.dto.TmdbContentRating;
 import syb.moviepedia.tv.external.dto.TmdbTVCredit;
 import syb.moviepedia.tv.external.dto.TmdbTVSeason;
+import syb.moviepedia.tv.external.dto.TmdbTVSeries;
 import syb.moviepedia.tv.repsitory.TVCategoryRepository;
 import syb.moviepedia.tv.repsitory.TVRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import static syb.moviepedia.tv.domain.QTV.tV;
 
@@ -52,6 +56,7 @@ public class TVService {
     private final CreditRepository creditRepo;
     private final JPAQueryFactory query;
     private final VideoRepository videoRepo;
+    private final CountryRepository countryRepo;
 
     private final TmdbTVClient tmdbTVClient;
 
@@ -161,11 +166,21 @@ public class TVService {
                 .orElseThrow(() -> new TVSeasonNotFoundException(
                         "TV 시즌 조회 실패. 시리즈 코드: " + seriesCode + ", 시즌 번호: " +  seasonNum));
 
-        // 상세 패치 안되어 있는 경우
+        // 상세 업데이트 안되어 있는 경우
         if(!tv.isDetailFetched()) {
-            TmdbTVSeason tvSsResponse = tmdbTVClient.fetchTVSeasonDetail(seriesCode, seasonNum);
-            String overview = tvSsResponse.overview().isEmpty() ? tv.getSeries().getOverview() : tvSsResponse.overview();
-            tv.updateDetail(overview, tvSsResponse.release_date(), tvSsResponse.episodes().length);
+            TmdbTVSeason seasonRes = tmdbTVClient.fetchTVSeasonDetail(seriesCode, seasonNum);
+            TVSeries series = tv.getSeries();
+
+            // 시리즈 상세 업데이트 안되어있으면, 업데이트
+            if(!series.getDetailFetched()) {
+                TmdbTVSeries serRes = tmdbTVClient.fetchTVSeriesDetail(seriesCode);
+                String serOverview = serRes.overview().isEmpty() ? null : serRes.overview();
+                List<String> countries = countryRepo.findNameByCodeIn(serRes.countries());
+                series.updateSeriesDetail(
+                        getContentRating(seriesCode), serRes.genres(), countries, serOverview, serRes.posterPath(), serRes.backdropPath());
+            }
+            String overview = seasonRes.overview().isEmpty() ? tv.getSeries().getOverview() : seasonRes.overview();
+            tv.updateDetail(overview, seasonRes.release_date(), seasonRes.episodes().length);
         }
 
         TVSeries series = tv.getSeries();
@@ -257,5 +272,35 @@ public class TVService {
         List<Video> videos = videoRepo.findByVideo(MediaType.TV, seriesCode, seasonNum);
 
         return videos.stream().map(video -> VideoResponse.from(video)).toList();
+    }
+
+    private String getContentRating(int code) {
+        TmdbContentRating res = tmdbTVClient.fetchContentRating(code);
+        return res.results().stream()
+                .filter(info -> "KR".equals(info.countryCode()))
+                .map(info -> info.rating())
+                .findFirst()
+                .orElseGet(() -> res.results().stream() // 한국 등급 없는 경우 미국걸로 대체
+                        .filter(info -> "US".equals(info.countryCode()))
+                        .map(info -> mapUsTvRating(info.rating()))
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(null)
+                );
+    }
+
+    private String mapUsTvRating(String rating) {
+        if (rating == null || rating.isBlank()) {
+            return null;
+        }
+
+        return switch (rating) {
+            case "TV-Y", "TV-Y7", "TV-G" -> "ALL";
+            case "TV-PG" -> "12";
+            case "TV-14" -> "15";
+            case "TV-MA" -> "19";
+            case "NR" -> null;
+            default -> null;
+        };
     }
 }

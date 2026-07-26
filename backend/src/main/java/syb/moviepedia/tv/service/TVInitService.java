@@ -173,7 +173,7 @@ public class TVInitService {
                 .map(info -> info.rating())
                 .findFirst()
                 .orElseGet(() -> tmdbContentRating.results().stream()
-                        .filter(info -> "JP".equals(info.countryCode()))
+                        .filter(info -> "US".equals(info.countryCode()))
                         .map(info -> mapUsTvRating(info.rating()))
                         .filter(Objects::nonNull)
                         .findFirst()

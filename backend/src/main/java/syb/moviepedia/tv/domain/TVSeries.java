@@ -45,4 +45,15 @@ public class TVSeries extends BaseMediaEntity {
             String backdropPath) {
         super(code, title, certification, country, overview, posterPath, backdropPath);
     }
+
+    public void updateSeriesDetail(
+            String certification,
+            List<Integer> genres,
+            List<String> countries,
+            String overview,
+            String posterPath,
+            String backdropPath) {
+        this.genres = genres;
+        super.updateSeriesDetail(certification, countries, overview, posterPath, backdropPath);
+    }
 }
