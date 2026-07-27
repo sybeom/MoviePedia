@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import syb.moviepedia.comment.domain.Comment;
 import syb.moviepedia.comment.repository.CommentRepository;
 import syb.moviepedia.common.*;
+import syb.moviepedia.common.util.CommonUtils;
 import syb.moviepedia.member.domain.Member;
 import syb.moviepedia.member.repository.MemberRepository;
 import syb.moviepedia.movie.domain.*;
@@ -46,7 +47,6 @@ public class MovieInitService {
     private final CreditRepository creditRepo;
     private final VideoRepository videoRepository;
     private static final String INDEX_NAME = "movie_search";
-    private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
     // 장르 데이터 초기화(로드)
     public void initGenres() {
@@ -105,7 +105,7 @@ public class MovieInitService {
                 .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code()))// DB에 없는 영화들만
                 .filter(tmdbMv ->
                         // 숫자만 와도되고 특수문자만 와도 되지만, 언어가 포함되면 한글이 반드시 최소 1개는 포함하는 정규식
-                        tmdbMv.title().matches(TITLE_PATTERN))
+                        CommonUtils.isTitleMatch(tmdbMv.title()))
                 .map(response -> {
                             String certification = extractCertification(response);
                             return toMovie(response, certification);
@@ -143,7 +143,7 @@ public class MovieInitService {
 
         return responses.results().stream()
                 .filter(tmdbMv -> !existingCodes.contains(tmdbMv.code()))
-                .filter(tmdbMv -> tmdbMv.title().matches(TITLE_PATTERN))
+                .filter(tmdbMv -> CommonUtils.isTitleMatch(tmdbMv.title()))
                 .toList();
     }
 
@@ -254,7 +254,7 @@ public class MovieInitService {
 
         // 카테고리별 영화 새로 갱신
         for (TmdbMovie response: responses.results()) {
-            if (!response.title().matches(TITLE_PATTERN))
+            if (!CommonUtils.isTitleMatch(response.title()))
                 continue;
 
             log.info("refreshCategoryMovies 초기화 시작 : {}", category);

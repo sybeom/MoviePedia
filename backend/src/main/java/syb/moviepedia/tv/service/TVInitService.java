@@ -45,7 +45,6 @@ public class TVInitService {
     private final CountryRepository countryRepo;
     private final GenreRepository genreRepo;
     private final ElasticsearchOperations esOperations;
-    private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
     private static final String INDEX_NAME = "tv_season_search";
 
     // 엘라스틱서치에 저장
