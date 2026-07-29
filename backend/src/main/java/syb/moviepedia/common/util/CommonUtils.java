@@ -5,6 +5,7 @@ public final class CommonUtils {
 
     private static final String TITLE_PATTERN = "^(?!(?=.*\\p{L})(?!.*[가-힣]))[\\p{L}0-9 .,:~!?'\"/(){}\\[\\]&+\\-·]+$";
 
+    // TV 시리즈 한국 관련 등급 없을 경우, 미국 등급 기준으로 설정
     public static String mapTvRating(String rating) {
         if (rating == null || rating.isBlank()) {
             return null;
