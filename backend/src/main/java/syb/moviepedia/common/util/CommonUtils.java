@@ -10,7 +10,6 @@ public final class CommonUtils {
         if (rating == null || rating.isBlank()) {
             return null;
         }
-
         return switch (rating) {
             case "TV-Y", "TV-Y7", "TV-G" -> "ALL";
             case "TV-PG" -> "12";
