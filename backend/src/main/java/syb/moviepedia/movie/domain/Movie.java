@@ -55,7 +55,6 @@ public class Movie extends BaseMediaEntity {
             LocalDate releaseDate,
             List<String> country,
             String posterPath,
-            String backdropPath,
             String overview,
             Integer runtime,
             long commentCount,
